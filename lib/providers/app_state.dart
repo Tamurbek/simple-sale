@@ -122,12 +122,16 @@ class AppState extends ChangeNotifier {
       final newProducts = (data['products'] as List).map((p) => Product.fromJson(p)).toList();
       final newWarehouses = (data['warehouses'] as List).map((w) => Warehouse.fromJson(w)).toList();
       final newRegisters = (data['registers'] as List).map((r) => Register.fromJson(r)).toList();
+      final newUsers = data['users'] != null
+          ? (data['users'] as List).map((u) => User.fromJson(u)).toList()
+          : <User>[];
       
       await DatabaseService.clearAllAndReplace(
         categories: newCategories,
         products: newProducts,
         warehouses: newWarehouses,
         registers: newRegisters,
+        users: newUsers,
       );
       
       await _loadFromDb();
@@ -193,6 +197,7 @@ class AppState extends ChangeNotifier {
           'products': products.map((p) => p.toJson()).toList(),
           'warehouses': warehouses.map((w) => w.toJson()).toList(),
           'registers': registers.map((r) => r.toJson()).toList(),
+          'users': users.map((u) => u.toJson()).toList(),
         };
       },
     );

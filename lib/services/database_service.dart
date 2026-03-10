@@ -259,6 +259,7 @@ class DatabaseService {
     required List<Product> products,
     required List<Warehouse> warehouses,
     required List<Register> registers,
+    List<User> users = const [],
   }) async {
     final db = await database;
     await db.transaction((txn) async {
@@ -267,10 +268,12 @@ class DatabaseService {
       await txn.delete('warehouses');
       await txn.delete('registers');
       await txn.delete('stocks');
+      if (users.isNotEmpty) await txn.delete('users');
 
       for (var c in categories) await txn.insert('categories', c.toJson());
       for (var w in warehouses) await txn.insert('warehouses', w.toJson());
       for (var r in registers) await txn.insert('registers', r.toJson());
+      for (var u in users) await txn.insert('users', u.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
       
       for (var p in products) {
         await txn.insert('products', {
@@ -279,6 +282,7 @@ class DatabaseService {
           'price': p.price,
           'categoryId': p.categoryId,
           'barcode': p.barcode,
+          'imagePath': p.imagePath,
         });
         for (var entry in p.stocks.entries) {
           await txn.insert('stocks', {
