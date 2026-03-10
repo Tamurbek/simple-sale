@@ -1,0 +1,87 @@
+name: Build App (Android & Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Windows
+  build-windows:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Create Installer (Inno Setup)
+        shell: pwsh
+        run: |
+          if (Test-Path "windows/installer.iss") {
+            iscc windows/installer.iss
+          } else {
+            Write-Host "installer.iss not found, skipping installer creation."
+          }
+
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: simple-sale-windows
+          path: build/windows/x64/runner/Release/
+
+  # Job 2: Android
+  build-android:
+    name: Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Build Android AppBundle
+        run: flutter build appbundle --release
+
+      - name: Upload Android Builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: simple-sale-android-builds
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
