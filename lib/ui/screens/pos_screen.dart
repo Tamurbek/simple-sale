@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../services/print_service.dart';
@@ -13,6 +14,44 @@ class POSScreen extends StatefulWidget {
 
 class _POSScreenState extends State<POSScreen> {
   String selectedCategory = 'Barchasi';
+  final FocusNode _focusNode = FocusNode();
+  String _barcodeBuffer = '';
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        if (_barcodeBuffer.isNotEmpty) {
+          _processBarcode(_barcodeBuffer.trim());
+          _barcodeBuffer = '';
+        }
+      } else {
+        final char = event.character;
+        if (char != null) {
+          _barcodeBuffer += char;
+        }
+      }
+    }
+  }
+
+  void _processBarcode(String barcode) {
+    try {
+      context.read<AppState>().addToCartByBarcode(barcode);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mahsulot topilmadi: $barcode'),
+          duration: const Duration(seconds: 1),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +62,14 @@ class _POSScreenState extends State<POSScreen> {
       ? state.products 
       : state.products.where((p) => p.category == selectedCategory).toList();
 
-    return Row(
-      children: [
-        // Product Section
-        Expanded(
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Row(
+        children: [
+          // Product Section
+          Expanded(
           flex: 7,
           child: Column(
             children: [

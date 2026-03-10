@@ -25,6 +25,7 @@ class Product {
   final String name;
   final double price;
   final String category;
+  final String barcode;
   final Map<String, double> stocks; // warehouseId -> quantity
 
   Product({
@@ -32,11 +33,12 @@ class Product {
     required this.name,
     required this.price,
     required this.category,
+    required this.barcode,
     required this.stocks,
   });
 
-  factory Product.create(String name, double price, String category) => 
-      Product(id: const Uuid().v4(), name: name, price: price, category: category, stocks: {});
+  factory Product.create(String name, double price, String category, String barcode) => 
+      Product(id: const Uuid().v4(), name: name, price: price, category: category, barcode: barcode, stocks: {});
 }
 
 class Sale {

@@ -15,10 +15,10 @@ class AppState extends ChangeNotifier {
   Register? currentRegister;
   
   List<Product> products = [
-    Product(id: 'p1', name: 'Coca-Cola 0.5L', price: 6000, category: 'Ichimliklar', stocks: {'w1': 100, 'w2': 50}),
-    Product(id: 'p2', name: 'Osh (1 portsiya)', price: 25000, category: 'Taomlar', stocks: {'w1': 20, 'w2': 10}),
-    Product(id: 'p3', name: 'Non', price: 4000, category: 'Non mahsulotlari', stocks: {'w1': 50, 'w2': 0}),
-    Product(id: 'p4', name: 'Fanta 0.5L', price: 6000, category: 'Ichimliklar', stocks: {'w1': 80, 'w2': 40}),
+    Product(id: 'p1', name: 'Coca-Cola 0.5L', price: 6000, category: 'Ichimliklar', barcode: '111111', stocks: {'w1': 100, 'w2': 50}),
+    Product(id: 'p2', name: 'Osh (1 portsiya)', price: 25000, category: 'Taomlar', barcode: '222222', stocks: {'w1': 20, 'w2': 10}),
+    Product(id: 'p3', name: 'Non', price: 4000, category: 'Non mahsulotlari', barcode: '333333', stocks: {'w1': 50, 'w2': 0}),
+    Product(id: 'p4', name: 'Fanta 0.5L', price: 6000, category: 'Ichimliklar', barcode: '444444', stocks: {'w1': 80, 'w2': 40}),
   ];
 
   List<SaleItem> cart = [];
@@ -52,6 +52,14 @@ class AppState extends ChangeNotifier {
       ));
     }
     notifyListeners();
+  }
+
+  void addToCartByBarcode(String barcode) {
+    final product = products.firstWhere(
+      (p) => p.barcode == barcode,
+      orElse: () => throw Exception('Mahsulot topilmadi'),
+    );
+    addToCart(product);
   }
 
   void removeFromCart(String productId) {
