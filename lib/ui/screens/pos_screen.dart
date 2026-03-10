@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -253,14 +254,24 @@ class _POSScreenState extends State<POSScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: const BorderRadius.vertical(top: Radius.circular(20))),
-                child: Center(
-                  child: Icon(
-                    state.categories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: '')).name == 'Ichimliklar' 
-                      ? Icons.local_drink : Icons.restaurant,
-                    size: 48, color: Colors.grey.shade300,
-                  ),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  image: product.imagePath != null
+                      ? DecorationImage(image: FileImage(File(product.imagePath!)), fit: BoxFit.cover)
+                      : null,
                 ),
+                child: product.imagePath == null
+                    ? Center(
+                        child: Icon(
+                          state.categories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: '')).name == 'Ichimliklar'
+                              ? Icons.local_drink
+                              : Icons.restaurant,
+                          size: 48,
+                          color: Colors.grey.shade300,
+                        ),
+                      )
+                    : null,
               ),
             ),
             Padding(
@@ -328,12 +339,29 @@ class _POSScreenState extends State<POSScreen> {
   }
 
   Widget _buildCartItem(SaleItem item, AppState state) {
+    final product = state.products.where((p) => p.id == item.productId).firstOrNull;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade100)),
       child: Row(
         children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              image: product?.imagePath != null
+                  ? DecorationImage(image: FileImage(File(product!.imagePath!)), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: product?.imagePath == null
+                ? const Icon(Icons.inventory_2_outlined, size: 20, color: Colors.grey)
+                : null,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

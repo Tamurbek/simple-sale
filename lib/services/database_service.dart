@@ -24,7 +24,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE categories (
@@ -51,7 +51,8 @@ class DatabaseService {
             name TEXT NOT NULL,
             price REAL NOT NULL,
             categoryId TEXT NOT NULL,
-            barcode TEXT NOT NULL
+            barcode TEXT NOT NULL,
+            imagePath TEXT
           )
         ''');
         await db.execute('''
@@ -145,6 +146,9 @@ class DatabaseService {
             )
           ''');
         }
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE products ADD COLUMN imagePath TEXT');
+        }
       },
     );
   }
@@ -199,6 +203,7 @@ class DatabaseService {
       'price': product.price,
       'categoryId': product.categoryId,
       'barcode': product.barcode,
+      'imagePath': product.imagePath,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     // Save stocks separately
@@ -227,6 +232,7 @@ class DatabaseService {
         categoryId: pMap['categoryId'] as String,
         barcode: pMap['barcode'] as String,
         stocks: stocks,
+        imagePath: pMap['imagePath'] as String?,
       ));
     }
     return products;

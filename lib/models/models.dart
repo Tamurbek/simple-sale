@@ -38,7 +38,6 @@ class Category {
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
   factory Category.fromJson(Map<String, dynamic> json) => Category(id: json['id'], name: json['name']);
 }
-
 class Product {
   final String id;
   final String name;
@@ -46,6 +45,7 @@ class Product {
   final String categoryId;
   final String barcode;
   final Map<String, double> stocks;
+  final String? imagePath;
 
   Product({
     required this.id,
@@ -54,10 +54,11 @@ class Product {
     required this.categoryId,
     required this.barcode,
     required this.stocks,
+    this.imagePath,
   });
 
-  factory Product.create(String name, double price, String categoryId, String barcode) => 
-      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, stocks: {});
+  factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath}) => 
+      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, stocks: {}, imagePath: imagePath);
 
   Product copyWith({
     String? name,
@@ -65,6 +66,7 @@ class Product {
     String? categoryId,
     String? barcode,
     Map<String, double>? stocks,
+    String? imagePath,
   }) => Product(
     id: id,
     name: name ?? this.name,
@@ -72,6 +74,7 @@ class Product {
     categoryId: categoryId ?? this.categoryId,
     barcode: barcode ?? this.barcode,
     stocks: stocks ?? this.stocks,
+    imagePath: imagePath ?? this.imagePath,
   );
 
   Map<String, dynamic> toJson() => {
@@ -80,17 +83,26 @@ class Product {
     'price': price,
     'categoryId': categoryId,
     'barcode': barcode,
+    'imagePath': imagePath,
     'stocks': stocks,
   };
 
-  factory Product.fromJson(Map<String, dynamic> json) => Product(
-    id: json['id'],
-    name: json['name'],
-    price: json['price'].toDouble(),
-    categoryId: json['categoryId'],
-    barcode: json['barcode'],
-    stocks: Map<String, double>.from(json['stocks'] ?? {}),
-  );
+  factory Product.fromJson(Map<String, dynamic> json) {
+    var stockData = json['stocks'];
+    Map<String, double> stocks = {};
+    if (stockData != null && stockData is Map) {
+      stocks = stockData.map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
+    }
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      price: (json['price'] as num).toDouble(),
+      categoryId: json['categoryId'],
+      barcode: json['barcode'],
+      stocks: stocks,
+      imagePath: json['imagePath'],
+    );
+  }
 }
 
 class Sale {

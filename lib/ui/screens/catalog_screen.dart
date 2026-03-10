@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
+import 'product_form_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -71,7 +73,13 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
             ),
           ),
           ElevatedButton.icon(
-            onPressed: () => _tabController.index == 0 ? _showProductDialog(null) : _showCategoryDialog(null),
+            onPressed: () {
+              if (_tabController.index == 0) {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductFormScreen()));
+              } else {
+                _showCategoryDialog(null);
+              }
+            },
             icon: const Icon(Icons.add),
             label: isNarrow ? const Text('Qo\'shish') : Text(_tabController.index == 0 ? 'Yangi mahsulot' : 'Yangi tur'),
             style: ElevatedButton.styleFrom(
@@ -116,9 +124,10 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
               title: product.name,
               subtitle: '${category.name} • ${product.barcode}',
               trailing: '${product.price.toStringAsFixed(0)} so\'m',
-              onEdit: () => _showProductDialog(product),
+              onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductFormScreen(product: product))),
               onDelete: () => state.deleteProduct(product.id),
               isNarrow: isNarrow,
+              imagePath: product.imagePath,
             );
           },
         );
@@ -156,6 +165,7 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
     required VoidCallback onEdit,
     required VoidCallback onDelete,
     required bool isNarrow,
+    String? imagePath,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -168,9 +178,14 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF6366F1), size: 20),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover) : null,
+            ),
+            child: imagePath == null ? const Icon(Icons.inventory_2_outlined, color: Color(0xFF6366F1), size: 20) : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -215,63 +230,6 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
             child: const Text('Saqlash'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showProductDialog(Product? product) {
-    final state = context.read<AppState>();
-    final nameCtrl = TextEditingController(text: product?.name ?? '');
-    final priceCtrl = TextEditingController(text: product?.price.toStringAsFixed(0) ?? '');
-    final barcodeCtrl = TextEditingController(text: product?.barcode ?? '');
-    String? selectedCatId = product?.categoryId ?? (state.categories.isNotEmpty ? state.categories.first.id : null);
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(product == null ? 'Yangi mahsulot' : 'Mahsulotni tahrirlash'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Mahsulot nomi')),
-                TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Narxi (so\'m)'), keyboardType: TextInputType.number),
-                TextField(controller: barcodeCtrl, decoration: const InputDecoration(labelText: 'Shtrix-kod')),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedCatId,
-                  items: state.categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
-                  onChanged: (val) => setDialogState(() => selectedCatId = val),
-                  decoration: const InputDecoration(labelText: 'Kategoriya'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
-            ElevatedButton(
-              onPressed: () {
-                if (nameCtrl.text.isNotEmpty && priceCtrl.text.isNotEmpty && selectedCatId != null) {
-                  if (product == null) {
-                    final newProduct = Product.create(nameCtrl.text, double.parse(priceCtrl.text), selectedCatId!, barcodeCtrl.text);
-                    state.addProduct(newProduct);
-                  } else {
-                    final updated = product.copyWith(
-                      name: nameCtrl.text,
-                      price: double.parse(priceCtrl.text),
-                      categoryId: selectedCatId,
-                      barcode: barcodeCtrl.text,
-                    );
-                    state.updateProduct(updated);
-                  }
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Saqlash'),
-            ),
-          ],
-        ),
       ),
     );
   }

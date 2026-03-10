@@ -239,9 +239,19 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    await DatabaseService.deleteProduct(id);
-    products.removeWhere((p) => p.id == id);
-    notifyListeners();
+    final productIndex = products.indexWhere((p) => p.id == id);
+    if (productIndex >= 0) {
+      final product = products[productIndex];
+      if (product.imagePath != null) {
+        final file = File(product.imagePath!);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+      await DatabaseService.deleteProduct(id);
+      products.removeAt(productIndex);
+      notifyListeners();
+    }
   }
 
   // --- Register & Cart ---
