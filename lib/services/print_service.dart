@@ -18,7 +18,7 @@ class PrintService {
         pageFormat: PdfPageFormat.roll80,
         build: (pw.Context context) {
           return pw.Column(
-            cross: pw.CrossAxisAlignment.start,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
                 child: pw.Text('SIMPLE SALE POS', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),

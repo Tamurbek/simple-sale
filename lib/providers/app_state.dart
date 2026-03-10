@@ -49,7 +49,7 @@ class AppState extends ChangeNotifier {
         productName: product.name,
         quantity: 1,
         price: product.price,
-      );
+      ));
     }
     notifyListeners();
   }

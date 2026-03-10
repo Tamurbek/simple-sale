@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:printing/printing.dart';
 import 'providers/app_state.dart';
 import 'ui/screens/pos_screen.dart';
 
@@ -31,7 +32,7 @@ class SimpleSaleApp extends StatelessWidget {
           background: const Color(0xFFF8FAFC),
         ),
         textTheme: GoogleFonts.interTextTheme(),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
