@@ -20,10 +20,23 @@ class DatabaseService {
     }
 
     final docsDir = await getApplicationDocumentsDirectory();
-    final path = join(docsDir.path, 'simple_sale.db');
+    final supportDir = await getApplicationSupportDirectory();
+    
+    final oldPath = join(docsDir.path, 'simple_sale.db');
+    final newPath = join(supportDir.path, 'simple_sale.db');
+
+    // Migration: move existing DB from Documents to App Support if it exists
+    final oldFile = File(oldPath);
+    if (await oldFile.exists()) {
+      if (!await supportDir.exists()) {
+        await supportDir.create(recursive: true);
+      }
+      await oldFile.copy(newPath);
+      await oldFile.delete(); // Delete old risky file
+    }
 
     return await openDatabase(
-      path,
+      newPath,
       version: 5,
       onCreate: (db, version) async {
         await db.execute('''
