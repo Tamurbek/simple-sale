@@ -7,7 +7,8 @@ import 'product_form_screen.dart';
 import 'dart:io';
 
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const CatalogScreen({super.key, this.onMenuPressed});
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -64,15 +65,14 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
       color: Colors.white,
       child: Row(
         children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Katalog', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-                Text('Mahsulotlar va turlarni boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-              ],
-            ),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Katalog', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+              Text('Mahsulotlar va turlarni boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+            ],
           ),
+          const Spacer(),
           ElevatedButton.icon(
             onPressed: () {
               if (_tabController.index == 0) {
@@ -90,6 +90,17 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
+          if (widget.onMenuPressed != null) ...[
+            const SizedBox(width: 16),
+            IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              onPressed: widget.onMenuPressed,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF8FAFC),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -116,7 +127,7 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
     return Consumer<AppState>(
       builder: (context, state, child) {
         final query = _searchController.text.toLowerCase();
-        final filtered = state.products.where((p) => p.name.toLowerCase().contains(query) || p.barcode.contains(query)).toList();
+        final filtered = state.activeProducts.where((p) => p.name.toLowerCase().contains(query) || p.barcode.contains(query)).toList();
         final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
 
         return Column(
@@ -142,7 +153,7 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final product = filtered[index];
-                  final category = state.categories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: ''));
+                  final category = state.activeCategories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: ''));
                   return _buildItemCard(
                     title: product.name,
                     subtitle: '${category.name} • ${product.barcode}',
@@ -164,12 +175,13 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
   Widget _buildCategoryList(bool isNarrow) {
     return Consumer<AppState>(
       builder: (context, state, child) {
+        final activeCategories = state.activeCategories;
         return ListView.builder(
           padding: const EdgeInsets.all(24),
-          itemCount: state.categories.length,
+          itemCount: activeCategories.length,
           itemBuilder: (context, index) {
-            final category = state.categories[index];
-            final count = state.products.where((p) => p.categoryId == category.id).length;
+            final category = activeCategories[index];
+            final count = state.activeProducts.where((p) => p.categoryId == category.id).length;
             return _buildItemCard(
               title: category.name,
               subtitle: '$count ta mahsulot',

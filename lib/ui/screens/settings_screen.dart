@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
 import '../../providers/app_state.dart';
+import '../../models/models.dart';
+import 'terminal_management_screen.dart';
+import 'warehouse_management_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const SettingsScreen({super.key, this.onMenuPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +36,18 @@ class SettingsScreen extends StatelessWidget {
                       onTap: () => _showRegisterPicker(context, state),
                     ),
                     _buildSettingsTile(
+                      icon: Icons.terminal_rounded,
+                      color: Colors.indigo,
+                      title: 'Kassa Terminallari',
+                      subtitle: 'Terminallarni qo\'shish va tahrirlash',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TerminalManagementScreen())),
+                    ),
+                    _buildSettingsTile(
                       icon: Icons.warehouse_rounded,
                       color: Colors.orange,
-                      title: 'Bog\'langan Ombor',
-                      subtitle: state.warehouses.firstWhere((w) => w.id == state.currentRegister?.warehouseId, orElse: () => state.warehouses.first).name,
-                      onTap: null, // read-only here
+                      title: 'Omborlar',
+                      subtitle: 'Omborlarni qo\'shish va tahrirlash',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WarehouseManagementScreen())),
                     ),
                   ],
                 ),
@@ -140,9 +151,10 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       color: Colors.white,
-      child: const Row(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -155,6 +167,15 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
+          if (onMenuPressed != null)
+            IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              onPressed: onMenuPressed,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF8FAFC),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
         ],
       ),
     );
@@ -252,9 +273,21 @@ class SettingsScreen extends StatelessWidget {
                   title: Text(reg.name, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                   trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF6366F1)) : null,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  onTap: () {
-                    state.setRegister(reg);
-                    Navigator.pop(context);
+                  onTap: () async {
+                    try {
+                      await state.setRegister(reg);
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString().replaceAll('Exception: ', '')),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
                   },
                 );
               },

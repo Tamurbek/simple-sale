@@ -5,7 +5,8 @@ import '../../providers/app_state.dart';
 import '../../models/models.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
-  const SalesHistoryScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const SalesHistoryScreen({super.key, this.onMenuPressed});
 
   @override
   State<SalesHistoryScreen> createState() => _SalesHistoryScreenState();
@@ -62,7 +63,22 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
             ],
           ),
-          _buildFilterButton(),
+          Row(
+            children: [
+              _buildFilterButton(),
+              if (widget.onMenuPressed != null) ...[
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  onPressed: widget.onMenuPressed,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF8FAFC),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );

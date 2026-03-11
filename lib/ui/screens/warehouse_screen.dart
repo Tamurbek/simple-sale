@@ -7,7 +7,8 @@ import '../../providers/app_state.dart';
 import '../../models/models.dart';
 
 class WarehouseScreen extends StatefulWidget {
-  const WarehouseScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const WarehouseScreen({super.key, this.onMenuPressed});
 
   @override
   State<WarehouseScreen> createState() => _WarehouseScreenState();
@@ -37,7 +38,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
     final state = context.watch<AppState>();
     final searchQuery = _searchController.text.toLowerCase();
 
-    final filteredProducts = state.products.where((p) {
+    final filteredProducts = state.activeProducts.where((p) {
       final matchesSearch = p.name.toLowerCase().contains(searchQuery) || p.barcode.contains(searchQuery);
       return matchesSearch;
     }).toList();
@@ -128,6 +129,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
         children: [
           Row(
             children: [
+
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,6 +168,17 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                   ),
                 ),
               ],
+              if (widget.onMenuPressed != null) ...[
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  onPressed: widget.onMenuPressed,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF8FAFC),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
             ],
           ),
           if (isNarrow) ...[
@@ -188,8 +201,8 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
   }
 
   Widget _buildStatsRow(AppState state, double width) {
-    final totalProducts = state.products.length;
-    final lowStockCount = state.products.where((p) {
+    final totalProducts = state.activeProducts.length;
+    final lowStockCount = state.activeProducts.where((p) {
       final stock = p.stocks[selectedWarehouseId] ?? 0;
       return stock <= 5;
     }).length;
@@ -432,9 +445,9 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                               isExpanded: true,
                               value: item['productId'],
                               hint: const Text('Tanlang'),
-                              items: state.products.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+                              items: state.activeProducts.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
                               onChanged: (val) {
-                                final p = state.products.firstWhere((p) => p.id == val);
+                                final p = state.activeProducts.firstWhere((p) => p.id == val);
                                 setDialogState(() {
                                   items[idx]['productId'] = val;
                                   items[idx]['productName'] = p.name;

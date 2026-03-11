@@ -9,7 +9,10 @@ class Warehouse {
   factory Warehouse.create(String name) => Warehouse(id: const Uuid().v4(), name: name);
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
-  factory Warehouse.fromJson(Map<String, dynamic> json) => Warehouse(id: json['id'], name: json['name']);
+  factory Warehouse.fromJson(Map<String, dynamic> json) => Warehouse(
+    id: json['id']?.toString() ?? '', 
+    name: json['name']?.toString() ?? 'Noma\'lum'
+  );
 }
 
 class Register {
@@ -17,26 +20,39 @@ class Register {
   final String name;
   final String warehouseId;
 
-  Register({required this.id, required this.name, required this.warehouseId});
+  final String? activeDeviceId;
+
+  Register({required this.id, required this.name, required this.warehouseId, this.activeDeviceId});
 
   factory Register.create(String name, String warehouseId) => 
-      Register(id: const Uuid().v4(), name: name, warehouseId: warehouseId);
+      Register(id: const Uuid().v4(), name: name, warehouseId: warehouseId, activeDeviceId: null);
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'warehouseId': warehouseId};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'warehouseId': warehouseId, 'activeDeviceId': activeDeviceId};
   factory Register.fromJson(Map<String, dynamic> json) => 
-      Register(id: json['id'], name: json['name'], warehouseId: json['warehouseId']);
+      Register(
+        id: json['id']?.toString() ?? '', 
+        name: json['name']?.toString() ?? 'Noma\'lum', 
+        warehouseId: json['warehouseId']?.toString() ?? '', 
+        activeDeviceId: json['activeDeviceId']?.toString()
+      );
 }
 
 class Category {
   final String id;
   final String name;
+  final bool isDeleted;
 
-  Category({required this.id, required this.name});
+  Category({required this.id, required this.name, this.isDeleted = false});
 
   factory Category.create(String name) => Category(id: const Uuid().v4(), name: name);
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
-  factory Category.fromJson(Map<String, dynamic> json) => Category(id: json['id'], name: json['name']);
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'isDeleted': isDeleted};
+  factory Category.fromJson(Map<String, dynamic> json) => 
+      Category(
+        id: json['id']?.toString() ?? '', 
+        name: json['name']?.toString() ?? 'Noma\'lum', 
+        isDeleted: json['isDeleted'] ?? false
+      );
 }
 class Product {
   final String id;
@@ -46,6 +62,8 @@ class Product {
   final String barcode;
   final Map<String, double> stocks;
   final String? imagePath;
+  final bool isDeleted;
+  final String unit; // 'dona', 'kg', 'litr', etc.
 
   Product({
     required this.id,
@@ -55,10 +73,12 @@ class Product {
     required this.barcode,
     required this.stocks,
     this.imagePath,
+    this.isDeleted = false,
+    this.unit = 'dona',
   });
 
-  factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath}) => 
-      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, stocks: {}, imagePath: imagePath);
+  factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath, String unit = 'dona'}) => 
+      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, stocks: {}, imagePath: imagePath, unit: unit);
 
   Product copyWith({
     String? name,
@@ -67,6 +87,8 @@ class Product {
     String? barcode,
     Map<String, double>? stocks,
     String? imagePath,
+    bool? isDeleted,
+    String? unit,
   }) => Product(
     id: id,
     name: name ?? this.name,
@@ -75,6 +97,8 @@ class Product {
     barcode: barcode ?? this.barcode,
     stocks: stocks ?? this.stocks,
     imagePath: imagePath ?? this.imagePath,
+    isDeleted: isDeleted ?? this.isDeleted,
+    unit: unit ?? this.unit,
   );
 
   Map<String, dynamic> toJson() => {
@@ -85,6 +109,8 @@ class Product {
     'barcode': barcode,
     'imagePath': imagePath,
     'stocks': stocks,
+    'isDeleted': isDeleted,
+    'unit': unit,
   };
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -94,13 +120,15 @@ class Product {
       stocks = stockData.map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
     }
     return Product(
-      id: json['id'],
-      name: json['name'],
-      price: (json['price'] as num).toDouble(),
-      categoryId: json['categoryId'],
-      barcode: json['barcode'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Noma\'lum',
+      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      categoryId: json['categoryId']?.toString() ?? '',
+      barcode: json['barcode']?.toString() ?? '',
       stocks: stocks,
-      imagePath: json['imagePath'],
+      imagePath: json['imagePath']?.toString(),
+      isDeleted: json['isDeleted'] ?? false,
+      unit: json['unit']?.toString() ?? 'dona',
     );
   }
 }
@@ -132,12 +160,12 @@ class Sale {
   };
 
   factory Sale.fromJson(Map<String, dynamic> json) => Sale(
-    id: json['id'],
-    date: DateTime.parse(json['date']),
-    items: (json['items'] as List).map((i) => SaleItem.fromJson(i)).toList(),
-    total: json['total'].toDouble(),
-    registerId: json['registerId'],
-    warehouseId: json['warehouseId'],
+    id: json['id']?.toString() ?? '',
+    date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+    items: (json['items'] as List?)?.map((i) => SaleItem.fromJson(i)).toList() ?? [],
+    total: double.tryParse(json['total']?.toString() ?? '0') ?? 0.0,
+    registerId: json['registerId']?.toString() ?? '',
+    warehouseId: json['warehouseId']?.toString() ?? '',
   );
 }
 
@@ -164,10 +192,10 @@ class SaleItem {
   };
 
   factory SaleItem.fromJson(Map<String, dynamic> json) => SaleItem(
-    productId: json['productId'],
-    productName: json['productName'],
-    quantity: json['quantity'].toDouble(),
-    price: json['price'].toDouble(),
+    productId: json['productId']?.toString() ?? '',
+    productName: json['productName']?.toString() ?? 'Noma\'lum',
+    quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
+    price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
   );
 }
 
@@ -195,11 +223,11 @@ class StockEntry {
   };
 
   factory StockEntry.fromJson(Map<String, dynamic> json) => StockEntry(
-    id: json['id'],
-    warehouseId: json['warehouseId'],
-    date: DateTime.parse(json['date']),
-    items: (json['items'] as List).map((i) => StockEntryItem.fromJson(i)).toList(),
-    description: json['description'] ?? '',
+    id: json['id']?.toString() ?? '',
+    warehouseId: json['warehouseId']?.toString() ?? '',
+    date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+    items: (json['items'] as List?)?.map((i) => StockEntryItem.fromJson(i)).toList() ?? [],
+    description: json['description']?.toString() ?? '',
   );
 }
 
@@ -221,9 +249,9 @@ class StockEntryItem {
   };
 
   factory StockEntryItem.fromJson(Map<String, dynamic> json) => StockEntryItem(
-    productId: json['productId'],
-    productName: json['productName'],
-    quantity: json['quantity'].toDouble(),
+    productId: json['productId']?.toString() ?? '',
+    productName: json['productName']?.toString() ?? 'Noma\'lum',
+    quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
   );
 }
 
@@ -234,12 +262,14 @@ class User {
   final String name;
   final String pin;
   final UserRole role;
+  final bool isDeleted;
 
   User({
     required this.id,
     required this.name,
     required this.pin,
     required this.role,
+    this.isDeleted = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -247,12 +277,14 @@ class User {
     'name': name,
     'pin': pin,
     'role': role.index,
+    'isDeleted': isDeleted,
   };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-    id: json['id'],
-    name: json['name'],
-    pin: json['pin'],
-    role: UserRole.values[json['role'] as int],
+    id: json['id']?.toString() ?? '',
+    name: json['name']?.toString() ?? 'Noma\'lum',
+    pin: json['pin']?.toString() ?? '',
+    role: UserRole.values[(json['role'] ?? 1) as int],
+    isDeleted: json['isDeleted'] ?? false,
   );
 }

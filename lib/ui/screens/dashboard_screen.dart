@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const DashboardScreen({super.key, this.onMenuPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -55,18 +56,20 @@ class DashboardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Dashboard',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
-              ),
-              Text(
-                'Savdo va ko\'rsatkichlar tahlili',
-                style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Dashboard',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                ),
+                Text(
+                  'Savdo va ko\'rsatkichlar tahlili',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
           ),
           if (width > 600)
             Chip(
@@ -74,6 +77,17 @@ class DashboardScreen extends StatelessWidget {
               avatar: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF6366F1)),
               backgroundColor: const Color(0xFFF8FAFC),
             ),
+          if (onMenuPressed != null) ...[
+            const SizedBox(width: 16),
+            IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              onPressed: onMenuPressed,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF8FAFC),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
         ],
       ),
     );

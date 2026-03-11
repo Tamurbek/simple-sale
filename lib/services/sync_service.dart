@@ -12,6 +12,7 @@ class SyncService {
   static Future<void> startServer({
     required Function(Map<String, dynamic>) onSaleReceived,
     required Map<String, dynamic> Function() onSyncRequested,
+    required Future<Map<String, dynamic>> Function(String? registerId, String? deviceId, bool force) onRegisterSelectionRequested,
   }) async {
     final router = Router();
 
@@ -22,6 +23,17 @@ class SyncService {
         final data = jsonDecode(payload);
         onSaleReceived(data);
         return Response.ok(jsonEncode({'status': 'success'}));
+      } catch (e) {
+        return Response.internalServerError(body: e.toString());
+      }
+    });
+
+    router.post('/select-register', (Request request) async {
+      try {
+        final payload = await request.readAsString();
+        final data = jsonDecode(payload);
+        final result = await onRegisterSelectionRequested(data['registerId'], data['deviceId'], data['force'] ?? false);
+        return Response.ok(jsonEncode(result));
       } catch (e) {
         return Response.internalServerError(body: e.toString());
       }
@@ -70,6 +82,23 @@ class SyncService {
     } catch (e) {
       print('Sinxronizatsiya xatosi: $e');
       return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> selectRegisterOnMaster(String masterIp, String? registerId, String? deviceId, bool force) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://$masterIp:8080/select-register'),
+        body: jsonEncode({'registerId': registerId, 'deviceId': deviceId, 'force': force}),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Select register error: $e');
+      return null;
     }
   }
 

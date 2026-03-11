@@ -5,7 +5,8 @@ import '../../models/models.dart';
 import 'package:uuid/uuid.dart';
 
 class EmployeeScreen extends StatelessWidget {
-  const EmployeeScreen({super.key});
+  final VoidCallback? onMenuPressed;
+  const EmployeeScreen({super.key, this.onMenuPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +20,9 @@ class EmployeeScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(24),
-              itemCount: state.users.length,
+              itemCount: state.activeUsers.length,
               itemBuilder: (context, index) {
-                final user = state.users[index];
+                final user = state.activeUsers[index];
                 return _buildUserCard(context, state, user);
               },
             ),
@@ -45,16 +46,31 @@ class EmployeeScreen extends StatelessWidget {
               Text('Tizim foydalanuvchilarini boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
             ],
           ),
-          ElevatedButton.icon(
-            onPressed: () => _showAddUserDialog(context, state),
-            icon: const Icon(Icons.person_add_alt_1_rounded),
-            label: const Text('Yangi hodim'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => _showAddUserDialog(context, state),
+                icon: const Icon(Icons.person_add_alt_1_rounded),
+                label: const Text('Yangi hodim'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              if (onMenuPressed != null) ...[
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  onPressed: onMenuPressed,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF8FAFC),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

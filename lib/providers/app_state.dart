@@ -21,9 +21,9 @@ class AppState extends ChangeNotifier {
   List<SaleItem> cart = [];
   String? selectedPrinterName;
 
-  // Terminal Settings
   bool? isMaster;
   String? masterAddress;
+  String? deviceId;
   bool isInitialized = false;
 
   double get todaySalesTotal {
@@ -58,6 +58,16 @@ class AppState extends ChangeNotifier {
     return sorted.take(5).toList();
   }
 
+  // Active items (not deleted)
+  List<Category> get activeCategories => categories.where((c) => !c.isDeleted).toList();
+  List<Product> get activeProducts => products.where((p) => !p.isDeleted).toList();
+  List<User> get activeUsers => users.where((u) => !u.isDeleted).toList();
+
+  // Deleted items (Trash)
+  List<Category> get deletedCategories => categories.where((c) => c.isDeleted).toList();
+  List<Product> get deletedProducts => products.where((p) => p.isDeleted).toList();
+  List<User> get deletedUsers => users.where((u) => u.isDeleted).toList();
+
   Future<String?> get localIp async {
     for (var interface in await NetworkInterface.list()) {
       for (var addr in interface.addresses) {
@@ -81,9 +91,18 @@ class AppState extends ChangeNotifier {
     
     isMaster = master;
     masterAddress = ip;
+    deviceId = prefs.getString('deviceId') ?? const Uuid().v4();
+    await prefs.setString('deviceId', deviceId!);
     
     // Load data from DB
     await _loadFromDb();
+    
+    // Safety check: ensure no nulls
+    categories = categories.whereType<Category>().toList();
+    products = products.whereType<Product>().toList();
+    warehouses = warehouses.whereType<Warehouse>().toList();
+    registers = registers.whereType<Register>().toList();
+    users = users.whereType<User>().toList();
 
     // If master and empty, add dummy data for demonstration
     if (isMaster == true && products.isEmpty && categories.isEmpty) {
@@ -91,8 +110,12 @@ class AppState extends ChangeNotifier {
       await _loadFromDb();
     }
 
-    if (registers.isNotEmpty) {
-      currentRegister = registers.first;
+    final savedRegId = prefs.getString('currentRegisterId');
+    if (savedRegId != null) {
+      final matching = registers.where((r) => r.id == savedRegId).toList();
+      if (matching.isNotEmpty && matching.first.activeDeviceId == deviceId) {
+        currentRegister = matching.first;
+      }
     }
 
     if (isMaster == true) {
@@ -143,6 +166,8 @@ class AppState extends ChangeNotifier {
     await DatabaseService.saveProduct(Product(id: 'p2', name: 'Osh (1 portsiya)', price: 25000, categoryId: 'c2', barcode: '222222', stocks: {'w1': 20, 'w2': 10}));
     await DatabaseService.saveProduct(Product(id: 'p3', name: 'Non', price: 4000, categoryId: 'c3', barcode: '333333', stocks: {'w1': 50, 'w2': 0}));
     await DatabaseService.saveProduct(Product(id: 'p4', name: 'Fanta 0.5L', price: 6000, categoryId: 'c1', barcode: '444444', stocks: {'w1': 80, 'w2': 40}));
+    await DatabaseService.saveProduct(Product(id: 'p5', name: 'Go\'sht (Mol)', price: 95000, categoryId: 'c2', barcode: '555555', stocks: {'w1': 10, 'w2': 5}, unit: 'kg'));
+    await DatabaseService.saveProduct(Product(id: 'p6', name: 'Un', price: 7000, categoryId: 'c3', barcode: '666666', stocks: {'w1': 200, 'w2': 100}, unit: 'kg'));
   }
 
   Future<void> syncWithMaster() async {
@@ -159,11 +184,11 @@ class AppState extends ChangeNotifier {
           : <User>[];
       
       await DatabaseService.clearAllAndReplace(
-        categories: newCategories,
-        products: newProducts,
-        warehouses: newWarehouses,
-        registers: newRegisters,
-        users: newUsers,
+        categories: newCategories.whereType<Category>().toList(),
+        products: newProducts.whereType<Product>().toList(),
+        warehouses: newWarehouses.whereType<Warehouse>().toList(),
+        registers: newRegisters.whereType<Register>().toList(),
+        users: newUsers.whereType<User>().toList(),
       );
       
       await _loadFromDb();
@@ -247,6 +272,60 @@ class AppState extends ChangeNotifier {
           'users': users.map((u) => u.toJson()).toList(),
         };
       },
+      onRegisterSelectionRequested: (registerId, rDeviceId, force) async {
+        if (registerId == null || rDeviceId == null) {
+          return {'status': 'error', 'message': 'Kassa yoki Qurilma ID topilmadi'};
+        }
+        final regIndex = registers.indexWhere((r) => r.id == registerId);
+        if (regIndex < 0) return {'status': 'error', 'message': 'Kassa topilmadi'};
+
+        final reg = registers[regIndex];
+        if (!force && reg.activeDeviceId != null && reg.activeDeviceId != rDeviceId) {
+          return {
+            'status': 'error', 
+            'message': 'Ushbu kassa hozirda boshqa qurilmada (${reg.activeDeviceId}) band!',
+          };
+        }
+
+        // Clear ANY device from this register if force is true
+        if (force && reg.activeDeviceId != null && reg.activeDeviceId != rDeviceId) {
+           // If we are forcing, we just take over. 
+           // Clear other device's reference if they have it (optional but good)
+        }
+
+        // Clear THIS device from any other register
+        for (int i = 0; i < registers.length; i++) {
+          if (registers[i].activeDeviceId == rDeviceId) {
+            final cleared = Register(
+              id: registers[i].id,
+              name: registers[i].name,
+              warehouseId: registers[i].warehouseId,
+              activeDeviceId: null,
+            );
+            await DatabaseService.saveRegister(cleared);
+            registers[i] = cleared;
+          }
+        }
+
+        // Clear the target register from OTHER devices if forcing
+        if (force) {
+          // It's already cleared from THIS device above. 
+          // Now just overwrite the target register's device ID.
+        }
+
+        final updated = Register(
+          id: reg.id,
+          name: reg.name,
+          warehouseId: reg.warehouseId,
+          activeDeviceId: rDeviceId,
+        );
+        await DatabaseService.saveRegister(updated);
+        final finalIdx = registers.indexWhere((r) => r.id == registerId);
+        if (finalIdx >= 0) registers[finalIdx] = updated;
+        
+        notifyListeners();
+        return {'status': 'success'};
+      },
     );
   }
 
@@ -269,9 +348,23 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteCategory(String id) async {
-    await DatabaseService.deleteCategory(id);
-    categories.removeWhere((c) => c.id == id);
-    notifyListeners();
+    final index = categories.indexWhere((c) => c.id == id);
+    if (index >= 0) {
+      final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: true);
+      await DatabaseService.saveCategory(updated);
+      categories[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreCategory(String id) async {
+    final index = categories.indexWhere((c) => c.id == id);
+    if (index >= 0) {
+      final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: false);
+      await DatabaseService.saveCategory(updated);
+      categories[index] = updated;
+      notifyListeners();
+    }
   }
 
   // --- Product CRUD ---
@@ -291,35 +384,106 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteProduct(String id) async {
-    final productIndex = products.indexWhere((p) => p.id == id);
-    if (productIndex >= 0) {
-      final product = products[productIndex];
-      if (product.imagePath != null) {
-        final file = File(product.imagePath!);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
-      await DatabaseService.deleteProduct(id);
-      products.removeAt(productIndex);
+    final index = products.indexWhere((p) => p.id == id);
+    if (index >= 0) {
+      final updated = products[index].copyWith(isDeleted: true);
+      await DatabaseService.saveProduct(updated);
+      products[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreProduct(String id) async {
+    final index = products.indexWhere((p) => p.id == id);
+    if (index >= 0) {
+      final updated = products[index].copyWith(isDeleted: false);
+      await DatabaseService.saveProduct(updated);
+      products[index] = updated;
       notifyListeners();
     }
   }
 
   // --- Register & Cart ---
-  void setRegister(Register register) {
-    currentRegister = register;
+  Future<void> setRegister(Register register) async {
+    final isAdmin = currentUser?.role == UserRole.admin;
+    
+    if (isMaster == true) {
+      if (!isAdmin && register.activeDeviceId != null && register.activeDeviceId != deviceId) {
+        throw Exception('Ushbu kassa hozirda boshqa qurilmada band!');
+      }
+
+      // Clear THIS device from others
+      for (int i = 0; i < registers.length; i++) {
+        if (registers[i].activeDeviceId == deviceId) {
+          final cleared = Register(
+            id: registers[i].id,
+            name: registers[i].name,
+            warehouseId: registers[i].warehouseId,
+            activeDeviceId: null,
+          );
+          await DatabaseService.saveRegister(cleared);
+          registers[i] = cleared;
+        }
+      }
+
+      final updated = Register(
+        id: register.id,
+        name: register.name,
+        warehouseId: register.warehouseId,
+        activeDeviceId: deviceId,
+      );
+      await DatabaseService.saveRegister(updated);
+      final idx = registers.indexWhere((r) => r.id == register.id);
+      if (idx >= 0) registers[idx] = updated;
+      currentRegister = updated;
+    } else if (isMaster == false && masterAddress != null) {
+      final res = await SyncService.selectRegisterOnMaster(masterAddress!, register.id, deviceId!, isAdmin);
+      if (res != null && res['status'] == 'success') {
+        final updated = Register(
+          id: register.id,
+          name: register.name,
+          warehouseId: register.warehouseId,
+          activeDeviceId: deviceId,
+        );
+        currentRegister = updated;
+      } else {
+        throw Exception(res?['message'] ?? 'Kassani tanlab bo\'lmadi');
+      }
+    } else {
+      currentRegister = register;
+    }
+    
+    final prefs = await SharedPreferences.getInstance();
+    if (currentRegister != null) {
+      await prefs.setString('currentRegisterId', currentRegister!.id);
+    } else {
+      await prefs.remove('currentRegisterId');
+    }
+    
     notifyListeners();
   }
 
   void addToCart(Product product) {
+    if (currentRegister == null) return;
+    final warehouseId = currentRegister!.warehouseId;
+    final stock = product.stocks[warehouseId] ?? 0;
+
     final existingIndex = cart.indexWhere((item) => item.productId == product.id);
+    double currentQty = 0;
     if (existingIndex >= 0) {
-      final currentItem = cart[existingIndex];
+      currentQty = cart[existingIndex].quantity;
+    }
+
+    if (currentQty + 1 > stock) {
+      throw Exception('Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})');
+    }
+
+    if (existingIndex >= 0) {
+      final item = cart[existingIndex];
       cart[existingIndex] = SaleItem(
         productId: product.id,
         productName: product.name,
-        quantity: currentItem.quantity + 1,
+        quantity: item.quantity + 1,
         price: product.price,
       );
     } else {
@@ -333,6 +497,34 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateCartQuantity(String productId, double quantity) {
+    if (currentRegister == null) return;
+    final warehouseId = currentRegister!.warehouseId;
+    
+    final product = products.firstWhere((p) => p.id == productId);
+    final stock = product.stocks[warehouseId] ?? 0;
+
+    if (quantity > stock) {
+      throw Exception('Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})');
+    }
+
+    final index = cart.indexWhere((item) => item.productId == productId);
+    if (index >= 0) {
+      if (quantity <= 0) {
+        cart.removeAt(index);
+      } else {
+        final item = cart[index];
+        cart[index] = SaleItem(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: quantity,
+          price: item.price,
+        );
+      }
+      notifyListeners();
+    }
+  }
+
   void addToCartByBarcode(String barcode) {
     final product = products.firstWhere(
       (p) => p.barcode == barcode,
@@ -344,6 +536,24 @@ class AppState extends ChangeNotifier {
   void removeFromCart(String productId) {
     cart.removeWhere((item) => item.productId == productId);
     notifyListeners();
+  }
+
+  void decrementInCart(String productId) {
+    final index = cart.indexWhere((item) => item.productId == productId);
+    if (index >= 0) {
+      if (cart[index].quantity > 1) {
+        final item = cart[index];
+        cart[index] = SaleItem(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity - 1,
+          price: item.price,
+        );
+      } else {
+        cart.removeAt(index);
+      }
+      notifyListeners();
+    }
   }
 
   void clearCart() {
@@ -425,9 +635,35 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteUser(String id) async {
-    await DatabaseService.deleteUser(id);
-    users.removeWhere((u) => u.id == id);
-    notifyListeners();
+    final index = users.indexWhere((u) => u.id == id);
+    if (index >= 0) {
+      final updated = User(
+        id: users[index].id,
+        name: users[index].name,
+        pin: users[index].pin,
+        role: users[index].role,
+        isDeleted: true,
+      );
+      await DatabaseService.saveUser(updated);
+      users[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreUser(String id) async {
+    final index = users.indexWhere((u) => u.id == id);
+    if (index >= 0) {
+      final updated = User(
+        id: users[index].id,
+        name: users[index].name,
+        pin: users[index].pin,
+        role: users[index].role,
+        isDeleted: false,
+      );
+      await DatabaseService.saveUser(updated);
+      users[index] = updated;
+      notifyListeners();
+    }
   }
 
   void login(String pin) {
@@ -438,6 +674,57 @@ class AppState extends ChangeNotifier {
 
   void logout() {
     currentUser = null;
+    notifyListeners();
+  }
+
+  // --- Warehouse Management ---
+  Future<void> addWarehouse(String name) async {
+    final warehouse = Warehouse.create(name);
+    await DatabaseService.saveWarehouse(warehouse);
+    warehouses.add(warehouse);
+    notifyListeners();
+  }
+
+  Future<void> updateWarehouse(String id, String newName) async {
+    final warehouse = Warehouse(id: id, name: newName);
+    await DatabaseService.saveWarehouse(warehouse);
+    final index = warehouses.indexWhere((w) => w.id == id);
+    if (index >= 0) {
+      warehouses[index] = warehouse;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteWarehouse(String id) async {
+    await DatabaseService.deleteWarehouse(id);
+    warehouses.removeWhere((w) => w.id == id);
+    notifyListeners();
+  }
+
+  // --- Register Management ---
+  Future<void> addRegister(String name, String warehouseId) async {
+    final register = Register.create(name, warehouseId);
+    await DatabaseService.saveRegister(register);
+    registers.add(register);
+    notifyListeners();
+  }
+
+  Future<void> updateRegister(String id, String name, String warehouseId) async {
+    final register = Register(id: id, name: name, warehouseId: warehouseId);
+    await DatabaseService.saveRegister(register);
+    final index = registers.indexWhere((r) => r.id == id);
+    if (index >= 0) {
+      registers[index] = register;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteRegister(String id) async {
+    await DatabaseService.deleteRegister(id);
+    registers.removeWhere((r) => r.id == id);
+    if (currentRegister?.id == id) {
+      currentRegister = registers.isNotEmpty ? registers.first : null;
+    }
     notifyListeners();
   }
 }

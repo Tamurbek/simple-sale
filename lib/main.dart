@@ -11,6 +11,7 @@ import 'ui/screens/setup_screen.dart';
 import 'ui/screens/employee_screen.dart';
 import 'ui/screens/sales_history_screen.dart';
 import 'ui/screens/login_screen.dart';
+import 'ui/screens/trash_screen.dart';
 import 'models/models.dart';
 
 void main() {
@@ -86,33 +87,43 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    POSScreen(),
-    SalesHistoryScreen(),
-    WarehouseScreen(),
-    CatalogScreen(),
-    EmployeeScreen(),
-    SettingsScreen(),
+  List<Widget> get _screens => [
+    POSScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    DashboardScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    SalesHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    WarehouseScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    CatalogScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    EmployeeScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    TrashScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    SettingsScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        width: 250,
+        child: _buildSidebar(false),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isSmall = constraints.maxWidth < 700;
           final isMedium = constraints.maxWidth >= 700 && constraints.maxWidth < 1200;
+          
+          // Disable permanent sidebar everywhere, just like POS
+          const bool showPermanentSidebar = false;
 
           return Column(
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    if (!isSmall) _buildSidebar(isMedium),
-                    if (!isSmall) const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFF1F5F9)),
+                    if (showPermanentSidebar) _buildSidebar(isMedium),
+                    if (showPermanentSidebar) const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFF1F5F9)),
                     Expanded(
                       child: IndexedStack(
                         index: _selectedIndex,
@@ -142,13 +153,14 @@ class _MainLayoutState extends State<MainLayout> {
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
-                _buildNavItem(1, Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Sotuv', slim),
+                _buildNavItem(0, Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Sotuv', slim),
+                _buildNavItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
                 _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'Sotuvlar Tarixi', slim),
                 _buildNavItem(3, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
                 _buildNavItem(4, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
                 _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
-                _buildNavItem(6, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
+                _buildNavItem(6, Icons.delete_outline_rounded, Icons.delete_rounded, 'Savat', slim),
+                _buildNavItem(7, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
               ],
             ),
           ),
@@ -176,12 +188,13 @@ class _MainLayoutState extends State<MainLayout> {
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart_rounded), label: 'Sotuv'),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
           BottomNavigationBarItem(icon: Icon(Icons.history_rounded), activeIcon: Icon(Icons.history_rounded), label: 'Tarix'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Ombor'),
           BottomNavigationBarItem(icon: Icon(Icons.category_outlined), activeIcon: Icon(Icons.category_rounded), label: 'Kat'),
           BottomNavigationBarItem(icon: Icon(Icons.people_outlined), activeIcon: Icon(Icons.people_rounded), label: 'Hodim'),
+          BottomNavigationBarItem(icon: Icon(Icons.delete_outline_rounded), activeIcon: Icon(Icons.delete_rounded), label: 'Savat'),
           BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: 'Soz'),
         ],
       ),
@@ -223,7 +236,12 @@ class _MainLayoutState extends State<MainLayout> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: InkWell(
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          if (_scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+            Navigator.pop(context);
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
