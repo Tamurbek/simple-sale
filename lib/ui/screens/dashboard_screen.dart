@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 
@@ -187,7 +189,7 @@ class DashboardScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Text('${fmt.format(sale.totalAmount)} so\'m',
+                    Text('${fmt.format(sale.total)} so\'m',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14)),
                   ],
                 ),

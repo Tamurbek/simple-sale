@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:io';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
-import 'dart:io';
 
 class WarehouseScreen extends StatefulWidget {
   const WarehouseScreen({super.key});
@@ -484,7 +486,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
 
                   if (finalItems.isNotEmpty) {
                     final entry = StockEntry(
-                      id: Uuid().v4(),
+                      id: const Uuid().v4(),
                       warehouseId: entryWarehouseId!,
                       date: DateTime.now(),
                       description: descriptionCtrl.text,

@@ -30,7 +30,7 @@ class AppState extends ChangeNotifier {
     final now = DateTime.now();
     return sales
         .where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day)
-        .fold(0.0, (sum, s) => sum + s.totalAmount);
+        .fold(0.0, (sum, s) => sum + s.total);
   }
 
   int get todaySalesCount {

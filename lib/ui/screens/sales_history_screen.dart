@@ -150,7 +150,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         ),
         title: Text('Sotuv #${sale.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         subtitle: Text(DateFormat('dd.MM.yyyy, HH:mm').format(sale.date), style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-        trailing: Text('${sale.totalAmount.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1E293B))),
+        trailing: Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1E293B))),
         children: [
           Container(
             padding: const EdgeInsets.all(20),
@@ -181,7 +181,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Jami:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('${sale.totalAmount.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF6366F1))),
+                    Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF6366F1))),
                   ],
                 ),
               ],
