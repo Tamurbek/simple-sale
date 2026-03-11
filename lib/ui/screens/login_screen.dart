@@ -216,43 +216,83 @@ class _LoginScreenState extends State<LoginScreen> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock_person_rounded, size: 64, color: Colors.white),
-                const SizedBox(height: 24),
-                const Text(
-                  'Tizimga Kirish',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                const Text(
-                  'Davom etish uchun PIN kodni kiriting',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 48),
-                _buildPinDisplay(),
-                const SizedBox(height: 48),
-                _buildNumpad(),
-                const SizedBox(height: 24),
-                TextButton(
-                  onPressed: _showRecoveryDialog,
-                  child: const Text(
-                    'PINni unutdingizmi?',
-                    style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  margin: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_person_rounded, size: 64, color: Colors.white),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Tizimga Kirish',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      Text(
+                        state.isMaster == true ? '🖥 Master terminal' : '💻 Klient terminal',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildPinDisplay(),
+                      const SizedBox(height: 32),
+                      _buildNumpad(),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: _showRecoveryDialog,
+                        child: const Text(
+                          'PINni unutdingizmi?',
+                          style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+            // Terminal sozlamalari tugmasi
+            Positioned(
+              top: 16,
+              right: 16,
+              child: SafeArea(
+                child: IconButton(
+                  onPressed: _resetTerminalMode,
+                  icon: const Icon(Icons.settings_rounded, color: Colors.white54, size: 28),
+                  tooltip: 'Terminal sozlamalari',
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  void _resetTerminalMode() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Terminal sozlamalari'),
+        content: const Text('Terminal rejimini qayta sozlashni xohlaysizmi? Barcha mahalliy ma\'lumotlar o\'chiriladi.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Bekor')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await context.read<AppState>().resetTerminalMode();
+            },
+            child: const Text('Qayta sozlash'),
+          ),
+        ],
       ),
     );
   }

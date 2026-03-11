@@ -174,6 +174,21 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> resetTerminalMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isMaster');
+    await prefs.remove('masterAddress');
+    await prefs.remove('masterPassword');
+    
+    SyncService.stopServer();
+    isMaster = null;
+    masterAddress = null;
+    masterPassword = null;
+    currentUser = null;
+    
+    notifyListeners();
+  }
+
   void _startServer() {
     SyncService.startServer(
       onSaleReceived: (saleData) async {
