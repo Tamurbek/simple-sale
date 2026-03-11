@@ -14,24 +14,67 @@ class SalesHistoryScreen extends StatefulWidget {
 
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   DateTimeRange? _dateRange;
+  String? _selectedRegisterId;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     
-    final filteredSales = _dateRange == null 
-      ? state.sales 
-      : state.sales.where((s) {
-          final date = DateTime(s.date.year, s.date.month, s.date.day);
-          return (date.isAtSameMomentAs(_dateRange!.start) || date.isAfter(_dateRange!.start)) &&
-                 (date.isAtSameMomentAs(_dateRange!.end) || date.isBefore(_dateRange!.end));
-        }).toList();
+    final filteredSales = state.sales.where((s) {
+      // Date filter
+      bool matchesDate = true;
+      if (_dateRange != null) {
+        final date = DateTime(s.date.year, s.date.month, s.date.day);
+        matchesDate = (date.isAtSameMomentAs(_dateRange!.start) || date.isAfter(_dateRange!.start)) &&
+                     (date.isAtSameMomentAs(_dateRange!.end) || date.isBefore(_dateRange!.end));
+      }
+
+      // Register filter
+      bool matchesRegister = true;
+      if (_selectedRegisterId != null) {
+        matchesRegister = s.registerId == _selectedRegisterId;
+      }
+
+      return matchesDate && matchesRegister;
+    }).toList();
+
+    final totalAmount = filteredSales.fold<double>(0, (sum, item) => sum + item.total);
 
     return Container(
       color: const Color(0xFFF1F5F9),
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(state),
+          if (filteredSales.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4F46E5)]),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Jami savdo:', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(
+                        '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(totalAmount)} so\'m',
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: filteredSales.isEmpty 
               ? _buildEmptyState()
@@ -40,7 +83,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   itemCount: filteredSales.length,
                   itemBuilder: (context, index) {
                     final sale = filteredSales[index];
-                    return _buildSaleCard(sale);
+                    return _buildSaleCard(sale, state);
                   },
                 ),
           ),
@@ -49,25 +92,23 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppState state) {
     return Container(
       padding: const EdgeInsets.all(24),
       color: Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Sotuvlar Tarixi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-              Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-            ],
-          ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildFilterButton(),
-              if (widget.onMenuPressed != null) ...[
-                const SizedBox(width: 16),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sotuvlar Tarixi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                  Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                ],
+              ),
+              if (widget.onMenuPressed != null)
                 IconButton(
                   icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
                   onPressed: widget.onMenuPressed,
@@ -76,7 +117,38 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-              ],
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: _buildFilterButton()),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: _selectedRegisterId != null ? const Color(0xFF6366F1).withOpacity(0.1) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _selectedRegisterId != null ? const Color(0xFF6366F1).withOpacity(0.2) : Colors.grey.shade100),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedRegisterId,
+                      hint: const Text('Kassa bo\'yicha', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                      isExpanded: true,
+                      onChanged: (val) => setState(() => _selectedRegisterId = val),
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('Barcha kassalar', style: TextStyle(fontSize: 13))),
+                        ...state.registers.map((r) => DropdownMenuItem(
+                          value: r.id,
+                          child: Text(r.name, style: const TextStyle(fontSize: 13)),
+                        )),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -148,7 +220,8 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
     );
   }
 
-  Widget _buildSaleCard(Sale sale) {
+  Widget _buildSaleCard(Sale sale, AppState state) {
+    final registerName = state.registers.where((r) => r.id == sale.registerId).firstOrNull?.name ?? 'Kassa';
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -165,7 +238,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           child: const Icon(Icons.receipt_long_rounded, color: Colors.green, size: 20),
         ),
         title: Text('Sotuv #${sale.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text(DateFormat('dd.MM.yyyy, HH:mm').format(sale.date), style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+        subtitle: Text('${DateFormat('dd.MM.yyyy, HH:mm').format(sale.date)} • $registerName', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
         trailing: Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1E293B))),
         children: [
           Container(

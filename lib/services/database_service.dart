@@ -8,9 +8,23 @@ class DatabaseService {
   static Database? _db;
 
   static Future<Database> get database async {
-    if (_db != null) return _db!;
+    if (_db != null && _db!.isOpen) return _db!;
     _db = await _initDb();
     return _db!;
+  }
+
+  static Future<String> getDatabasePath() async {
+    final supportDir = await getApplicationSupportDirectory();
+    return join(supportDir.path, 'simple_sale.db');
+  }
+
+  static Future<void> replaceDatabase(File newFile) async {
+    if (_db != null && _db!.isOpen) {
+      await _db!.close();
+      _db = null;
+    }
+    final path = await getDatabasePath();
+    await newFile.copy(path);
   }
 
   static Future<Database> _initDb() async {

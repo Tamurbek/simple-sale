@@ -139,6 +139,42 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (state.isMaster == true) ...[
+                  const SizedBox(height: 24),
+                  _buildSection(
+                    context,
+                    'Ma\'lumotlar xavfsizligi',
+                    'Ma\'lumotlar bazasini saqlash va tiklash',
+                    [
+                      _buildSettingsTile(
+                        icon: Icons.cloud_upload_rounded,
+                        color: Colors.green,
+                        title: 'Zaxira nusxasini yaratish',
+                        subtitle: 'Bazani faylga yuklab olish',
+                        onTap: () async {
+                          await state.exportDatabase();
+                        },
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.cloud_download_rounded,
+                        color: Colors.red,
+                        title: 'Zaxiradan tiklash',
+                        subtitle: 'Bazani tanlangan fayldan tiklash',
+                        onTap: () async {
+                          final confirmed = await _showConfirmRestore(context);
+                          if (confirmed == true) {
+                            await state.importDatabase();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Baza muvaffaqiyatli tiklandi!')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -322,6 +358,27 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Future<bool?> _showConfirmRestore(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bazani tiklash'),
+        content: const Text(
+          'Diqqat! Yangi baza faylini tanlasangiz, hozirgi barcha ma\'lumotlaringiz (mahsulotlar, sotuvlar) o\'chiriladi va tanlangan fayl bilan almashadi. Davom etasizmi?',
+          style: TextStyle(color: Color(0xFF64748B)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Bekor qilish')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ha, tiklash'),
+          ),
+        ],
       ),
     );
   }

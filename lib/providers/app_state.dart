@@ -5,6 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import '../services/sync_service.dart';
 import '../services/database_service.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AppState extends ChangeNotifier {
   List<Warehouse> warehouses = [];
@@ -726,5 +728,25 @@ class AppState extends ChangeNotifier {
       currentRegister = registers.isNotEmpty ? registers.first : null;
     }
     notifyListeners();
+  }
+
+  Future<void> exportDatabase() async {
+    final path = await DatabaseService.getDatabasePath();
+    final file = File(path);
+    if (await file.exists()) {
+      final xFile = XFile(path);
+      await Share.shareXFiles([xFile], text: 'Simple Sale Baza Zaxira Nusxasi');
+    }
+  }
+
+  Future<void> importDatabase() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      await DatabaseService.replaceDatabase(file);
+      await loadSettings(); // Refresh everything
+      notifyListeners();
+    }
   }
 }
