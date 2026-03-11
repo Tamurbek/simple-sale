@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../services/print_service.dart';
 import '../../models/models.dart';
@@ -284,7 +284,10 @@ class _POSScreenState extends State<POSScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${product.price.toStringAsFixed(0)} so\'m', style: const TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.w800, fontSize: 13)),
+                      Text(
+                        '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} s',
+                        style: const TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(color: isLowStock ? Colors.red.shade50 : Colors.green.shade50, borderRadius: BorderRadius.circular(6)),
@@ -398,7 +401,10 @@ class _POSScreenState extends State<POSScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Jami:', style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600)),
-              Text('${state.cartTotal.toStringAsFixed(0)} so\'m', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+              Text(
+                '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(state.cartTotal)} so\'m',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -440,6 +446,125 @@ class _POSScreenState extends State<POSScreen> {
   }
 
   Future<void> _handlePayment(AppState state) async {
+    final total = state.cartTotal;
+    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+    
+    String paymentMethod = 'Naqd';
+    final TextEditingController receivedController = TextEditingController(text: total.toStringAsFixed(0));
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final received = double.tryParse(receivedController.text) ?? 0;
+            final change = received - total;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Center(child: Text('To\'lovni Yakunlash', style: TextStyle(fontWeight: FontWeight.w900))),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Jami To\'lov:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text('${fmt.format(total)} so\'m', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF6366F1))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Align(alignment: Alignment.centerLeft, child: Text('To\'lov turi:', style: TextStyle(fontWeight: FontWeight.bold))),
+                    Row(
+                      children: [
+                        _buildMethodButton('Naqd', Icons.payments_rounded, paymentMethod, (m) => setDialogState(() => paymentMethod = m)),
+                        const SizedBox(width: 12),
+                        _buildMethodButton('Plastik', Icons.credit_card_rounded, paymentMethod, (m) => setDialogState(() => paymentMethod = m)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: receivedController,
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) => setDialogState(() {}),
+                      decoration: InputDecoration(
+                        labelText: 'Olingan summa',
+                        prefixIcon: const Icon(Icons.money_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (paymentMethod == 'Naqd' && change > 0)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Qaytim:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text('${fmt.format(change)} so\'m', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.green)),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.all(20),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor Qilish')),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context); // Close dialog
+                    _executeSale(state);
+                  },
+                  child: const Text('TASDIQLASH', style: TextStyle(fontWeight: FontWeight.w900)),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    );
+  }
+
+  Widget _buildMethodButton(String method, IconData icon, String selected, Function(String) onSelect) {
+    final isSelected = selected == method;
+    return Expanded(
+      child: InkWell(
+        onTap: () => onSelect(method),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF6366F1) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isSelected ? const Color(0xFF6366F1) : Colors.grey.shade200),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: isSelected ? Colors.white : const Color(0xFF6366F1)),
+              const SizedBox(height: 8),
+              Text(method, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _executeSale(AppState state) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -454,13 +579,54 @@ class _POSScreenState extends State<POSScreen> {
         printerName: state.selectedPrinterName,
       );
       await state.processSale();
-      if (mounted) Navigator.pop(context); // close loader
+      if (mounted) {
+        Navigator.pop(context); // close loader
+        _showSuccessDialog();
+      }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatoli: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+            ),
+            const SizedBox(height: 24),
+            const Text('Sotuv yakunlandi!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Ombor yangilandi va chek chiqarildi.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Davom Etish', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState() => const Center(child: Text('Mahsulot topilmadi', style: TextStyle(color: Colors.grey)));

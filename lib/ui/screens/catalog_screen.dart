@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'dart:io';
+import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
 import 'product_form_screen.dart';
+import 'dart:io';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -114,22 +113,47 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
   Widget _buildProductList(bool isNarrow) {
     return Consumer<AppState>(
       builder: (context, state, child) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: state.products.length,
-          itemBuilder: (context, index) {
-            final product = state.products[index];
-            final category = state.categories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: ''));
-            return _buildItemCard(
-              title: product.name,
-              subtitle: '${category.name} • ${product.barcode}',
-              trailing: '${product.price.toStringAsFixed(0)} so\'m',
-              onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductFormScreen(product: product))),
-              onDelete: () => state.deleteProduct(product.id),
-              isNarrow: isNarrow,
-              imagePath: product.imagePath,
-            );
-          },
+        final query = _searchController.text.toLowerCase();
+        final filtered = state.products.where((p) => p.name.toLowerCase().contains(query) || p.barcode.contains(query)).toList();
+        final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'Mahsulotlarni qidirish...',
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6366F1)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(24),
+                itemCount: filtered.length,
+                itemBuilder: (context, index) {
+                  final product = filtered[index];
+                  final category = state.categories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: ''));
+                  return _buildItemCard(
+                    title: product.name,
+                    subtitle: '${category.name} • ${product.barcode}',
+                    trailing: '${fmt.format(product.price)} s',
+                    onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductFormScreen(product: product))),
+                    onDelete: () => state.deleteProduct(product.id),
+                    isNarrow: isNarrow,
+                    imagePath: product.imagePath,
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );

@@ -9,8 +9,8 @@ import 'ui/screens/settings_screen.dart';
 import 'ui/screens/catalog_screen.dart';
 import 'ui/screens/setup_screen.dart';
 import 'ui/screens/employee_screen.dart';
+import 'ui/screens/sales_history_screen.dart';
 import 'ui/screens/login_screen.dart';
-import 'ui/screens/sales_screen.dart';
 import 'models/models.dart';
 
 void main() {
@@ -90,7 +90,8 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _screens = const [
     DashboardScreen(),
-    SalesScreen(),
+    POSScreen(),
+    SalesHistoryScreen(),
     WarehouseScreen(),
     CatalogScreen(),
     EmployeeScreen(),
@@ -142,11 +143,12 @@ class _MainLayoutState extends State<MainLayout> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
-                _buildNavItem(1, Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Sotuvlar', slim),
-                _buildNavItem(2, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
-                _buildNavItem(3, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
-                _buildNavItem(4, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
-                _buildNavItem(5, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
+                _buildNavItem(1, Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Sotuv', slim),
+                _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'Sotuvlar Tarixi', slim),
+                _buildNavItem(3, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
+                _buildNavItem(4, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
+                _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
+                _buildNavItem(6, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
               ],
             ),
           ),
@@ -175,7 +177,8 @@ class _MainLayoutState extends State<MainLayout> {
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), activeIcon: Icon(Icons.shopping_bag_rounded), label: 'Sotuv'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart_rounded), label: 'Sotuv'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), activeIcon: Icon(Icons.history_rounded), label: 'Tarix'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Ombor'),
           BottomNavigationBarItem(icon: Icon(Icons.category_outlined), activeIcon: Icon(Icons.category_rounded), label: 'Kat'),
           BottomNavigationBarItem(icon: Icon(Icons.people_outlined), activeIcon: Icon(Icons.people_rounded), label: 'Hodim'),

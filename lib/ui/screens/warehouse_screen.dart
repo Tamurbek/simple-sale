@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
-import 'package:uuid/uuid.dart';
+import 'dart:io';
 
 class WarehouseScreen extends StatefulWidget {
   const WarehouseScreen({super.key});
@@ -269,10 +269,18 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B), size: 20),
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                  image: product.imagePath != null
+                      ? DecorationImage(image: FileImage(File(product.imagePath!)), fit: BoxFit.cover)
+                      : null,
+                ),
+                child: product.imagePath == null
+                    ? const Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B), size: 20)
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -314,7 +322,10 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text('${product.price.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                  Text(
+                    '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} s',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ],

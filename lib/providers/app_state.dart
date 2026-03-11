@@ -26,6 +26,38 @@ class AppState extends ChangeNotifier {
   String? masterAddress;
   bool isInitialized = false;
 
+  double get todaySalesTotal {
+    final now = DateTime.now();
+    return sales
+        .where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day)
+        .fold(0.0, (sum, s) => sum + s.totalAmount);
+  }
+
+  int get todaySalesCount {
+    final now = DateTime.now();
+    return sales.where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day).length;
+  }
+
+  double get averageCheck {
+    final count = todaySalesCount;
+    return count == 0 ? 0 : todaySalesTotal / count;
+  }
+
+  List<MapEntry<String, double>> get topSellingProducts {
+    final now = DateTime.now();
+    final todaySales = sales.where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day);
+    
+    final Map<String, double> topMap = {};
+    for (var sale in todaySales) {
+      for (var item in sale.items) {
+        topMap[item.productName] = (topMap[item.productName] ?? 0.0) + item.quantity;
+      }
+    }
+    
+    final sorted = topMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(5).toList();
+  }
+
   Future<String?> get localIp async {
     for (var interface in await NetworkInterface.list()) {
       for (var addr in interface.addresses) {

@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -68,10 +67,10 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           if (width > 600)
-            const Chip(
-              label: Text('Bugun: 10 Mart, 2026'),
-              avatar: Icon(Icons.calendar_today, size: 16, color: Color(0xFF6366F1)),
-              backgroundColor: Color(0xFFF8FAFC),
+            Chip(
+              label: Text('Bugun: ${DateFormat('dd MMMM, yyyy').format(DateTime.now())}'),
+              avatar: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF6366F1)),
+              backgroundColor: const Color(0xFFF8FAFC),
             ),
         ],
       ),
@@ -80,7 +79,8 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildStatsSummary(AppState state, double width) {
     int crossAxisCount = width < 600 ? 1 : width < 1200 ? 2 : 4;
-    
+    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -89,10 +89,10 @@ class DashboardScreen extends StatelessWidget {
       mainAxisSpacing: 24,
       childAspectRatio: 2.2,
       children: [
-        _buildStatCard('Bugungi Savdo', '1,240,000 so\'m', Icons.payments_outlined, Colors.green, '+12%'),
-        _buildStatCard('Cheklar soni', '48 ta', Icons.receipt_long_outlined, Colors.blue, '+5%'),
-        _buildStatCard('O\'rtacha chek', '25,800 so\'m', Icons.analytics_outlined, Colors.orange, '-2%'),
-        _buildStatCard('Mijozlar', '36 ta', Icons.people_outline, Colors.purple, '+8%'),
+        _buildStatCard('Bugungi Savdo', '${fmt.format(state.todaySalesTotal)} so\'m', Icons.payments_outlined, Colors.green, 'Live'),
+        _buildStatCard('Cheklar soni', '${state.todaySalesCount} ta', Icons.receipt_long_outlined, Colors.blue, 'Live'),
+        _buildStatCard('O\'rtacha chek', '${fmt.format(state.averageCheck)} so\'m', Icons.analytics_outlined, Colors.orange, 'Live'),
+        _buildStatCard('Mahsulotlar', '${state.products.length} turda', Icons.inventory_2_outlined, Colors.purple, 'Baza'),
       ],
     );
   }
@@ -143,6 +143,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentSales(AppState state) {
+    final recentSales = state.sales.take(5).toList();
+    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
@@ -157,69 +160,84 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          for (int i = 0; i < 5; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-                    child: const Icon(Icons.shopping_bag_outlined, size: 20, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Sale #102$i', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text('21:0$i', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
+          if (recentSales.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: Text('Hozircha sotuvlar yo\'q', style: TextStyle(color: Colors.grey))),
+            )
+          else
+            for (var sale in recentSales)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
+                      child: const Icon(Icons.shopping_bag_outlined, size: 20, color: Color(0xFF64748B)),
                     ),
-                  ),
-                  const Text('45,000 so\'m', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14)),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Sotuv #${sale.id.substring(0, 5)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(DateFormat('HH:mm').format(sale.date), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                    Text('${fmt.format(sale.totalAmount)} so\'m',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14)),
+                  ],
+                ),
               ),
-            ),
         ],
       ),
     );
   }
 
   Widget _buildTopProducts(AppState state) {
+    final topProducts = state.topSellingProducts;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Top Mahsulotlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Top Mahsulotlar (Bugun)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
-          for (int i = 0; i < (state.products.length > 4 ? 4 : state.products.length); i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(state.products[i].name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text('${(80 - i * 10)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (80 - i * 15) / 100,
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    color: const Color(0xFF6366F1),
-                    minHeight: 6,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ],
+          if (topProducts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: Text('Bugun sotuv bo\'lmadi', style: TextStyle(color: Colors.grey))),
+            )
+          else
+            for (var entry in topProducts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        Text('${entry.value.toStringAsFixed(0)} ta', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: entry.value / (topProducts.first.value == 0 ? 1 : topProducts.first.value),
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      color: const Color(0xFF6366F1),
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ],
+                ),
               ),
-            ),
         ],
       ),
     );
