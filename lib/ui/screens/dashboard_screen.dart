@@ -99,8 +99,10 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, String trend) {
-    final isPositive = trend.startsWith('+');
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, String status) {
+    final isBaza = status == 'Baza';
+    final statusColor = isBaza ? Colors.blue : Colors.green;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -125,12 +127,12 @@ class DashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isPositive ? Colors.green.shade50 : Colors.red.shade50,
+                  color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  trend,
-                  style: TextStyle(color: isPositive ? Colors.green : Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+                  status,
+                  style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

@@ -239,7 +239,7 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
       context: context,
       builder: (context) => AlertDialog(
         title: Text(category == null ? 'Yangi kategoriya' : 'Kategoriyani tahrirlash'),
-        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Kategoriya nomi')),
+        content: TextField(controller: controller, decoration: InputDecoration(hintText: 'Kategoriya nomi')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
           ElevatedButton(
