@@ -59,23 +59,86 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('PIN kodni tiklash'),
-        content: TextField(
-          controller: passCtrl,
-          decoration: const InputDecoration(labelText: 'Xo\'jayin paroli'),
-          obscureText: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: passCtrl,
+              decoration: const InputDecoration(labelText: 'Xo\'jayin paroli'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Foydalanuvchilar soni: ${state.users.length}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor')),
           ElevatedButton(
             onPressed: () {
-              if (passCtrl.text == state.masterPassword || passCtrl.text == '7777') {
+              final enteredPass = passCtrl.text;
+              final masterPass = state.masterPassword;
+              // 7777 har doim ishlaydi, yoki to'g'ri master parol
+              final isValid = enteredPass == '7777' ||
+                  (masterPass != null && enteredPass == masterPass);
+              if (isValid) {
                 Navigator.pop(context);
-                _showUserResetList();
+                if (state.users.isEmpty) {
+                  // Foydalanuvchilar yo'q -> to'g'ridan admin yaratish
+                  _showEmergencyAdminDialog();
+                } else {
+                  _showUserResetList();
+                }
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Xo\'jayin paroli xato!')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xo\'jayin paroli xato!')),
+                );
               }
             },
             child: const Text('Tasdiqlash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmergencyAdminDialog() {
+    final state = context.read<AppState>();
+    final pinCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Admin yaratish'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Tizimda foydalanuvchi yo\'q. Yangi admin PIN yarating:', style: TextStyle(color: Colors.orange)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: pinCtrl,
+              decoration: const InputDecoration(labelText: 'Yangi 4 xonali PIN'),
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor')),
+          ElevatedButton(
+            onPressed: () async {
+              if (pinCtrl.text.length == 4) {
+                final newAdmin = User(id: 'admin', name: 'Admin', pin: pinCtrl.text, role: UserRole.admin);
+                await state.addUser(newAdmin);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Admin yaratildi! Endi login turing.')),
+                );
+              }
+            },
+            child: const Text('Saqlash'),
           ),
         ],
       ),
