@@ -12,6 +12,7 @@ import 'ui/screens/employee_screen.dart';
 import 'ui/screens/sales_history_screen.dart';
 import 'ui/screens/login_screen.dart';
 import 'ui/screens/trash_screen.dart';
+import 'ui/screens/activation_screen.dart';
 import 'models/models.dart';
 
 void main() {
@@ -65,6 +66,10 @@ class InitializationWrapper extends StatelessWidget {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: Color(0xFF6366F1))),
       );
+    }
+    
+    if (!state.isActivated) {
+      return const ActivationScreen();
     }
     
     if (state.isMaster == null) {

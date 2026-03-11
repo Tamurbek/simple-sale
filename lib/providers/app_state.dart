@@ -27,6 +27,7 @@ class AppState extends ChangeNotifier {
   String? masterAddress;
   String? deviceId;
   bool isInitialized = false;
+  bool isActivated = false;
 
   double get todaySalesTotal {
     final now = DateTime.now();
@@ -71,14 +72,37 @@ class AppState extends ChangeNotifier {
   List<User> get deletedUsers => users.where((u) => u.isDeleted).toList();
 
   Future<String?> get localIp async {
-    for (var interface in await NetworkInterface.list()) {
-      for (var addr in interface.addresses) {
-        if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
-          return addr.address;
+    try {
+      final interfaces = await NetworkInterface.list();
+      List<String> allIps = [];
+      
+      for (var interface in interfaces) {
+        // Skip common virtual/docker interfaces
+        if (interface.name.contains('utun') || 
+            interface.name.contains('docker') || 
+            interface.name.contains('vboxnet')) continue;
+            
+        for (var addr in interface.addresses) {
+          if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
+            allIps.add(addr.address);
+          }
         }
       }
+
+      if (allIps.isEmpty) return null;
+
+      // Prioritize common local network patterns
+      try {
+        return allIps.firstWhere(
+          (ip) => ip.startsWith('192.168.') || ip.startsWith('10.0.') || ip.startsWith('172.'),
+          orElse: () => allIps.first,
+        );
+      } catch (e) {
+        return allIps.first;
+      }
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 
   AppState() {
@@ -95,6 +119,7 @@ class AppState extends ChangeNotifier {
     masterAddress = ip;
     deviceId = prefs.getString('deviceId') ?? const Uuid().v4();
     await prefs.setString('deviceId', deviceId!);
+    isActivated = prefs.getBool('isActivated') ?? false;
     
     // Load data from DB
     await _loadFromDb();
@@ -747,6 +772,33 @@ class AppState extends ChangeNotifier {
       await DatabaseService.replaceDatabase(file);
       await loadSettings(); // Refresh everything
       notifyListeners();
+    }
+  }
+
+  // --- Activation System ---
+  String get activationRequestCode {
+    if (deviceId == null) return "Unknown";
+    // Generate a shorter, user-friendly request code from deviceId
+    return deviceId!.substring(0, 8).toUpperCase();
+  }
+
+  bool checkActivationCode(String code) {
+    if (deviceId == null) return false;
+    // Simple secret algorithm: 
+    // Take first 8 chars of deviceId, reverse them, and add a secret suffix
+    final secret = deviceId!.substring(0, 8).split('').reversed.join('');
+    final expected = "SS-$secret-OK".toUpperCase();
+    return code.toUpperCase() == expected;
+  }
+
+  Future<void> activate(String code) async {
+    if (checkActivationCode(code)) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isActivated', true);
+      isActivated = true;
+      notifyListeners();
+    } else {
+      throw Exception('Noto\'g\'ri aktivatsiya kodi!');
     }
   }
 }
