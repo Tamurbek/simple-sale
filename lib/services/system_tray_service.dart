@@ -34,7 +34,9 @@ class SystemTrayService with TrayListener, WindowListener {
   }
 
   Future<void> initTray() async {
-    await trayManager.setIcon('assets/icon.png');
+    const String iconPath = 'assets/icon.png';
+    await trayManager.setIcon(iconPath);
+    await windowManager.setIcon(iconPath); // Sets the window icon for taskbar
     
     List<MenuItem> items = [
       MenuItem(
