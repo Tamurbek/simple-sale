@@ -593,7 +593,7 @@ class _POSScreenState extends State<POSScreen> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.transparent,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(20),
                   ),
@@ -1141,13 +1141,13 @@ class _POSScreenState extends State<POSScreen> {
       );
     } else if (isBack) {
       bgColor = Theme.of(context).dividerColor;
-      textColor = Colors.black87;
-      labelWidget = Icon(Icons.backspace_outlined, size: 18);
+      textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
+      labelWidget = Icon(Icons.backspace_outlined, size: 18, color: textColor);
     } else if (isCaps) {
       bgColor = _isCaps
-          ? Theme.of(context).hintColor
+          ? Theme.of(context).colorScheme.primary.withOpacity(0.8)
           : Theme.of(context).dividerColor;
-      textColor = _isCaps ? Colors.white : Colors.black87;
+      textColor = _isCaps ? Colors.white : (Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87);
       labelWidget = Text(
         'ABC',
         style: TextStyle(
@@ -1157,30 +1157,32 @@ class _POSScreenState extends State<POSScreen> {
         ),
       );
     } else if (isSpace) {
-      bgColor = Colors.white;
-      textColor = Colors.black54;
-      labelWidget = Text('Bo\'shliq', style: TextStyle(fontSize: 14));
+      bgColor = Theme.of(context).cardColor;
+      textColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.black54;
+      labelWidget = Text('Bo\'shliq', style: TextStyle(fontSize: 14, color: textColor));
     } else {
-      bgColor = Colors.white;
-      textColor = Colors.black87;
+      bgColor = Theme.of(context).cardColor;
+      textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
       labelWidget = Text(
         _isCaps ? k.toUpperCase() : k.toLowerCase(),
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
       );
     }
 
-    return Container(
-      height: 52,
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      child: Material(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        elevation: (isEnter || isSpace) ? 2 : 1,
-        shadowColor: Colors.black.withOpacity(0.2),
-        child: InkWell(
-          onTap: () => _onKeyTap(k),
-          borderRadius: BorderRadius.circular(10),
-          child: Center(child: labelWidget),
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: SizedBox(
+        height: 52,
+        child: Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          elevation: (isEnter || isSpace) ? 2 : 1,
+          shadowColor: Colors.black.withOpacity(0.2),
+          child: InkWell(
+            onTap: () => _onKeyTap(k),
+            borderRadius: BorderRadius.circular(10),
+            child: Center(child: labelWidget),
+          ),
         ),
       ),
     );
