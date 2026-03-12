@@ -984,21 +984,24 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> clearAllData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    
-    // Close DB and delete file
-    final dbPath = await DatabaseService.getDatabasePath();
-    final file = File(dbPath);
-    
-    // Attempt to close DB if it exists (not strictly necessary with sqflite, but good practice)
-    // Actually our DatabaseService doesn't have a close method, so we just delete it.
-    
-    if (await file.exists()) {
-      await file.delete();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      
+      // Close DB properly before deleting (Critical for Windows)
+      await DatabaseService.closeDatabase();
+      
+      final dbPath = await DatabaseService.getDatabasePath();
+      final file = File(dbPath);
+      
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      debugPrint('Data clear error: $e');
     }
     
-    // Reset local state
+    // Reset local state regardless of file deletion success
     isMaster = null;
     isActivated = false;
     isBlocked = false;

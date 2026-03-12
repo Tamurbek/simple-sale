@@ -18,11 +18,15 @@ class DatabaseService {
     return join(supportDir.path, 'simple_sale.db');
   }
 
-  static Future<void> replaceDatabase(File newFile) async {
+  static Future<void> closeDatabase() async {
     if (_db != null && _db!.isOpen) {
       await _db!.close();
       _db = null;
     }
+  }
+
+  static Future<void> replaceDatabase(File newFile) async {
+    await closeDatabase();
     final path = await getDatabasePath();
     await newFile.copy(path);
   }
