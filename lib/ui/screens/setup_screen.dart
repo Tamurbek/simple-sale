@@ -192,12 +192,6 @@ class _SetupScreenState extends State<SetupScreen> {
       ),
     );
   }
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildChoiceCard({
     required String title,
