@@ -119,12 +119,29 @@ class SimpleSaleApp extends StatelessWidget {
   }
 }
 
-class InitializationWrapper extends StatelessWidget {
+class InitializationWrapper extends StatefulWidget {
   const InitializationWrapper({super.key});
+
+  @override
+  State<InitializationWrapper> createState() => _InitializationWrapperState();
+}
+
+class _InitializationWrapperState extends State<InitializationWrapper> {
+  User? _lastUser;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+
+    // If user was logged in and now is not, clear any open dialogs/screens
+    if (_lastUser != null && state.currentUser == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      });
+    }
+    _lastUser = state.currentUser;
 
     if (!state.isInitialized) {
       return const Scaffold(
