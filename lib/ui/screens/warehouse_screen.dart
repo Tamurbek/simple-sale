@@ -5,6 +5,10 @@ import 'package:uuid/uuid.dart';
 import 'dart:io';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
+import 'stock_entry_screen.dart';
+import 'return_screen.dart';
+import 'write_off_screen.dart';
+import 'inventory_screen.dart';
 
 class WarehouseScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -83,7 +87,9 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Theme.of(context).dividerColor),
+                                  border: Border.all(
+                                    color: Theme.of(context).dividerColor,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.03),
@@ -156,7 +162,6 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
         children: [
           Row(
             children: [
-
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -481,7 +486,9 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: isLow ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                      color: isLow
+                          ? Colors.red.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -577,6 +584,10 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
             'Kirimni bekor qilmoqchimisiz?',
             () => state.deleteStockEntry(entry.id),
           ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => StockEntryScreen(entry: entry)),
+          ),
         );
       },
     );
@@ -613,6 +624,10 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
             context,
             'Vazvratni bekor qilmoqchimisiz?',
             () => state.deleteReturn(ret.id),
+          ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ReturnScreen(saleReturn: ret)),
           ),
         );
       },
@@ -651,6 +666,10 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
             'Hisobdan chiqarishni bekor qilmoqchimisiz?',
             () => state.deleteWriteOff(wo.id),
           ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => WriteOffScreen(writeOff: wo)),
+          ),
         );
       },
     );
@@ -687,6 +706,15 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                 ),
               )
               .toList(),
+          onDelete: () => _confirmDelete(
+            context,
+            'Inventarizatsiyani bekor qilmoqchimisiz?',
+            () => state.deleteInventory(inv.id),
+          ),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => InventoryScreen(inventory: inv)),
+          ),
         );
       },
     );
@@ -699,6 +727,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
     Color color,
     List<Widget> items, {
     VoidCallback? onDelete,
+    VoidCallback? onEdit,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -729,6 +758,11 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
               '$count ta tur',
               style: TextStyle(fontWeight: FontWeight.bold, color: color),
             ),
+            if (onEdit != null)
+              IconButton(
+                icon: Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                onPressed: onEdit,
+              ),
             if (onDelete != null)
               IconButton(
                 icon: Icon(Icons.cancel_outlined, color: Colors.grey, size: 20),
@@ -781,25 +815,37 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
           'Kirim',
           Icons.add,
           Theme.of(context).colorScheme.primary,
-          () => _showStockEntryDialog(state),
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StockEntryScreen()),
+          ),
         ),
         _buildActionButton(
           'Vazvrat',
           Icons.settings_backup_restore_rounded,
           Colors.orange,
-          () => _showReturnDialog(state),
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ReturnScreen()),
+          ),
         ),
         _buildActionButton(
           'Chiqarish',
           Icons.remove_circle_outline,
           Colors.redAccent,
-          () => _showWriteOffDialog(state),
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const WriteOffScreen()),
+          ),
         ),
         _buildActionButton(
           'Inventar',
           Icons.fact_check_outlined,
           Colors.teal,
-          () => _showInventoryDialog(state),
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const InventoryScreen()),
+          ),
         ),
       ],
     );
@@ -820,624 +866,6 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  void _showReturnDialog(AppState state) {
-    final List<Map<String, dynamic>> items = [];
-    final saleIdCtrl = TextEditingController();
-    String? returnWarehouseId = selectedWarehouseId;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Mahsulot Vazvrati (Return)'),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: saleIdCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Sotuv ID (ixtiyoriy)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: returnWarehouseId,
-                    decoration: const InputDecoration(
-                      labelText: 'Qaysi omborga qaytadi?',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: state.warehouses
-                        .map(
-                          (w) => DropdownMenuItem(
-                            value: w.id,
-                            child: Text(w.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => returnWarehouseId = val),
-                  ),
-                  const Divider(height: 32),
-                  ...items.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final item = entry.value;
-                    return Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: item['productId'],
-                            items: state.activeProducts
-                                .map(
-                                  (p) => DropdownMenuItem(
-                                    value: p.id,
-                                    child: Text(p.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              final p = state.activeProducts.firstWhere(
-                                (p) => p.id == val,
-                              );
-                              setDialogState(() {
-                                items[idx]['productId'] = val;
-                                items[idx]['productName'] = p.name;
-                                items[idx]['price'] = p.price;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: TextField(
-                            decoration: const InputDecoration(hintText: 'Soni'),
-                            keyboardType: TextInputType.number,
-                            onChanged: (v) => items[idx]['quantity'] =
-                                double.tryParse(v) ?? 0,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () =>
-                              setDialogState(() => items.removeAt(idx)),
-                        ),
-                      ],
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: () => setDialogState(
-                      () => items.add({
-                        'productId': null,
-                        'productName': '',
-                        'quantity': 0.0,
-                        'price': 0.0,
-                      }),
-                    ),
-                    icon: Icon(Icons.add),
-                    label: Text('Qo\'shish'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Yopish'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                if (items.isNotEmpty && returnWarehouseId != null) {
-                  final ret = SaleReturn(
-                    id: Uuid().v4(),
-                    saleId: saleIdCtrl.text.isEmpty
-                        ? 'HAND_RETURN'
-                        : saleIdCtrl.text,
-                    date: DateTime.now(),
-                    warehouseId: returnWarehouseId!,
-                    total: items.fold(
-                      0,
-                      (sum, i) => sum + (i['price'] * (i['quantity'] ?? 0)),
-                    ),
-                    items: items
-                        .where((i) => i['productId'] != null)
-                        .map(
-                          (i) => SaleReturnItem(
-                            productId: i['productId'],
-                            productName: i['productName'],
-                            quantity: i['quantity'],
-                            price: i['price'],
-                          ),
-                        )
-                        .toList(),
-                  );
-                  state.addReturn(ret);
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Vazvratni Saqlash'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showWriteOffDialog(AppState state) {
-    final List<Map<String, dynamic>> items = [];
-    final descCtrl = TextEditingController();
-    String? woWarehouseId = selectedWarehouseId;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Hisobdan Chiqarish (Spisaniye)'),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: woWarehouseId,
-                    decoration: const InputDecoration(
-                      labelText: 'Qaysi ombordan?',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: state.warehouses
-                        .map(
-                          (w) => DropdownMenuItem(
-                            value: w.id,
-                            child: Text(w.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => woWarehouseId = val),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: descCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Sababi',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const Divider(height: 32),
-                  ...items.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final item = entry.value;
-                    return Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: item['productId'],
-                            items: state.activeProducts
-                                .map(
-                                  (p) => DropdownMenuItem(
-                                    value: p.id,
-                                    child: Text(p.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              final p = state.activeProducts.firstWhere(
-                                (p) => p.id == val,
-                              );
-                              setDialogState(() {
-                                items[idx]['productId'] = val;
-                                items[idx]['productName'] = p.name;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: TextField(
-                            decoration: const InputDecoration(hintText: 'Soni'),
-                            keyboardType: TextInputType.number,
-                            onChanged: (v) => items[idx]['quantity'] =
-                                double.tryParse(v) ?? 0,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () =>
-                              setDialogState(() => items.removeAt(idx)),
-                        ),
-                      ],
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: () => setDialogState(
-                      () => items.add({
-                        'productId': null,
-                        'productName': '',
-                        'quantity': 0.0,
-                      }),
-                    ),
-                    icon: Icon(Icons.add),
-                    label: Text('Qo\'shish'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Yopish'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                if (items.isNotEmpty && woWarehouseId != null) {
-                  final wo = WriteOff(
-                    id: Uuid().v4(),
-                    date: DateTime.now(),
-                    warehouseId: woWarehouseId!,
-                    description: descCtrl.text,
-                    items: items
-                        .where((i) => i['productId'] != null)
-                        .map(
-                          (i) => WriteOffItem(
-                            productId: i['productId'],
-                            productName: i['productName'],
-                            quantity: i['quantity'],
-                          ),
-                        )
-                        .toList(),
-                  );
-                  state.addWriteOff(wo);
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Saqlash'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showInventoryDialog(AppState state) {
-    final List<Map<String, dynamic>> items = [];
-    String? invWarehouseId = selectedWarehouseId;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Inventarizatsiya'),
-          content: SizedBox(
-            width: 600,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: invWarehouseId,
-                    decoration: const InputDecoration(
-                      labelText: 'Ombor',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: state.warehouses
-                        .map(
-                          (w) => DropdownMenuItem(
-                            value: w.id,
-                            child: Text(w.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => invWarehouseId = val),
-                  ),
-                  const Divider(height: 32),
-                  ...items.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final item = entry.value;
-                    return Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: item['productId'],
-                            items: state.activeProducts
-                                .map(
-                                  (p) => DropdownMenuItem(
-                                    value: p.id,
-                                    child: Text(p.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              final p = state.activeProducts.firstWhere(
-                                (p) => p.id == val,
-                              );
-                              setDialogState(() {
-                                items[idx]['productId'] = val;
-                                items[idx]['productName'] = p.name;
-                                items[idx]['expected'] =
-                                    p.stocks[invWarehouseId] ?? 0.0;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(child: Text('E: ${item['expected'] ?? 0}')),
-                        SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'Haqiqiy',
-                            ),
-                            keyboardType: TextInputType.number,
-                            onChanged: (v) =>
-                                items[idx]['actual'] = double.tryParse(v) ?? 0,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () =>
-                              setDialogState(() => items.removeAt(idx)),
-                        ),
-                      ],
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: () => setDialogState(
-                      () => items.add({
-                        'productId': null,
-                        'productName': '',
-                        'expected': 0.0,
-                        'actual': 0.0,
-                      }),
-                    ),
-                    icon: Icon(Icons.add),
-                    label: Text('Qo\'shish'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Yopish'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                if (items.isNotEmpty && invWarehouseId != null) {
-                  final inv = InventoryEntry(
-                    id: Uuid().v4(),
-                    date: DateTime.now(),
-                    warehouseId: invWarehouseId!,
-                    items: items
-                        .where((i) => i['productId'] != null)
-                        .map(
-                          (i) => InventoryItem(
-                            productId: i['productId'],
-                            productName: i['productName'],
-                            expectedQuantity: i['expected'],
-                            actualQuantity: i['actual'],
-                          ),
-                        )
-                        .toList(),
-                  );
-                  state.addInventory(inv);
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Saqlash'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showStockEntryDialog(AppState state) {
-    if (state.warehouses.isEmpty || state.products.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Avval ombor va mahsulotlarni kiriting!')),
-      );
-      return;
-    }
-
-    String? entryWarehouseId = state.warehouses.first.id;
-    final List<Map<String, dynamic>> items = [];
-    final descriptionCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Yangi Kirim Hujjati',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: entryWarehouseId,
-                    decoration: const InputDecoration(
-                      labelText: 'Qaysi omborga?',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: state.warehouses
-                        .map(
-                          (w) => DropdownMenuItem(
-                            value: w.id,
-                            child: Text(w.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => entryWarehouseId = val),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: descriptionCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Tavsif (izoh)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  const Divider(),
-                  Text(
-                    'Mahsulotlar',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  ...items.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final item = entry.value;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              value: item['productId'],
-                              hint: Text('Tanlang'),
-                              items: state.activeProducts
-                                  .map(
-                                    (p) => DropdownMenuItem(
-                                      value: p.id,
-                                      child: Text(p.name),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (val) {
-                                final p = state.activeProducts.firstWhere(
-                                  (p) => p.id == val,
-                                );
-                                setDialogState(() {
-                                  items[idx]['productId'] = val;
-                                  items[idx]['productName'] = p.name;
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            flex: 1,
-                            child: TextField(
-                              decoration: const InputDecoration(
-                                hintText: 'Soni',
-                              ),
-                              keyboardType: TextInputType.number,
-                              onChanged: (val) => items[idx]['quantity'] =
-                                  double.tryParse(val) ?? 0,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.remove_circle_outline,
-                              color: Colors.red,
-                            ),
-                            onPressed: () =>
-                                setDialogState(() => items.removeAt(idx)),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  SizedBox(height: 16),
-                  TextButton.icon(
-                    onPressed: () => setDialogState(
-                      () => items.add({
-                        'productId': null,
-                        'productName': '',
-                        'quantity': 0.0,
-                      }),
-                    ),
-                    icon: Icon(Icons.add),
-                    label: Text('Mahsulot qo\'shish'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Bekor qilish'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                if (entryWarehouseId != null && items.isNotEmpty) {
-                  final finalItems = items
-                      .where((i) => i['productId'] != null && i['quantity'] > 0)
-                      .map(
-                        (i) => StockEntryItem(
-                          productId: i['productId'],
-                          productName: i['productName'],
-                          quantity: i['quantity'],
-                        ),
-                      )
-                      .toList();
-
-                  if (finalItems.isNotEmpty) {
-                    final entry = StockEntry(
-                      id: Uuid().v4(),
-                      warehouseId: entryWarehouseId!,
-                      date: DateTime.now(),
-                      description: descriptionCtrl.text,
-                      items: finalItems,
-                    );
-                    state.addStockEntry(entry);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Kirim hujjati saqlandi!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: Text('Saqlash'),
-            ),
-          ],
-        ),
       ),
     );
   }

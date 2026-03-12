@@ -1407,6 +1407,188 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteInventory(String id) async {
+    final index = inventories.indexWhere((i) => i.id == id);
+    if (index >= 0) {
+      final inv = inventories[index];
+      // Revert stock back to expected quantity before the inventory change
+      for (var item in inv.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0) {
+          final p = products[pIdx];
+          if (p.trackStock) {
+            p.stocks[inv.warehouseId] = item.expectedQuantity;
+            await DatabaseService.updateStock(
+              p.id,
+              inv.warehouseId,
+              item.expectedQuantity,
+            );
+          }
+        }
+      }
+      await DatabaseService.deleteInventory(id);
+      await _sendUpdate('inventory_delete', {'id': id});
+      inventories.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateStockEntry(StockEntry newEntry) async {
+    final index = stockEntries.indexWhere((e) => e.id == newEntry.id);
+    if (index >= 0) {
+      final oldEntry = stockEntries[index];
+      // 1. Revert Old
+      for (var item in oldEntry.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[oldEntry.warehouseId] =
+              (p.stocks[oldEntry.warehouseId] ?? 0) - item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            oldEntry.warehouseId,
+            p.stocks[oldEntry.warehouseId]!,
+          );
+        }
+      }
+      // 2. Apply New
+      for (var item in newEntry.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[newEntry.warehouseId] =
+              (p.stocks[newEntry.warehouseId] ?? 0) + item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            newEntry.warehouseId,
+            p.stocks[newEntry.warehouseId]!,
+          );
+        }
+      }
+      await DatabaseService.deleteStockEntry(newEntry.id);
+      await DatabaseService.saveStockEntry(newEntry);
+      stockEntries[index] = newEntry;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateReturn(SaleReturn newReturn) async {
+    final index = returns.indexWhere((r) => r.id == newReturn.id);
+    if (index >= 0) {
+      final oldReturn = returns[index];
+      // 1. Revert Old
+      for (var item in oldReturn.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[oldReturn.warehouseId] =
+              (p.stocks[oldReturn.warehouseId] ?? 0) - item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            oldReturn.warehouseId,
+            p.stocks[oldReturn.warehouseId]!,
+          );
+        }
+      }
+      // 2. Apply New
+      for (var item in newReturn.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[newReturn.warehouseId] =
+              (p.stocks[newReturn.warehouseId] ?? 0) + item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            newReturn.warehouseId,
+            p.stocks[newReturn.warehouseId]!,
+          );
+        }
+      }
+      await DatabaseService.deleteReturn(newReturn.id);
+      await DatabaseService.saveReturn(newReturn);
+      returns[index] = newReturn;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateWriteOff(WriteOff newWo) async {
+    final index = writeOffs.indexWhere((w) => w.id == newWo.id);
+    if (index >= 0) {
+      final oldWo = writeOffs[index];
+      // 1. Revert Old (it decreased stock, so we increase)
+      for (var item in oldWo.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[oldWo.warehouseId] =
+              (p.stocks[oldWo.warehouseId] ?? 0) + item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            oldWo.warehouseId,
+            p.stocks[oldWo.warehouseId]!,
+          );
+        }
+      }
+      // 2. Apply New (it decreases stock)
+      for (var item in newWo.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[newWo.warehouseId] =
+              (p.stocks[newWo.warehouseId] ?? 0) - item.quantity;
+          await DatabaseService.updateStock(
+            p.id,
+            newWo.warehouseId,
+            p.stocks[newWo.warehouseId]!,
+          );
+        }
+      }
+      await DatabaseService.deleteWriteOff(newWo.id);
+      await DatabaseService.saveWriteOff(newWo);
+      writeOffs[index] = newWo;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateInventory(InventoryEntry newInv) async {
+    final index = inventories.indexWhere((i) => i.id == newInv.id);
+    if (index >= 0) {
+      final oldInv = inventories[index];
+      // 1. Revert Old (restore to its expectedQuantity)
+      for (var item in oldInv.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          p.stocks[oldInv.warehouseId] = item.expectedQuantity;
+          await DatabaseService.updateStock(
+            p.id,
+            oldInv.warehouseId,
+            item.expectedQuantity,
+          );
+        }
+      }
+      // 2. Apply New (set to new actualQuantity)
+      for (var item in newInv.items) {
+        final pIdx = products.indexWhere((p) => p.id == item.productId);
+        if (pIdx >= 0 && products[pIdx].trackStock) {
+          final p = products[pIdx];
+          // Notice: expectedQuantity might have changed if stock changed meantime,
+          // but we just trust newInv.items which has the fresh recalculation.
+          p.stocks[newInv.warehouseId] = item.actualQuantity;
+          await DatabaseService.updateStock(
+            p.id,
+            newInv.warehouseId,
+            item.actualQuantity,
+          );
+        }
+      }
+      await DatabaseService.deleteInventory(newInv.id);
+      await DatabaseService.saveInventory(newInv);
+      inventories[index] = newInv;
+      notifyListeners();
+    }
+  }
+
   // --- Activation System ---
   String get activationRequestCode {
     if (deviceId == null) return "Unknown";
