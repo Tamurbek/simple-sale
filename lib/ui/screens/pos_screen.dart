@@ -180,21 +180,12 @@ class _POSScreenState extends State<POSScreen> {
     
     try {
       final state = context.read<AppState>();
-      final product = state.activeProducts.firstWhere(
-        (p) => p.barcode == barcode,
+      state.addToCartByBarcode(barcode);
+      
+      final product = state.products.firstWhere(
+        (p) => p.barcode == barcode || p.additionalBarcodes.contains(barcode),
         orElse: () => throw Exception('Mahsulot topilmadi'),
       );
-      
-      try {
-        state.addToCart(product);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
-          );
-        }
-        return;
-      }
       
       // Clear fields if we successfully added
       if (_searchController.text == barcode) {
@@ -305,7 +296,11 @@ class _POSScreenState extends State<POSScreen> {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Container(
               height: 55,
@@ -491,7 +486,7 @@ class _POSScreenState extends State<POSScreen> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: Colors.white,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   image: product.imagePath != null
                       ? DecorationImage(image: FileImage(File(product.imagePath!)), fit: BoxFit.cover)
@@ -499,12 +494,19 @@ class _POSScreenState extends State<POSScreen> {
                 ),
                 child: product.imagePath == null
                     ? Center(
-                        child: Icon(
-                          state.categories.any((c) => c.id == product.categoryId && c.name == 'Ichimliklar')
-                              ? Icons.local_drink
-                              : Icons.restaurant,
-                          size: 48,
-                          color: Colors.grey.shade300,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366F1).withOpacity(0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            state.categories.any((c) => c.id == product.categoryId && c.name == 'Ichimliklar')
+                                ? Icons.local_drink_rounded
+                                : Icons.restaurant_rounded,
+                            size: 40,
+                            color: const Color(0xFF6366F1).withOpacity(0.5),
+                          ),
                         ),
                       )
                     : null,
@@ -596,16 +598,17 @@ class _POSScreenState extends State<POSScreen> {
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   color: Colors.white,
+                  border: Border.all(color: Colors.grey.shade100),
                   image: product?.imagePath != null ? DecorationImage(image: FileImage(File(product!.imagePath!)), fit: BoxFit.cover) : null,
                 ),
-                child: product?.imagePath == null ? const Icon(Icons.inventory_2_outlined, size: 22, color: Colors.grey) : null,
+                child: product?.imagePath == null ? const Icon(Icons.inventory_2_outlined, size: 20, color: Color(0xFF6366F1)) : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

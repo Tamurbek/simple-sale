@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:path/path.dart' as path;
 
 class SystemTrayService with TrayListener, WindowListener {
   static final SystemTrayService _instance = SystemTrayService._internal();
@@ -36,16 +37,25 @@ class SystemTrayService with TrayListener, WindowListener {
   Future<void> initTray() async {
     String iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/icon.png';
     
-    // On Windows, tray_manager works better if we provide the path carefully
     if (Platform.isWindows) {
-      // In release mode, assets are in data/flutter_assets
-      // But tray_manager usually handles assets/ correctly if bundled.
-      // Let's ensure we are using the correct method.
-      await trayManager.setIcon(iconPath);
+      // In release mode, assets are in data/flutter_assets/assets/
+      // In debug mode, we can use the relative 'assets/' path
+      final exePath = Platform.resolvedExecutable;
+      final exeDir = path.dirname(exePath);
+      final releaseIconPath = path.join(exeDir, 'data', 'flutter_assets', 'assets', 'app_icon.ico');
+      
+      if (await File(releaseIconPath).exists()) {
+        iconPath = releaseIconPath;
+      }
+      
       await windowManager.setIcon(iconPath);
+      await trayManager.setIcon(iconPath);
     } else {
       await trayManager.setIcon(iconPath);
     }
+    
+    // Explicitly set tooltip
+    await trayManager.setToolTip('Simple Sale');
     
     List<MenuItem> items = [
       MenuItem(

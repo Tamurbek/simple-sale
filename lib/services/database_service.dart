@@ -55,7 +55,7 @@ class DatabaseService {
 
     return await openDatabase(
       newPath,
-      version: 8,
+      version: 9,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE categories (
@@ -87,7 +87,15 @@ class DatabaseService {
             barcode TEXT NOT NULL,
             imagePath TEXT,
             isDeleted INTEGER NOT NULL DEFAULT 0,
-            unit TEXT NOT NULL DEFAULT 'dona'
+            unit TEXT NOT NULL DEFAULT 'dona',
+            trackStock INTEGER NOT NULL DEFAULT 1
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE product_additional_barcodes (
+            productId TEXT NOT NULL,
+            barcode TEXT NOT NULL,
+            PRIMARY KEY (productId, barcode)
           )
         ''');
         await db.execute('''
@@ -114,6 +122,57 @@ class DatabaseService {
             productName TEXT NOT NULL,
             quantity REAL NOT NULL,
             price REAL NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE returns (
+            id TEXT PRIMARY KEY,
+            saleId TEXT NOT NULL,
+            date TEXT NOT NULL,
+            total REAL NOT NULL,
+            warehouseId TEXT NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE return_items (
+            returnId TEXT NOT NULL,
+            productId TEXT NOT NULL,
+            productName TEXT NOT NULL,
+            quantity REAL NOT NULL,
+            price REAL NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE write_offs (
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            warehouseId TEXT NOT NULL,
+            description TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE write_off_items (
+            writeOffId TEXT NOT NULL,
+            productId TEXT NOT NULL,
+            productName TEXT NOT NULL,
+            quantity REAL NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE inventories (
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            warehouseId TEXT NOT NULL,
+            description TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE inventory_items (
+            inventoryId TEXT NOT NULL,
+            productId TEXT NOT NULL,
+            productName TEXT NOT NULL,
+            expectedQuantity REAL NOT NULL,
+            actualQuantity REAL NOT NULL
           )
         ''');
         await db.execute('''
@@ -196,6 +255,67 @@ class DatabaseService {
         if (oldVersion < 8) {
           await db.execute('ALTER TABLE registers ADD COLUMN activeDeviceId TEXT');
         }
+        if (oldVersion < 9) {
+          await db.execute('ALTER TABLE products ADD COLUMN trackStock INTEGER NOT NULL DEFAULT 1');
+          await db.execute('''
+            CREATE TABLE product_additional_barcodes (
+              productId TEXT NOT NULL,
+              barcode TEXT NOT NULL,
+              PRIMARY KEY (productId, barcode)
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE returns (
+              id TEXT PRIMARY KEY,
+              saleId TEXT NOT NULL,
+              date TEXT NOT NULL,
+              total REAL NOT NULL,
+              warehouseId TEXT NOT NULL
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE return_items (
+              returnId TEXT NOT NULL,
+              productId TEXT NOT NULL,
+              productName TEXT NOT NULL,
+              quantity REAL NOT NULL,
+              price REAL NOT NULL
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE write_offs (
+              id TEXT PRIMARY KEY,
+              date TEXT NOT NULL,
+              warehouseId TEXT NOT NULL,
+              description TEXT
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE write_off_items (
+              writeOffId TEXT NOT NULL,
+              productId TEXT NOT NULL,
+              productName TEXT NOT NULL,
+              quantity REAL NOT NULL
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE inventories (
+              id TEXT PRIMARY KEY,
+              date TEXT NOT NULL,
+              warehouseId TEXT NOT NULL,
+              description TEXT
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE inventory_items (
+              inventoryId TEXT NOT NULL,
+              productId TEXT NOT NULL,
+              productName TEXT NOT NULL,
+              expectedQuantity REAL NOT NULL,
+              actualQuantity REAL NOT NULL
+            )
+          ''');
+        }
       },
     );
   }
@@ -277,7 +397,19 @@ class DatabaseService {
       'imagePath': product.imagePath,
       'isDeleted': product.isDeleted ? 1 : 0,
       'unit': product.unit,
+      'trackStock': product.trackStock ? 1 : 0,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // Save additional barcodes
+    await db.delete('product_additional_barcodes', where: 'productId = ?', whereArgs: [product.id]);
+    for (var b in product.additionalBarcodes) {
+      if (b.isNotEmpty) {
+        await db.insert('product_additional_barcodes', {
+          'productId': product.id,
+          'barcode': b,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    }
 
     // Save stocks separately
     for (var entry in product.stocks.entries) {
@@ -308,6 +440,10 @@ class DatabaseService {
         imagePath: pMap['imagePath']?.toString(),
         isDeleted: pMap['isDeleted'] == 1,
         unit: pMap['unit']?.toString() ?? 'dona',
+        trackStock: pMap['trackStock'] == 1,
+        additionalBarcodes: (await db.query('product_additional_barcodes', where: 'productId = ?', whereArgs: [pMap['id']]))
+            .map((b) => b['barcode'].toString())
+            .toList(),
       ));
     }
     return products;
@@ -368,6 +504,7 @@ class DatabaseService {
           'imagePath': p.imagePath,
           'isDeleted': p.isDeleted ? 1 : 0,
           'unit': p.unit,
+          'trackStock': p.trackStock ? 1 : 0,
         });
         for (var entry in p.stocks.entries) {
           await txn.insert('stocks', {
@@ -499,5 +636,164 @@ class DatabaseService {
   static Future<void> deleteUser(String id) async {
     final db = await database;
     await db.delete('users', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Returns ---
+  static Future<void> saveReturn(SaleReturn ret) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.insert('returns', {
+        'id': ret.id,
+        'saleId': ret.saleId,
+        'date': ret.date.toIso8601String(),
+        'total': ret.total,
+        'warehouseId': ret.warehouseId,
+      });
+      for (var item in ret.items) {
+        await txn.insert('return_items', {
+          'returnId': ret.id,
+          'productId': item.productId,
+          'productName': item.productName,
+          'quantity': item.quantity,
+          'price': item.price,
+        });
+      }
+    });
+  }
+
+  static Future<List<SaleReturn>> getReturns() async {
+    final db = await database;
+    final res = await db.query('returns', orderBy: 'date DESC');
+    final List<SaleReturn> returns = [];
+    for (var rMap in res) {
+      final itemsRes = await db.query('return_items', where: 'returnId = ?', whereArgs: [rMap['id']]);
+      final items = itemsRes.map((i) => SaleReturnItem.fromJson({
+        'productId': i['productId'],
+        'productName': i['productName'],
+        'quantity': i['quantity'],
+        'price': i['price'],
+      })).toList();
+      returns.add(SaleReturn(
+        id: rMap['id'].toString(),
+        saleId: rMap['saleId'].toString(),
+        date: DateTime.parse(rMap['date'].toString()),
+        total: (rMap['total'] as num).toDouble(),
+        warehouseId: rMap['warehouseId'].toString(),
+        items: items,
+      ));
+    }
+    return returns;
+  }
+
+  // --- Write Offs ---
+  static Future<void> saveWriteOff(WriteOff wo) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.insert('write_offs', {
+        'id': wo.id,
+        'date': wo.date.toIso8601String(),
+        'warehouseId': wo.warehouseId,
+        'description': wo.description,
+      });
+      for (var item in wo.items) {
+        await txn.insert('write_off_items', {
+          'writeOffId': wo.id,
+          'productId': item.productId,
+          'productName': item.productName,
+          'quantity': item.quantity,
+        });
+      }
+    });
+  }
+
+  static Future<List<WriteOff>> getWriteOffs() async {
+    final db = await database;
+    final res = await db.query('write_offs', orderBy: 'date DESC');
+    final List<WriteOff> results = [];
+    for (var map in res) {
+      final itemsRes = await db.query('write_off_items', where: 'writeOffId = ?', whereArgs: [map['id']]);
+      final items = itemsRes.map((i) => WriteOffItem.fromJson({
+        'productId': i['productId'],
+        'productName': i['productName'],
+        'quantity': i['quantity'],
+      })).toList();
+      results.add(WriteOff(
+        id: map['id'].toString(),
+        date: DateTime.parse(map['date'].toString()),
+        warehouseId: map['warehouseId'].toString(),
+        description: map['description']?.toString() ?? '',
+        items: items,
+      ));
+    }
+    return results;
+  }
+
+  // --- Inventories ---
+  static Future<void> saveInventory(InventoryEntry inv) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.insert('inventories', {
+        'id': inv.id,
+        'date': inv.date.toIso8601String(),
+        'warehouseId': inv.warehouseId,
+        'description': inv.description,
+      });
+      for (var item in inv.items) {
+        await txn.insert('inventory_items', {
+          'inventoryId': inv.id,
+          'productId': item.productId,
+          'productName': item.productName,
+          'expectedQuantity': item.expectedQuantity,
+          'actualQuantity': item.actualQuantity,
+        });
+      }
+    });
+  }
+
+  static Future<List<InventoryEntry>> getInventories() async {
+    final db = await database;
+    final res = await db.query('inventories', orderBy: 'date DESC');
+    final List<InventoryEntry> results = [];
+    for (var map in res) {
+      final itemsRes = await db.query('inventory_items', where: 'inventoryId = ?', whereArgs: [map['id']]);
+      final items = itemsRes.map((i) => InventoryItem.fromJson({
+        'productId': i['productId'],
+        'productName': i['productName'],
+        'expectedQuantity': i['expectedQuantity'],
+        'actualQuantity': i['actualQuantity'],
+      })).toList();
+      results.add(InventoryEntry(
+        id: map['id'].toString(),
+        date: DateTime.parse(map['date'].toString()),
+        warehouseId: map['warehouseId'].toString(),
+        description: map['description']?.toString() ?? '',
+        items: items,
+      ));
+    }
+    return results;
+  }
+
+  static Future<void> deleteReturn(String id) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('returns', where: 'id = ?', whereArgs: [id]);
+      await txn.delete('return_items', where: 'returnId = ?', whereArgs: [id]);
+    });
+  }
+
+  static Future<void> deleteWriteOff(String id) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('write_offs', where: 'id = ?', whereArgs: [id]);
+      await txn.delete('write_off_items', where: 'writeOffId = ?', whereArgs: [id]);
+    });
+  }
+
+  static Future<void> deleteStockEntry(String id) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('stock_entries', where: 'id = ?', whereArgs: [id]);
+      await txn.delete('stock_entry_items', where: 'entryId = ?', whereArgs: [id]);
+    });
   }
 }

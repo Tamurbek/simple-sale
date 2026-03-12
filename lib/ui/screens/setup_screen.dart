@@ -44,13 +44,9 @@ class _SetupScreenState extends State<SetupScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.settings_suggest_rounded, color: Color(0xFF6366F1), size: 40),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset('assets/icon.png', width: 80, height: 80, fit: BoxFit.cover),
               ),
               const SizedBox(height: 24),
               const Text(

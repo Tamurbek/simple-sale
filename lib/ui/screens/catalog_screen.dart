@@ -65,6 +65,11 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
       color: Colors.white,
       child: Row(
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 16),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

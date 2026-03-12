@@ -54,11 +54,20 @@ class _TrashScreenState extends State<TrashScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text('Savat (O\'chirilganlar)', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-              Text('O\'chirilgan ma\'lumotlarni qayta tiklash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+              ),
+              const SizedBox(width: 16),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Savat (O\'chirilganlar)', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                  Text('O\'chirilgan ma\'lumotlarni qayta tiklash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                ],
+              ),
             ],
           ),
           if (widget.onMenuPressed != null)

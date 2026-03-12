@@ -12,7 +12,17 @@ class TerminalManagementScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kassa Terminallari', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset('assets/icon.png', width: 28, height: 28, fit: BoxFit.cover),
+            ),
+            const SizedBox(width: 12),
+            const Text('Kassa Terminallari', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,

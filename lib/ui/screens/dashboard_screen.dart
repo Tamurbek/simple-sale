@@ -56,20 +56,27 @@ class DashboardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Dashboard',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
-                ),
-                Text(
-                  'Savdo va ko\'rsatkichlar tahlili',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+              ),
+              const SizedBox(width: 16),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Dashboard',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                  ),
+                  Text(
+                    'Savdo va ko\'rsatkichlar tahlili',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ],
           ),
           if (width > 600)
             Chip(

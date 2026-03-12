@@ -101,12 +101,19 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Sotuvlar Tarixi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-                  Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-                ],
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sotuvlar Tarixi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                    Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  ],
+                ),
               ),
               if (widget.onMenuPressed != null)
                 IconButton(
@@ -273,8 +280,64 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF6366F1))),
                   ],
                 ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => _confirmReturn(context, state, sale),
+                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
+                        label: const Text('Vazvrat qilish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmReturn(BuildContext context, AppState state, Sale sale) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Vazvratni tasdiqlang'),
+        content: Text('Sotuv #${sale.id.substring(0, 8).toUpperCase()} uchun barcha mahsulotlarni omborga qaytarmoqchimisiz?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            onPressed: () async {
+              final ret = SaleReturn(
+                id: const Uuid().v4(),
+                saleId: sale.id,
+                date: DateTime.now(),
+                total: sale.total,
+                warehouseId: sale.warehouseId,
+                items: sale.items.map((i) => SaleReturnItem(
+                  productId: i.productId,
+                  productName: i.productName,
+                  quantity: i.quantity,
+                  price: i.price,
+                )).toList(),
+              );
+              await state.addReturn(ret);
+              if (mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vazvrat muvaffaqiyatli amalga oshirildi')));
+              }
+            },
+            child: const Text('Muvaffaqiyatli qaytarish'),
           ),
         ],
       ),

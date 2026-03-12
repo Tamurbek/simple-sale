@@ -231,7 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.lock_person_rounded, size: 64, color: Colors.white),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset('assets/icon.png', width: 100, height: 100, fit: BoxFit.cover),
+                      ),
                       const SizedBox(height: 24),
                       const Text(
                         'Tizimga Kirish',

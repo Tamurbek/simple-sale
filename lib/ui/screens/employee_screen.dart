@@ -39,11 +39,20 @@ class EmployeeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text('Hodimlar', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-              Text('Tizim foydalanuvchilarini boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+              ),
+              const SizedBox(width: 16),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hodimlar', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                  Text('Tizim foydalanuvchilarini boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                ],
+              ),
             ],
           ),
           Row(

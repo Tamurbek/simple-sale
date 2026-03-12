@@ -23,6 +23,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _barcodeController;
   String? _selectedCategoryId;
   String? _imagePath;
+  bool _trackStock = true;
+  List<TextEditingController> _additionalBarcodeControllers = [];
 
   @override
   void initState() {
@@ -32,6 +34,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _barcodeController = TextEditingController(text: widget.product?.barcode ?? '');
     _selectedCategoryId = widget.product?.categoryId;
     _imagePath = widget.product?.imagePath;
+    _trackStock = widget.product?.trackStock ?? true;
+    _additionalBarcodeControllers = (widget.product?.additionalBarcodes ?? [])
+        .map((b) => TextEditingController(text: b))
+        .toList();
   }
 
   @override
@@ -39,6 +45,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _barcodeController.dispose();
+    for (var c in _additionalBarcodeControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -78,6 +87,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final name = _nameController.text;
       final price = double.tryParse(_priceController.text) ?? 0.0;
       final barcode = _barcodeController.text;
+      final additionalBarcodes = _additionalBarcodeControllers
+          .map((c) => c.text)
+          .where((t) => t.isNotEmpty)
+          .toList();
 
       if (widget.product == null) {
         final product = Product.create(
@@ -86,7 +99,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           _selectedCategoryId!,
           barcode,
           imagePath: _imagePath,
-        );
+          trackStock: _trackStock,
+        ).copyWith(additionalBarcodes: additionalBarcodes);
         await state.addProduct(product);
       } else {
         final updatedProduct = widget.product!.copyWith(
@@ -94,7 +108,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           price: price,
           categoryId: _selectedCategoryId,
           barcode: barcode,
+          additionalBarcodes: additionalBarcodes,
           imagePath: _imagePath,
+          trackStock: _trackStock,
         );
         await state.updateProduct(updatedProduct);
       }
@@ -110,7 +126,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        title: Text(widget.product == null ? 'Yangi Mahsulot' : 'Tahrirlash'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset('assets/icon.png', width: 30, height: 30, fit: BoxFit.cover),
+            ),
+            const SizedBox(width: 12),
+            Text(widget.product == null ? 'Yangi Mahsulot' : 'Tahrirlash'),
+          ],
+        ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1E293B),
@@ -133,9 +159,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 children: [
                   Expanded(child: _buildTextField('Narxi (so\'m)', _priceController, Icons.payments_outlined, isNumber: true)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildTextField('Shtrix-kod', _barcodeController, Icons.qr_code_scanner_outlined)),
+                  Expanded(child: _buildTextField('Asosiy Shtrix-kod', _barcodeController, Icons.qr_code_scanner_outlined)),
                 ],
               ),
+              const SizedBox(height: 20),
+              _buildAdditionalBarcodes(),
+              const SizedBox(height: 20),
+              _buildTrackStockToggle(),
               const SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
@@ -254,6 +284,71 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAdditionalBarcodes() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Qo\'shimcha Shtrix-kodlar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF64748B))),
+            TextButton.icon(
+              onPressed: () => setState(() => _additionalBarcodeControllers.add(TextEditingController())),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Qo\'shish', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ..._additionalBarcodeControllers.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final controller = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade100),
+              ),
+              child: TextFormField(
+                controller: controller,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF94A3B8), size: 20),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
+                    onPressed: () => setState(() => _additionalBarcodeControllers.removeAt(idx)),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(12),
+                  hintText: 'Shtrix-kodni kiriting',
+                  hintStyle: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildTrackStockToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: SwitchListTile(
+        title: const Text('Ombor hisobini yuritish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))),
+        subtitle: const Text('Sotilganda ombordan ayiriladi', style: TextStyle(fontSize: 12)),
+        value: _trackStock,
+        onChanged: (v) => setState(() => _trackStock = v),
+        activeColor: const Color(0xFF6366F1),
+      ),
     );
   }
 }

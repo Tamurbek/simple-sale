@@ -127,7 +127,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('To\'lovni Yakunlash', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset('assets/icon.png', width: 32, height: 32, fit: BoxFit.cover),
+            ),
+            const SizedBox(width: 12),
+            const Text('To\'lovni Yakunlash', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+          ],
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,

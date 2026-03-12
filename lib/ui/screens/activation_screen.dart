@@ -44,13 +44,9 @@ class _ActivationScreenState extends State<ActivationScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.lock_person_rounded, color: Color(0xFF6366F1), size: 48),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset('assets/icon.png', width: 100, height: 100, fit: BoxFit.cover),
               ),
               const SizedBox(height: 24),
               const Text(

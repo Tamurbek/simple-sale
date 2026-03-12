@@ -60,10 +60,12 @@ class Product {
   final double price;
   final String categoryId;
   final String barcode;
+  final List<String> additionalBarcodes;
   final Map<String, double> stocks;
   final String? imagePath;
   final bool isDeleted;
   final String unit; // 'dona', 'kg', 'litr', etc.
+  final bool trackStock; // NEW: Should this item subtract from warehouse?
 
   Product({
     required this.id,
@@ -71,34 +73,40 @@ class Product {
     required this.price,
     required this.categoryId,
     required this.barcode,
+    this.additionalBarcodes = const [],
     required this.stocks,
     this.imagePath,
     this.isDeleted = false,
     this.unit = 'dona',
+    this.trackStock = true,
   });
 
-  factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath, String unit = 'dona'}) => 
-      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, stocks: {}, imagePath: imagePath, unit: unit);
+  factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath, String unit = 'dona', bool trackStock = true}) => 
+      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, additionalBarcodes: [], stocks: {}, imagePath: imagePath, unit: unit, trackStock: trackStock);
 
   Product copyWith({
     String? name,
     double? price,
     String? categoryId,
     String? barcode,
+    List<String>? additionalBarcodes,
     Map<String, double>? stocks,
     String? imagePath,
     bool? isDeleted,
     String? unit,
+    bool? trackStock,
   }) => Product(
     id: id,
     name: name ?? this.name,
     price: price ?? this.price,
     categoryId: categoryId ?? this.categoryId,
     barcode: barcode ?? this.barcode,
+    additionalBarcodes: additionalBarcodes ?? this.additionalBarcodes,
     stocks: stocks ?? this.stocks,
     imagePath: imagePath ?? this.imagePath,
     isDeleted: isDeleted ?? this.isDeleted,
     unit: unit ?? this.unit,
+    trackStock: trackStock ?? this.trackStock,
   );
 
   Map<String, dynamic> toJson() => {
@@ -107,10 +115,12 @@ class Product {
     'price': price,
     'categoryId': categoryId,
     'barcode': barcode,
+    'additionalBarcodes': additionalBarcodes,
     'imagePath': imagePath,
     'stocks': stocks,
     'isDeleted': isDeleted,
     'unit': unit,
+    'trackStock': trackStock,
   };
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -119,16 +129,25 @@ class Product {
     if (stockData != null && stockData is Map) {
       stocks = stockData.map((k, v) => MapEntry(k.toString(), (v as num).toDouble()));
     }
+    
+    var additionalB = json['additionalBarcodes'];
+    List<String> barcodes = [];
+    if (additionalB != null && additionalB is List) {
+      barcodes = additionalB.map((e) => e.toString()).toList();
+    }
+
     return Product(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Noma\'lum',
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
       categoryId: json['categoryId']?.toString() ?? '',
       barcode: json['barcode']?.toString() ?? '',
+      additionalBarcodes: barcodes,
       stocks: stocks,
       imagePath: json['imagePath']?.toString(),
       isDeleted: json['isDeleted'] ?? false,
       unit: json['unit']?.toString() ?? 'dona',
+      trackStock: json['trackStock'] ?? true,
     );
   }
 }
@@ -252,6 +271,191 @@ class StockEntryItem {
     productId: json['productId']?.toString() ?? '',
     productName: json['productName']?.toString() ?? 'Noma\'lum',
     quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
+  );
+}
+
+// --- NEW: Returns (Vazvrat) ---
+class SaleReturn {
+  final String id;
+  final String saleId;
+  final DateTime date;
+  final List<SaleReturnItem> items;
+  final double total;
+  final String warehouseId;
+
+  SaleReturn({
+    required this.id,
+    required this.saleId,
+    required this.date,
+    required this.items,
+    required this.total,
+    required this.warehouseId,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'saleId': saleId,
+    'date': date.toIso8601String(),
+    'items': items.map((i) => i.toJson()).toList(),
+    'total': total,
+    'warehouseId': warehouseId,
+  };
+
+  factory SaleReturn.fromJson(Map<String, dynamic> json) => SaleReturn(
+    id: json['id']?.toString() ?? '',
+    saleId: json['saleId']?.toString() ?? '',
+    date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+    items: (json['items'] as List?)?.map((i) => SaleReturnItem.fromJson(i)).toList() ?? [],
+    total: double.tryParse(json['total']?.toString() ?? '0') ?? 0.0,
+    warehouseId: json['warehouseId']?.toString() ?? '',
+  );
+}
+
+class SaleReturnItem {
+  final String productId;
+  final String productName;
+  final double quantity;
+  final double price;
+
+  SaleReturnItem({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.price,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'productId': productId,
+    'productName': productName,
+    'quantity': quantity,
+    'price': price,
+  };
+
+  factory SaleReturnItem.fromJson(Map<String, dynamic> json) => SaleReturnItem(
+    productId: json['productId']?.toString() ?? '',
+    productName: json['productName']?.toString() ?? 'Noma\'lum',
+    quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
+    price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+  );
+}
+
+// --- NEW: Write Off (Hisobdan chiqarish) ---
+class WriteOff {
+  final String id;
+  final DateTime date;
+  final String warehouseId;
+  final List<WriteOffItem> items;
+  final String description;
+
+  WriteOff({
+    required this.id,
+    required this.date,
+    required this.warehouseId,
+    required this.items,
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'date': date.toIso8601String(),
+    'warehouseId': warehouseId,
+    'items': items.map((i) => i.toJson()).toList(),
+    'description': description,
+  };
+
+  factory WriteOff.fromJson(Map<String, dynamic> json) => WriteOff(
+    id: json['id']?.toString() ?? '',
+    date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+    warehouseId: json['warehouseId']?.toString() ?? '',
+    items: (json['items'] as List?)?.map((i) => WriteOffItem.fromJson(i)).toList() ?? [],
+    description: json['description']?.toString() ?? '',
+  );
+}
+
+class WriteOffItem {
+  final String productId;
+  final String productName;
+  final double quantity;
+
+  WriteOffItem({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'productId': productId,
+    'productName': productName,
+    'quantity': quantity,
+  };
+
+  factory WriteOffItem.fromJson(Map<String, dynamic> json) => WriteOffItem(
+    productId: json['productId']?.toString() ?? '',
+    productName: json['productName']?.toString() ?? 'Noma\'lum',
+    quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
+  );
+}
+
+// --- NEW: Inventory Adjustment ---
+class InventoryEntry {
+  final String id;
+  final DateTime date;
+  final String warehouseId;
+  final List<InventoryItem> items;
+  final String description;
+
+  InventoryEntry({
+    required this.id,
+    required this.date,
+    required this.warehouseId,
+    required this.items,
+    this.description = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'date': date.toIso8601String(),
+    'warehouseId': warehouseId,
+    'items': items.map((i) => i.toJson()).toList(),
+    'description': description,
+  };
+
+  factory InventoryEntry.fromJson(Map<String, dynamic> json) => InventoryEntry(
+    id: json['id']?.toString() ?? '',
+    date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+    warehouseId: json['warehouseId']?.toString() ?? '',
+    items: (json['items'] as List?)?.map((i) => InventoryItem.fromJson(i)).toList() ?? [],
+    description: json['description']?.toString() ?? '',
+  );
+}
+
+class InventoryItem {
+  final String productId;
+  final String productName;
+  final double expectedQuantity;
+  final double actualQuantity;
+
+  InventoryItem({
+    required this.productId,
+    required this.productName,
+    required this.expectedQuantity,
+    required this.actualQuantity,
+  });
+
+  double get difference => actualQuantity - expectedQuantity;
+
+  Map<String, dynamic> toJson() => {
+    'productId': productId,
+    'productName': productName,
+    'expectedQuantity': expectedQuantity,
+    'actualQuantity': actualQuantity,
+  };
+
+  factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
+    productId: json['productId']?.toString() ?? '',
+    productName: json['productName']?.toString() ?? 'Noma\'lum',
+    expectedQuantity: double.tryParse(json['expectedQuantity']?.toString() ?? '0') ?? 0.0,
+    actualQuantity: double.tryParse(json['actualQuantity']?.toString() ?? '0') ?? 0.0,
   );
 }
 

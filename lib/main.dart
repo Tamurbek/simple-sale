@@ -13,6 +13,8 @@ import 'ui/screens/sales_history_screen.dart';
 import 'ui/screens/login_screen.dart';
 import 'ui/screens/trash_screen.dart';
 import 'ui/screens/activation_screen.dart';
+import 'ui/screens/returns_history_screen.dart';
+import 'ui/screens/write_offs_history_screen.dart';
 import 'models/models.dart';
 import 'services/system_tray_service.dart';
 import 'services/single_instance_service.dart';
@@ -148,6 +150,8 @@ class _MainLayoutState extends State<MainLayout> {
     EmployeeScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
     TrashScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
     SettingsScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    ReturnsHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    WriteOffsHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
   ];
 
   bool _canAccess(int index, UserRole? role) {
@@ -218,6 +222,9 @@ class _MainLayoutState extends State<MainLayout> {
                 if (_canAccess(5, state.currentUser?.role)) _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
                 if (_canAccess(6, state.currentUser?.role)) _buildNavItem(6, Icons.delete_outline_rounded, Icons.delete_rounded, 'Savat', slim),
                 if (_canAccess(7, state.currentUser?.role)) _buildNavItem(7, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
+                const Divider(),
+                if (_canAccess(8, state.currentUser?.role)) _buildNavItem(8, Icons.assignment_return_outlined, Icons.assignment_return_rounded, 'Vazvratlar', slim),
+                if (_canAccess(9, state.currentUser?.role)) _buildNavItem(9, Icons.remove_circle_outline_rounded, Icons.remove_circle_rounded, 'Chiqarishlar', slim),
               ],
             ),
           ),
