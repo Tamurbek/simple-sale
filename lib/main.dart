@@ -15,10 +15,14 @@ import 'ui/screens/trash_screen.dart';
 import 'ui/screens/activation_screen.dart';
 import 'models/models.dart';
 import 'services/system_tray_service.dart';
+import 'services/single_instance_service.dart';
 import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Ensure only one instance is running
+  await SingleInstanceService().ensureSingleInstance();
   
   // Initialize system tray and window management for Desktop
   if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
