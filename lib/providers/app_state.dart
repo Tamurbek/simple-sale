@@ -5,6 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import '../services/sync_service.dart';
 import '../services/database_service.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -791,14 +793,50 @@ class AppState extends ChangeNotifier {
     return code.toUpperCase() == expected;
   }
 
-  Future<void> activate(String code) async {
-    if (checkActivationCode(code)) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isActivated', true);
-      isActivated = true;
-      notifyListeners();
+  Future<void> activate(String code, {bool online = true}) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (online) {
+      // PROMPT: Update this URL with your real backend server IP/Domain
+      const backendUrl = "http://localhost:8000/verify";
+      
+      try {
+        final resp = await http.post(
+          Uri.parse(backendUrl),
+          body: jsonEncode({
+            "device_id": activationRequestCode, 
+            "activation_code": code.trim().toUpperCase()
+          }),
+          headers: {"Content-Type": "application/json"},
+        ).timeout(const Duration(seconds: 10));
+
+        if (resp.statusCode == 200) {
+          await prefs.setBool('isActivated', true);
+          isActivated = true;
+          notifyListeners();
+        } else {
+          String errorMessage = 'Noto\'g\'ri kod!';
+          try {
+            final data = jsonDecode(resp.body);
+            errorMessage = data['detail'] ?? errorMessage;
+          } catch (_) {}
+          throw Exception(errorMessage);
+        }
+      } catch (e) {
+        if (e.toString().contains('Noto\'g\'ri kod')) {
+          rethrow;
+        }
+        throw Exception('Serverga ulanib bo\'lmadi. Backend ishlayotganini tekshiring.');
+      }
     } else {
-      throw Exception('Noto\'g\'ri aktivatsiya kodi!');
+      // Fallback to local check if needed
+      if (checkActivationCode(code)) {
+        await prefs.setBool('isActivated', true);
+        isActivated = true;
+        notifyListeners();
+      } else {
+        throw Exception('Noto\'g\'ri aktivatsiya kodi!');
+      }
     }
   }
 }

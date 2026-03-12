@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 
@@ -75,9 +76,23 @@ class _ActivationScreenState extends State<ActivationScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      'SO\'ROV KODI (DEVICE ID):',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'SO\'ROV KODI (DEVICE ID):',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: state.activationRequestCode));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Suro\'v kodi nusxalandi!'), duration: Duration(seconds: 2)),
+                            );
+                          },
+                          child: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF6366F1)),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     SelectableText(
@@ -118,10 +133,14 @@ class _ActivationScreenState extends State<ActivationScreen> {
                     elevation: 0,
                   ),
                   onPressed: () async {
+                    if (_codeController.text.isEmpty) {
+                      setState(() => _error = 'Kodni kiriting!');
+                      return;
+                    }
                     try {
                       await state.activate(_codeController.text);
                     } catch (e) {
-                      setState(() => _error = 'Noto\'g\'ri kod! Qaytadan urinib ko\'ring.');
+                      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
                     }
                   },
                   child: const Text('FAOLLASHTIRISH', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
@@ -130,8 +149,14 @@ class _ActivationScreenState extends State<ActivationScreen> {
               
               const SizedBox(height: 24),
               const Text(
-                'Kodni olish uchun ishlab chiquvchiga murojaat qiling.',
+                'Kodni olish uchun Telegram botga murojaat qiling:',
                 style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '@SimpleSaleBot',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
                 textAlign: TextAlign.center,
               ),
             ],
