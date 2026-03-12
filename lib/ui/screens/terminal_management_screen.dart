@@ -35,7 +35,7 @@ class TerminalManagementScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ListView.builder(
         padding: const EdgeInsets.all(24),
         itemCount: state.registers.length,

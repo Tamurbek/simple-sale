@@ -3,40 +3,57 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
   const DashboardScreen({super.key, this.onMenuPressed});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String? selectedRegisterId; // null means "All Registers"
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
 
+    // Filter sales by register if selected
+    final filteredSales = selectedRegisterId == null
+        ? state.sales
+        : state.sales.where((s) => s.registerId == selectedRegisterId).toList();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 900;
-
-        return Container(
-          color: Theme.of(context).colorScheme.surface,
-          child: Column(
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: Column(
             children: [
-              _buildHeader(context, constraints.maxWidth),
+              _buildHeader(context, state, constraints.maxWidth),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    _buildStatsSummary(context, state, constraints.maxWidth),
+                    _buildStatsSummary(context, state, filteredSales, constraints.maxWidth),
                     SizedBox(height: 24),
                     if (isNarrow) ...[
-                      _buildRecentSales(context, state),
+                      _buildRecentSales(context, state, filteredSales),
                       SizedBox(height: 24),
-                      _buildTopProducts(context, state),
+                      _buildTopProducts(context, state, filteredSales),
                     ] else
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(flex: 2, child: _buildRecentSales(context, state)),
+                          Expanded(
+                            flex: 2,
+                            child: _buildRecentSales(context, state, filteredSales),
+                          ),
                           SizedBox(width: 24),
-                          Expanded(flex: 1, child: _buildTopProducts(context, state)),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTopProducts(context, state, filteredSales),
+                          ),
                         ],
                       ),
                   ],
@@ -49,7 +66,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, double width) {
+  Widget _buildHeader(BuildContext context, AppState state, double width) {
     return Container(
       padding: const EdgeInsets.all(24),
       color: Theme.of(context).cardColor,
@@ -58,6 +75,25 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (Navigator.canPop(context))
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                  ),
+                ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -86,45 +122,105 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
-          if (width > 600)
-            Chip(
-              label: Text(
-                'Bugun: ${DateFormat('dd MMMM, yyyy').format(DateTime.now())}',
-              ),
-              avatar: Icon(
-                Icons.calendar_today,
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withOpacity(0.05),
-            ),
-          if (onMenuPressed != null) ...[
-            SizedBox(width: 16),
-            IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-              ),
-              onPressed: onMenuPressed,
-              style: IconButton.styleFrom(
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.primary.withOpacity(0.05),
-                shape: RoundedRectangleBorder(
+          Row(
+            children: [
+              // Register Filter
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: selectedRegisterId,
+                    hint: const Text('Barcha kassalar'),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Barcha kassalar'),
+                      ),
+                      ...state.registers.map((r) {
+                        return DropdownMenuItem<String?>(
+                          value: r.id,
+                          child: Text(r.name),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) => setState(() => selectedRegisterId = val),
+                    icon: Icon(
+                      Icons.filter_list_rounded,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+              if (width > 800) ...[
+                SizedBox(width: 16),
+                Chip(
+                  label: Text(
+                    'Bugun: ${DateFormat('dd MMMM, yyyy').format(DateTime.now())}',
+                  ),
+                  avatar: Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.05),
+                ),
+              ],
+              if (widget.onMenuPressed != null) ...[
+                SizedBox(width: 16),
+                IconButton(
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
+                  onPressed: widget.onMenuPressed,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsSummary(BuildContext context, AppState state, double width) {
+  Widget _buildStatsSummary(
+    BuildContext context,
+    AppState state,
+    List<Sale> filteredSales,
+    double width,
+  ) {
+    final now = DateTime.now();
+    final todaySales = filteredSales.where((s) {
+      return s.date.year == now.year &&
+          s.date.month == now.month &&
+          s.date.day == now.day;
+    }).toList();
+
+    final todayTotal = todaySales.fold(0.0, (sum, s) => sum + s.total);
+    final todayCount = todaySales.length;
+    final avgCheck = todayCount == 0 ? 0.0 : todayTotal / todayCount;
+
     int crossAxisCount = width < 600
         ? 1
         : width < 1200
@@ -147,7 +243,7 @@ class DashboardScreen extends StatelessWidget {
         _buildStatCard(
           context,
           'Bugungi Savdo',
-          '${fmt.format(state.todaySalesTotal)} so\'m',
+          '${fmt.format(todayTotal)} so\'m',
           Icons.payments_outlined,
           Colors.green,
           'Live',
@@ -155,7 +251,7 @@ class DashboardScreen extends StatelessWidget {
         _buildStatCard(
           context,
           'Cheklar soni',
-          '${state.todaySalesCount} ta',
+          '$todayCount ta',
           Icons.receipt_long_outlined,
           Colors.blue,
           'Live',
@@ -163,7 +259,7 @@ class DashboardScreen extends StatelessWidget {
         _buildStatCard(
           context,
           'O\'rtacha chek',
-          '${fmt.format(state.averageCheck)} so\'m',
+          '${fmt.format(avgCheck)} so\'m',
           Icons.analytics_outlined,
           Colors.orange,
           'Live',
@@ -196,6 +292,7 @@ class DashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(
@@ -257,8 +354,12 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentSales(BuildContext context, AppState state) {
-    final recentSales = state.sales.take(5).toList();
+  Widget _buildRecentSales(
+    BuildContext context,
+    AppState state,
+    List<Sale> filteredSales,
+  ) {
+    final recentSales = filteredSales.take(10).toList();
     final fmt = NumberFormat.currency(
       locale: 'uz_UZ',
       symbol: '',
@@ -270,6 +371,7 @@ class DashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,14 +456,37 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopProducts(BuildContext context, AppState state) {
-    final topProducts = state.topSellingProducts;
+  Widget _buildTopProducts(
+    BuildContext context,
+    AppState state,
+    List<Sale> filteredSales,
+  ) {
+    final now = DateTime.now();
+    final todaySales = filteredSales.where(
+      (s) =>
+          s.date.year == now.year &&
+          s.date.month == now.month &&
+          s.date.day == now.day,
+    );
+
+    final Map<String, double> topMap = {};
+    for (var sale in todaySales) {
+      for (var item in sale.items) {
+        topMap[item.productName] =
+            (topMap[item.productName] ?? 0.0) + item.quantity;
+      }
+    }
+
+    final sorted = topMap.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topProducts = sorted.take(5).toList();
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

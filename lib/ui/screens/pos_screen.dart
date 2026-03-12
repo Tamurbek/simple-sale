@@ -266,7 +266,7 @@ class _POSScreenState extends State<POSScreen> {
           final isMobile = constraints.maxWidth < 900;
 
           return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Row(
               children: [
                 if (!isMobile) _buildCartSidebar(state, 400),
@@ -338,6 +338,25 @@ class _POSScreenState extends State<POSScreen> {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
+          if (Navigator.canPop(context))
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).cardColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                ),
+              ),
+            ),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.asset(
@@ -354,6 +373,7 @@ class _POSScreenState extends State<POSScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Theme.of(context).dividerColor),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),
@@ -430,6 +450,7 @@ class _POSScreenState extends State<POSScreen> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.04),
@@ -457,6 +478,7 @@ class _POSScreenState extends State<POSScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -526,6 +548,11 @@ class _POSScreenState extends State<POSScreen> {
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected
+                      ? Colors.transparent
+                      : Theme.of(context).dividerColor,
+                ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
@@ -578,6 +605,7 @@ class _POSScreenState extends State<POSScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).dividerColor),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
@@ -611,7 +639,7 @@ class _POSScreenState extends State<POSScreen> {
                           decoration: BoxDecoration(
                             color: Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.05),
+                            ).colorScheme.primary.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -662,8 +690,8 @@ class _POSScreenState extends State<POSScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: isLowStock
-                              ? Colors.red.shade50
-                              : Colors.green.shade50,
+                              ? Colors.red.withOpacity(0.1)
+                              : Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -671,7 +699,7 @@ class _POSScreenState extends State<POSScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: isLowStock ? Colors.red : Colors.green,
+                            color: isLowStock ? Colors.redAccent : Colors.green,
                           ),
                         ),
                       ),
@@ -841,8 +869,8 @@ class _POSScreenState extends State<POSScreen> {
                         );
                       }
                     },
-                    color: Colors.red.shade50,
-                    iconColor: Colors.red,
+                    color: Colors.red.withOpacity(0.1),
+                    iconColor: Colors.redAccent,
                   ),
                   InkWell(
                     onTap: () => _showQuantityDialog(context, state, item),
@@ -852,7 +880,9 @@ class _POSScreenState extends State<POSScreen> {
                       height: 40,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -884,7 +914,7 @@ class _POSScreenState extends State<POSScreen> {
                         }
                       }
                     },
-                    color: Colors.green.shade50,
+                    color: Colors.green.withOpacity(0.1),
                     iconColor: Colors.green,
                   ),
                 ],
@@ -915,7 +945,7 @@ class _POSScreenState extends State<POSScreen> {
                   : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 18, color: iconColor ?? Colors.black87),
+        child: Icon(icon, size: 18, color: iconColor ?? Theme.of(context).colorScheme.onSurface),
       ),
     );
   }
@@ -1023,15 +1053,16 @@ class _POSScreenState extends State<POSScreen> {
 
   Widget _buildVirtualKeyboard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1170,18 +1201,19 @@ class _POSScreenState extends State<POSScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.all(1.0), // Very tight grid like eHopper
       child: SizedBox(
-        height: 52,
+        height: 60,
         child: Material(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          elevation: (isEnter || isSpace) ? 2 : 1,
-          shadowColor: Colors.black.withOpacity(0.2),
           child: InkWell(
             onTap: () => _onKeyTap(k),
-            borderRadius: BorderRadius.circular(10),
-            child: Center(child: labelWidget),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+              ),
+              child: Center(child: labelWidget),
+            ),
           ),
         ),
       ),

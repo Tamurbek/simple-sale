@@ -53,52 +53,64 @@ class SimpleSaleApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Clean, professional light grey
+        cardColor: Colors.white,
+        dividerColor: const Color(0xFFE9ECEF),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4F46E5),
-          primary: const Color(0xFF4F46E5),
+          seedColor: const Color(0xFF2D2D2D), // Neutral primary
+          primary: const Color(0xFF2D2D2D),
           onPrimary: Colors.white,
-          surface: const Color(0xFFF3F4F6), // Matches scaffold
-          onSurface: const Color(0xFF111827),
-          background: const Color(0xFFF3F4F6),
-          onBackground: const Color(0xFF111827),
+          surface: const Color(0xFFF8F9FA),
+          onSurface: const Color(0xFF212529),
+          background: const Color(0xFFF8F9FA),
+          onBackground: const Color(0xFF212529),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
         cardTheme: CardThemeData(
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.05),
+          elevation: 0, // Flat design with slim borders like in the image
           color: Colors.white,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(4), // Slightly more square/professional
+            side: const BorderSide(color: Color(0xFFE9ECEF)),
           ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF2D2D2D),
+          foregroundColor: Colors.white,
+          elevation: 0,
         ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF1A1A1A), // Deep charcoal black
+        cardColor: const Color(0xFF262626), // Slightly lighter charcoal for layers
+        dividerColor: Colors.white.withOpacity(0.08),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6366F1),
+          seedColor: const Color(0xFF818CF8),
           brightness: Brightness.dark,
-          primary: const Color(0xFF818CF8),
+          primary: const Color(0xFF818CF8), // Brighter indigo for actions and prices
           onPrimary: Colors.white,
-          surface: const Color(0xFF121212), // Matches scaffold
-          onSurface: const Color(0xFFF3F4F6),
-          background: const Color(0xFF121212),
-          onBackground: const Color(0xFFF3F4F6),
+          surface: const Color(0xFF1A1A1A),
+          onSurface: const Color(0xFFE9ECEF),
+          background: const Color(0xFF1A1A1A),
+          onBackground: const Color(0xFFE9ECEF),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
         cardTheme: CardThemeData(
-          elevation: 4,
-          shadowColor: Colors.black.withOpacity(0.3),
-          color: const Color(0xFF1E1E1E),
+          elevation: 0,
+          color: const Color(0xFF262626),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.08)),
+            borderRadius: BorderRadius.circular(4),
+            side: BorderSide(color: Colors.white.withOpacity(0.1)),
           ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF121212),
+          foregroundColor: Colors.white,
+          elevation: 0,
         ),
       ),
       home: const InitializationWrapper(),

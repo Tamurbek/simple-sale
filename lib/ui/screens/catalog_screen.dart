@@ -38,9 +38,9 @@ class _CatalogScreenState extends State<CatalogScreen>
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 700;
 
-        return Container(
-          color: Theme.of(context).colorScheme.surface,
-          child: Column(
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: Column(
             children: [
               _buildHeader(isNarrow),
               _buildTabBar(),
@@ -66,6 +66,25 @@ class _CatalogScreenState extends State<CatalogScreen>
       color: Theme.of(context).cardColor,
       child: Row(
         children: [
+          if (Navigator.canPop(context))
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                ),
+              ),
+            ),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.asset(
@@ -188,8 +207,14 @@ class _CatalogScreenState extends State<CatalogScreen>
 
         return Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            Container(
+              margin: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
@@ -200,11 +225,8 @@ class _CatalogScreenState extends State<CatalogScreen>
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
@@ -284,6 +306,7 @@ class _CatalogScreenState extends State<CatalogScreen>
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(
@@ -300,7 +323,7 @@ class _CatalogScreenState extends State<CatalogScreen>
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
               image: imagePath != null
                   ? DecorationImage(

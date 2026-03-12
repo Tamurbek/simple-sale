@@ -12,9 +12,9 @@ class EmployeeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
 
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
         children: [
           _buildHeader(context, state),
           Expanded(
@@ -41,6 +41,25 @@ class EmployeeScreen extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (Navigator.canPop(context))
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                  ),
+                ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -125,6 +144,7 @@ class EmployeeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(
@@ -140,7 +160,7 @@ class EmployeeScreen extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: (isAdmin ? Colors.amber : Colors.blue).withOpacity(
-              0.1,
+              0.15,
             ),
             child: Icon(
               isAdmin ? Icons.admin_panel_settings : Icons.person,

@@ -51,14 +51,14 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 800;
 
-          return Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Column(
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: Column(
               children: [
                 _buildHeader(state, isNarrow),
                 TabBar(
                   labelColor: Theme.of(context).colorScheme.primary,
-                  unselectedLabelColor: Colors.grey,
+                  unselectedLabelColor: Colors.grey.shade400,
                   indicatorColor: Theme.of(context).colorScheme.primary,
                   tabs: [
                     Tab(text: 'Qoldiqlar'),
@@ -83,6 +83,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Theme.of(context).dividerColor),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.03),
@@ -155,6 +156,25 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
         children: [
           Row(
             children: [
+              if (Navigator.canPop(context))
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                  ),
+                ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -313,6 +333,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.04),
@@ -478,7 +499,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: isLow ? Colors.red.shade50 : Colors.green.shade50,
+                      color: isLow ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -486,7 +507,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: isLow ? Colors.red : Colors.green,
+                        color: isLow ? Colors.redAccent : Colors.green,
                       ),
                     ),
                   ),
@@ -702,6 +723,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(

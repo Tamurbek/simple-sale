@@ -47,9 +47,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       (sum, item) => sum + item.total,
     );
 
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
         children: [
           _buildHeader(state),
           if (filteredSales.isNotEmpty)
@@ -64,6 +64,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
                 boxShadow: [
                   BoxShadow(
                     color: Theme.of(
@@ -139,6 +140,25 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              if (Navigator.canPop(context))
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Theme.of(context).dividerColor),
+                      ),
+                    ),
+                  ),
+                ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -338,6 +358,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(

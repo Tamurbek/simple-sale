@@ -241,101 +241,131 @@ class _LoginScreenState extends State<LoginScreen> {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: Theme.of(context).brightness == Brightness.dark
-                ? [
-                    Theme.of(context).colorScheme.onSurface,
-                    const Color(0xFF0F172A),
-                  ]
-                : [
-                    Theme.of(context).colorScheme.primary,
-                    const Color(0xFF4F46E5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          Center(
+            child: SingleChildScrollView(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 450),
+                margin: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.4
+                            : 0.1,
+                      ),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
                   ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: SingleChildScrollView(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  margin: const EdgeInsets.all(24),
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withOpacity(0.03)
-                        : Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ClipRRect(
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          'assets/icon.png',
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
                         ),
                       ),
-                      SizedBox(height: 24),
-                      Text(
-                        'Tizimga Kirish',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      child: Image.asset(
+                        'assets/icon.png',
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
                       ),
-                      Text(
+                    ),
+                    SizedBox(height: 24),
+                    Text(
+                      'Tizimga Kirish',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
                         state.isMaster == true
                             ? '🖥 Master terminal'
                             : '💻 Klient terminal',
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                      SizedBox(height: 32),
-                      _buildPinDisplay(),
-                      SizedBox(height: 32),
-                      _buildNumpad(),
-                      SizedBox(height: 16),
-                      TextButton(
-                        onPressed: _showRecoveryDialog,
-                        child: Text(
-                          'PINni unutdingizmi?',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            decoration: TextDecoration.underline,
-                          ),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 48),
+                    _buildPinDisplay(),
+                    SizedBox(height: 48),
+                    _buildNumpad(),
+                    SizedBox(height: 24),
+                    TextButton(
+                      onPressed: _showRecoveryDialog,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.color,
+                      ),
+                      child: Text(
+                        'PINni unutdingizmi?',
+                        style: TextStyle(
+                          decoration: TextDecoration.underline,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            // Terminal sozlamalari tugmasi
-            Positioned(
-              top: 16,
-              right: 16,
-              child: SafeArea(
-                child: IconButton(
-                  onPressed: _resetTerminalMode,
-                  icon: Icon(
-                    Icons.settings_rounded,
-                    color: Colors.white54,
-                    size: 28,
-                  ),
-                  tooltip: 'Terminal sozlamalari',
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: _resetTerminalMode,
+                icon: Icon(
+                  Icons.settings_rounded,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  size: 24,
                 ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).cardColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                ),
+                tooltip: 'Terminal sozlamalari',
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -344,6 +374,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text('Terminal sozlamalari'),
         content: Text(
           'Terminal rejimini qayta sozlashni xohlaysizmi? Barcha mahalliy ma\'lumotlar o\'chiriladi.',
@@ -354,6 +385,9 @@ class _LoginScreenState extends State<LoginScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -371,22 +405,36 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(4, (index) {
         bool filled = index < pin.length;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          width: 20,
-          height: 20,
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          width: 16,
+          height: 16,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: filled ? Colors.white : Colors.white24,
-            border: Border.all(color: Colors.white54, width: 2),
-            boxShadow: filled
-                ? [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.5),
-                      blurRadius: 10,
-                    ),
-                  ]
-                : [],
+            color:
+                filled
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).dividerColor,
+            border: Border.all(
+              color:
+                  filled
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).dividerColor,
+              width: 1,
+            ),
+            boxShadow:
+                filled
+                    ? [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                    : [],
           ),
         );
       }),
@@ -394,53 +442,61 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildNumpad() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: ['1', '2', '3'].map((n) => _buildNumButton(n)).toList(),
-        ),
-        SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: ['4', '5', '6'].map((n) => _buildNumButton(n)).toList(),
-        ),
-        SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: ['7', '8', '9'].map((n) => _buildNumButton(n)).toList(),
-        ),
-        SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            SizedBox(width: 80),
-            _buildNumButton('0'),
-            _buildIconButton(Icons.backspace_rounded, _onDelete),
-          ],
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildNumpadRow(['1', '2', '3']),
+          _buildNumpadRow(['4', '5', '6']),
+          _buildNumpadRow(['7', '8', '9']),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 70,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+              _buildNumButton('0'),
+              _buildIconButton(Icons.backspace_outlined, _onDelete),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumpadRow(List<String> numbers) {
+    return Row(
+      children: numbers.map((n) => _buildNumButton(n)).toList(),
     );
   }
 
   Widget _buildNumButton(String n) {
-    return InkWell(
-      onTap: () => _onNumberPressed(n),
-      borderRadius: BorderRadius.circular(40),
-      child: Container(
-        width: 80,
-        height: 80,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white24, width: 2),
-        ),
-        child: Text(
-          n,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onNumberPressed(n),
+        child: Container(
+          height: 70,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+          ),
+          child: Text(
+            n,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ),
@@ -448,13 +504,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildIconButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(40),
-      child: SizedBox(
-        width: 80,
-        height: 80,
-        child: Icon(icon, size: 28, color: Colors.white),
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          height: 70,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+          ),
+          child: Icon(
+            icon,
+            size: 22,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
       ),
     );
   }

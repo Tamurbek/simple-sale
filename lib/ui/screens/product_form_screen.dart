@@ -133,7 +133,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,

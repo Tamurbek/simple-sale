@@ -25,9 +25,7 @@ class _ActivationScreenState extends State<ActivationScreen> {
     final state = context.watch<AppState>();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF0F172A)
-          : Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Container(
           width: 450,

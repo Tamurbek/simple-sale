@@ -154,7 +154,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final change = received - total;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Row(
           children: [
@@ -220,7 +220,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Expanded(
                 flex: 4,
                 child: Container(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   child: Column(
                     children: [
                       Expanded(
@@ -261,6 +261,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(
@@ -553,31 +554,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }) {
     return Material(
       color: color ?? (Theme.of(context).cardColor),
-      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: () => onNumPressed(val),
-        borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.5),
+              color: Theme.of(context).dividerColor,
+              width: 0.5,
             ),
           ),
           child: Center(
             child: icon != null
                 ? Icon(
                     icon,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 24,
                   )
                 : Text(
                     val,
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                       color:
                           textColor ?? Theme.of(context).colorScheme.onSurface,
                     ),
