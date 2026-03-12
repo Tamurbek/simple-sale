@@ -980,6 +980,34 @@ class AppState extends ChangeNotifier {
       }
     } catch (e) {
       rethrow;
+  }
+
+  Future<void> clearAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    
+    // Close DB and delete file
+    final dbPath = await DatabaseService.getDatabasePath();
+    final file = File(dbPath);
+    
+    // Attempt to close DB if it exists (not strictly necessary with sqflite, but good practice)
+    // Actually our DatabaseService doesn't have a close method, so we just delete it.
+    
+    if (await file.exists()) {
+      await file.delete();
     }
+    
+    // Reset local state
+    isMaster = null;
+    isActivated = false;
+    isBlocked = false;
+    activationCode = null;
+    currentRegister = null;
+    registers = [];
+    products = [];
+    categories = [];
+    sales = [];
+    
+    notifyListeners();
   }
 }

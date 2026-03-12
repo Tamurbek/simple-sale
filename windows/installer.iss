@@ -43,3 +43,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+; Delete the database file from AppData (Current location)
+Type: filesandordirs; Name: "{userappdata}\com.example\{#MyAppName}"
+Type: filesandordirs; Name: "{localappdata}\com.example\{#MyAppName}"
+; Delete the database file from Documents (Old location)
+Type: files; Name: "{userdocs}\simple_sale.db"

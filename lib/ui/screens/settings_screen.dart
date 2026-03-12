@@ -227,6 +227,40 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
+                const SizedBox(height: 24),
+                _buildSection(
+                  context,
+                  'Tizimni Tozalash',
+                  'Dasturni boshlang\'ich holatga qaytarish',
+                  [
+                    _buildSettingsTile(
+                      icon: Icons.delete_forever_rounded,
+                      color: Colors.red,
+                      title: 'Barcha ma\'lumotlarni o\'chirish',
+                      subtitle: 'Dasturni tozalash va qayta o\'rnatish holatiga keltirish',
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Diqqat!'),
+                            content: const Text('Ushbu amal barcha ma\'lumotlarni (mahsulotlar, sotuvlar, sozlamalar) butunlay o\'chirib yuboradi. Dastur qayta o\'rnatilgan holatga qaytadi. Davom etasizmi?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Yo\'q')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Ha, hammasini o\'chirish'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await state.clearAllData();
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
