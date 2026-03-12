@@ -14,9 +14,17 @@ import 'ui/screens/login_screen.dart';
 import 'ui/screens/trash_screen.dart';
 import 'ui/screens/activation_screen.dart';
 import 'models/models.dart';
+import 'services/system_tray_service.dart';
+import 'dart:io';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize system tray and window management for Desktop
+  if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+    await SystemTrayService().init();
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AppState(),
