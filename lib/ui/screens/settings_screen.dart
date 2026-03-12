@@ -172,6 +172,58 @@ class SettingsScreen extends StatelessWidget {
                           }
                         },
                       ),
+                      const Divider(height: 1, indent: 20, endIndent: 20),
+                      _buildSettingsTile(
+                        icon: Icons.cloud_sync_rounded,
+                        color: const Color(0xFF6366F1),
+                        title: 'Bulutli zaxira (Railway)',
+                        subtitle: 'Ma\'lumotlarni serverga saqlash',
+                        onTap: () async {
+                          try {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaxira yuklanmoqda...')));
+                            await state.uploadDatabaseToCloud();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaxira serverga yuborildi!')));
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                            }
+                          }
+                        },
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.settings_backup_restore_rounded,
+                        color: Colors.orange,
+                        title: 'Bulutdan tiklash',
+                        subtitle: 'Serverdan zaxirani qaytarib olish',
+                        onTap: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Serverdan tiklash'),
+                              content: const Text('Bu amal hozirgi barcha ma\'lumotlarni serverdagi zaxira bilan almashtiradi. Davom etasizmi?'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Yo\'q')),
+                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ha')),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            try {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tiklanmoqda...')));
+                              await state.restoreDatabaseFromCloud();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ma\'lumotlar muvaffaqiyatli tiklandi!')));
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                              }
+                            }
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ],

@@ -9,6 +9,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart';
 
 class AppState extends ChangeNotifier {
   List<Warehouse> warehouses = [];
@@ -30,6 +32,7 @@ class AppState extends ChangeNotifier {
   String? deviceId;
   bool isInitialized = false;
   bool isActivated = false;
+  String? activationCode;
 
   double get todaySalesTotal {
     final now = DateTime.now();
@@ -122,6 +125,7 @@ class AppState extends ChangeNotifier {
     deviceId = prefs.getString('deviceId') ?? const Uuid().v4();
     await prefs.setString('deviceId', deviceId!);
     isActivated = prefs.getBool('isActivated') ?? false;
+    activationCode = prefs.getString('activationCode');
     
     // Load data from DB
     await _loadFromDb();
@@ -797,22 +801,32 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     
     if (online) {
-      // PROMPT: Update this URL with your real backend server IP/Domain
       const backendUrl = "http://localhost:8000/verify";
       
       try {
         final resp = await http.post(
           Uri.parse(backendUrl),
           body: jsonEncode({
-            "device_id": activationRequestCode, 
+            "device_id": deviceId, 
             "activation_code": code.trim().toUpperCase()
           }),
           headers: {"Content-Type": "application/json"},
         ).timeout(const Duration(seconds: 10));
 
         if (resp.statusCode == 200) {
+          final cleanCode = code.trim().toUpperCase();
           await prefs.setBool('isActivated', true);
+          await prefs.setString('activationCode', cleanCode);
           isActivated = true;
+          activationCode = cleanCode;
+          
+          // Try to see if there's a cloud backup for this account
+          try {
+            await restoreDatabaseFromCloud();
+          } catch (_) {
+            // No backup found, that's fine for new users
+          }
+          
           notifyListeners();
         } else {
           String errorMessage = 'Noto\'g\'ri kod!';
@@ -829,7 +843,6 @@ class AppState extends ChangeNotifier {
         throw Exception('Serverga ulanib bo\'lmadi. Backend ishlayotganini tekshiring.');
       }
     } else {
-      // Fallback to local check if needed
       if (checkActivationCode(code)) {
         await prefs.setBool('isActivated', true);
         isActivated = true;
@@ -837,6 +850,53 @@ class AppState extends ChangeNotifier {
       } else {
         throw Exception('Noto\'g\'ri aktivatsiya kodi!');
       }
+    }
+  }
+
+  Future<void> uploadDatabaseToCloud() async {
+    if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
+    
+    final dbPath = await DatabaseService.getDatabasePath();
+    final file = File(dbPath);
+    if (!await file.exists()) throw Exception('Baza fayli topilmadi');
+
+    const uploadUrl = "http://localhost:8000/backup";
+    
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$uploadUrl?activation_code=$activationCode'));
+      request.files.add(await http.MultipartFile.fromPath('file', dbPath));
+      
+      var response = await request.send().timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        throw Exception('Zaxira yuklashda xatolik: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Serverga ulanib bo\'lmadi: $e');
+    }
+  }
+
+  Future<void> restoreDatabaseFromCloud() async {
+    if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
+
+    final downloadUrl = "http://localhost:8000/backup/$activationCode";
+    
+    try {
+      final response = await http.get(Uri.parse(downloadUrl)).timeout(const Duration(seconds: 30));
+      
+      if (response.statusCode == 200) {
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File(join(tempDir.path, 'restore.db'));
+        await tempFile.writeAsBytes(response.bodyBytes);
+        await DatabaseService.replaceDatabase(tempFile);
+        await loadSettings();
+        notifyListeners();
+      } else if (response.statusCode == 404) {
+        throw Exception('Ushbu account uchun zaxira topilmadi');
+      } else {
+        throw Exception('Zaxira yuklab bo\'lmadi');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }
