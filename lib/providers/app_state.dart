@@ -153,6 +153,10 @@ class AppState extends ChangeNotifier {
 
     if (isMaster == true) {
       _startServer();
+      // Automatic Windows Firewall rule add (if on Windows)
+      if (Platform.isWindows) {
+        _addWindowsFirewallRule();
+      }
     } else if (isMaster == false && masterAddress != null) {
       await syncWithMaster();
     }
@@ -277,6 +281,27 @@ class AppState extends ChangeNotifier {
     currentUser = null;
     
     notifyListeners();
+  }
+
+  void _addWindowsFirewallRule() async {
+    try {
+      // Command to add firewall rule for port 8080
+      // Requires admin privileges implicitly or by user prompt depending on OS settings
+      await Process.run('netsh', [
+        'advfirewall',
+        'firewall',
+        'add',
+        'rule',
+        'name=SimpleSaleServer',
+        'dir=in',
+        'action=allow',
+        'protocol=TCP',
+        'localport=8080'
+      ]);
+      print('Firewall rule added or already exists.');
+    } catch (e) {
+      print('Failed to add firewall rule: $e');
+    }
   }
 
   void _startServer() {
