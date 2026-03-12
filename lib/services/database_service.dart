@@ -345,10 +345,18 @@ class DatabaseService {
       await txn.delete('stocks');
       if (users.isNotEmpty) await txn.delete('users');
 
-      for (var c in categories) await txn.insert('categories', c.toJson());
+      for (var c in categories) {
+        final json = c.toJson();
+        json['isDeleted'] = c.isDeleted ? 1 : 0;
+        await txn.insert('categories', json);
+      }
       for (var w in warehouses) await txn.insert('warehouses', w.toJson());
       for (var r in registers) await txn.insert('registers', r.toJson());
-      for (var u in users) await txn.insert('users', u.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+      for (var u in users) {
+        final json = u.toJson();
+        json['isDeleted'] = u.isDeleted ? 1 : 0;
+        await txn.insert('users', json, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
       
       for (var p in products) {
         await txn.insert('products', {
