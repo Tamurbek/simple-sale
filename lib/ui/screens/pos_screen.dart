@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
-import '../../services/print_service.dart';
 import '../../models/models.dart';
 import 'checkout_screen.dart';
 
@@ -31,7 +30,7 @@ class _POSScreenState extends State<POSScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
-    
+
     _searchFocusNode.addListener(() {
       if (_isScanMode && !_searchFocusNode.hasFocus) {
         // Short delay to avoid focus fighting and ensure it returns
@@ -52,10 +51,18 @@ class _POSScreenState extends State<POSScreen> {
     super.dispose();
   }
 
-  void _showQuantityDialog(BuildContext context, AppState state, SaleItem item) {
-    final product = state.products.where((p) => p.id == item.productId).firstOrNull;
+  void _showQuantityDialog(
+    BuildContext context,
+    AppState state,
+    SaleItem item,
+  ) {
+    final product = state.products
+        .where((p) => p.id == item.productId)
+        .firstOrNull;
     final unit = product?.unit ?? 'dona';
-    final initialValue = item.quantity % 1 == 0 ? item.quantity.toInt().toString() : item.quantity.toString();
+    final initialValue = item.quantity % 1 == 0
+        ? item.quantity.toInt().toString()
+        : item.quantity.toString();
     final controller = TextEditingController(text: initialValue);
 
     void saveContent() {
@@ -66,7 +73,10 @@ class _POSScreenState extends State<POSScreen> {
         Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -75,35 +85,45 @@ class _POSScreenState extends State<POSScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('${item.productName} - Miqdorni kiring (${unit})'),
+        title: Text('${item.productName} - Miqdorni kiring ($unit)'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: controller,
               autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onSubmitted: (_) => saveContent(),
               decoration: InputDecoration(
                 labelText: 'Miqdor',
                 suffixText: unit,
                 filled: true,
-                fillColor: const Color(0xFFF1F5F9),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                fillColor: Theme.of(context).colorScheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: saveContent,
-            child: const Text('Saqlash'),
+            child: Text('Saqlash'),
           ),
         ],
       ),
@@ -116,7 +136,10 @@ class _POSScreenState extends State<POSScreen> {
     setState(() {
       if (key == 'back') {
         if (_searchController.text.isNotEmpty) {
-          _searchController.text = _searchController.text.substring(0, _searchController.text.length - 1);
+          _searchController.text = _searchController.text.substring(
+            0,
+            _searchController.text.length - 1,
+          );
         }
       } else if (key == 'space') {
         _searchController.text += ' ';
@@ -128,7 +151,9 @@ class _POSScreenState extends State<POSScreen> {
         _showKeyboard = false;
         _focusNode.requestFocus(); // Return focus to physical scanner
       } else {
-        _searchController.text += _isCaps ? key.toUpperCase() : key.toLowerCase();
+        _searchController.text += _isCaps
+            ? key.toUpperCase()
+            : key.toLowerCase();
       }
     });
   }
@@ -140,12 +165,12 @@ class _POSScreenState extends State<POSScreen> {
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return;
-    
+
     final now = DateTime.now();
-    
+
     // If keys are coming in slowly (>50ms between keys), it's likely manual typing.
     // Scanners are much faster.
-    if (_lastKeyEventTime != null && 
+    if (_lastKeyEventTime != null &&
         now.difference(_lastKeyEventTime!).inMilliseconds > 100) {
       _barcodeBuffer = ''; // Clear buffer if it's too slow (likely human)
     }
@@ -158,7 +183,9 @@ class _POSScreenState extends State<POSScreen> {
       }
     } else {
       final char = event.character;
-      if (char != null && char.isNotEmpty && RegExp(r'[a-zA-Z0-9]').hasMatch(char)) {
+      if (char != null &&
+          char.isNotEmpty &&
+          RegExp(r'[a-zA-Z0-9]').hasMatch(char)) {
         _barcodeBuffer += char;
       }
     }
@@ -166,38 +193,40 @@ class _POSScreenState extends State<POSScreen> {
 
   void _processBarcode(String barcode) {
     if (barcode.isEmpty) return;
-    
+
     // Prevent double processing within a short time (e.g. 300ms)
     final now = DateTime.now();
-    if (_lastBarcode == barcode && 
-        _lastBarcodeTime != null && 
+    if (_lastBarcode == barcode &&
+        _lastBarcodeTime != null &&
         now.difference(_lastBarcodeTime!).inMilliseconds < 500) {
-      return; 
+      return;
     }
-    
+
     _lastBarcode = barcode;
     _lastBarcodeTime = now;
-    
+
     try {
       final state = context.read<AppState>();
       state.addToCartByBarcode(barcode);
-      
+
       final product = state.products.firstWhere(
         (p) => p.barcode == barcode || p.additionalBarcodes.contains(barcode),
         orElse: () => throw Exception('Mahsulot topilmadi'),
       );
-      
+
       // Clear fields if we successfully added
       if (_searchController.text == barcode) {
         _searchController.clear();
       }
       _barcodeBuffer = '';
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${product.name} savatga qo\'shildi'),
           duration: const Duration(milliseconds: 700),
-          backgroundColor: const Color(0xFF6366F1), // Using theme color
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.primary, // Using theme color
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(20),
         ),
@@ -213,15 +242,19 @@ class _POSScreenState extends State<POSScreen> {
     final state = context.watch<AppState>();
     final activeCategories = state.activeCategories;
     final categories = ['Barchasi', ...activeCategories.map((c) => c.name)];
-    
+
     final searchQuery = _searchController.text.toLowerCase();
     final filteredProducts = state.activeProducts.where((p) {
-       final category = activeCategories.any((c) => c.id == p.categoryId)
-           ? activeCategories.firstWhere((c) => c.id == p.categoryId)
-           : null;
-       final matchesCategory = selectedCategory == 'Barchasi' || (category?.name == selectedCategory);
-       final matchesSearch = (p.name ?? '').toLowerCase().contains(searchQuery) || (p.barcode ?? '').contains(searchQuery);
-       return matchesCategory && matchesSearch;
+      final category = activeCategories.any((c) => c.id == p.categoryId)
+          ? activeCategories.firstWhere((c) => c.id == p.categoryId)
+          : null;
+      final matchesCategory =
+          selectedCategory == 'Barchasi' ||
+          (category?.name == selectedCategory);
+      final matchesSearch =
+          (p.name ?? '').toLowerCase().contains(searchQuery) ||
+          (p.barcode ?? '').contains(searchQuery);
+      return matchesCategory && matchesSearch;
     }).toList();
 
     return KeyboardListener(
@@ -231,9 +264,9 @@ class _POSScreenState extends State<POSScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 900;
-          
+
           return Scaffold(
-            backgroundColor: const Color(0xFFF1F5F9),
+            backgroundColor: Theme.of(context).colorScheme.surface,
             body: Row(
               children: [
                 if (!isMobile) _buildCartSidebar(state, 400),
@@ -245,7 +278,13 @@ class _POSScreenState extends State<POSScreen> {
                       Expanded(
                         child: Column(
                           children: [
-                            Expanded(child: _buildProductGrid(filteredProducts, state, constraints.maxWidth)),
+                            Expanded(
+                              child: _buildProductGrid(
+                                filteredProducts,
+                                state,
+                                constraints.maxWidth,
+                              ),
+                            ),
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 300),
                               switchInCurve: Curves.easeOutCubic,
@@ -259,12 +298,12 @@ class _POSScreenState extends State<POSScreen> {
                                   child: child,
                                 );
                               },
-                              child: _showKeyboard 
-                                ? KeyedSubtree(
-                                    key: const ValueKey('virtual_keyboard'),
-                                    child: _buildVirtualKeyboard(),
-                                  ) 
-                                : const SizedBox.shrink(),
+                              child: _showKeyboard
+                                  ? KeyedSubtree(
+                                      key: const ValueKey('virtual_keyboard'),
+                                      child: _buildVirtualKeyboard(),
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                           ],
                         ),
@@ -277,11 +316,14 @@ class _POSScreenState extends State<POSScreen> {
             floatingActionButton: isMobile && state.cart.isNotEmpty
                 ? FloatingActionButton.extended(
                     onPressed: () => _showMobileCart(context, state),
-                    backgroundColor: const Color(0xFF6366F1),
-                    icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    icon: Icon(Icons.shopping_cart, color: Colors.white),
                     label: Text(
                       'Savat (${state.cart.length})',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   )
                 : null,
@@ -298,17 +340,26 @@ class _POSScreenState extends State<POSScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/icon.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Container(
               height: 55,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
               child: TextField(
@@ -316,24 +367,37 @@ class _POSScreenState extends State<POSScreen> {
                 focusNode: _searchFocusNode,
                 onChanged: (v) => setState(() {}),
                 onSubmitted: (v) {
-                   _processBarcode(v);
-                   _searchController.clear();
-                   if (_isScanMode) _searchFocusNode.requestFocus();
+                  _processBarcode(v);
+                  _searchController.clear();
+                  if (_isScanMode) _searchFocusNode.requestFocus();
                 },
                 decoration: InputDecoration(
                   hintText: 'Qidirish yoki shtrix kodni o\'qing...',
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6366F1)),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.keyboard_outlined, color: _showKeyboard ? const Color(0xFF6366F1) : Colors.grey.shade400),
-                        onPressed: () => setState(() => _showKeyboard = !_showKeyboard),
+                        icon: Icon(
+                          Icons.keyboard_outlined,
+                          color: _showKeyboard
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade400,
+                        ),
+                        onPressed: () =>
+                            setState(() => _showKeyboard = !_showKeyboard),
                       ),
                       IconButton(
                         icon: Icon(
-                          _isScanMode ? Icons.qr_code_scanner_rounded : Icons.barcode_reader, 
-                          color: _isScanMode ? const Color(0xFF6366F1) : Colors.grey.shade400
+                          _isScanMode
+                              ? Icons.qr_code_scanner_rounded
+                              : Icons.barcode_reader,
+                          color: _isScanMode
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade400,
                         ),
                         onPressed: () {
                           setState(() {
@@ -353,7 +417,7 @@ class _POSScreenState extends State<POSScreen> {
               ),
             ),
           ),
-          if (!isMobile) const SizedBox(width: 20),
+          if (!isMobile) SizedBox(width: 20),
           if (!isMobile) _buildKassaInfo(state),
           if (widget.onMenuPressed != null)
             Padding(
@@ -364,13 +428,21 @@ class _POSScreenState extends State<POSScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  child: Icon(
+                    Icons.menu_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
                 ),
               ),
             ),
@@ -383,24 +455,38 @@ class _POSScreenState extends State<POSScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.storefront, color: Color(0xFF6366F1), size: 20),
-          const SizedBox(width: 12),
+          Icon(
+            Icons.storefront,
+            color: Theme.of(context).colorScheme.primary,
+            size: 20,
+          ),
+          SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(state.currentRegister?.name ?? 'Kassa tanlanmagan', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               Text(
-                'Ombor: ${state.currentRegister == null ? "Tanlanmagan" : (state.warehouses.any((w) => w.id == state.currentRegister?.warehouseId) ? state.warehouses.firstWhere((w) => w.id == state.currentRegister?.warehouseId).name : (state.warehouses.isNotEmpty ? state.warehouses.first.name : "Noma\'lum"))}',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                state.currentRegister?.name ?? 'Kassa tanlanmagan',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Text(
+                'Ombor: ${state.currentRegister == null ? "Tanlanmagan" : (state.warehouses.any((w) => w.id == state.currentRegister?.warehouseId) ? state.warehouses.firstWhere((w) => w.id == state.currentRegister?.warehouseId).name : (state.warehouses.isNotEmpty ? state.warehouses.first.name : "Noma'lum"))}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
               ),
             ],
           ),
@@ -425,13 +511,22 @@ class _POSScreenState extends State<POSScreen> {
               label: Text(cat),
               selected: isSelected,
               onSelected: (val) => setState(() => selectedCategory = cat),
-              backgroundColor: Colors.white,
-              selectedColor: const Color(0xFF6366F1),
+              backgroundColor: Theme.of(context).cardColor,
+              selectedColor: Theme.of(context).colorScheme.primary,
+              iconTheme: IconThemeData(
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.primary,
+              ),
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           );
@@ -440,9 +535,13 @@ class _POSScreenState extends State<POSScreen> {
     );
   }
 
-  Widget _buildProductGrid(List<Product> products, AppState state, double width) {
+  Widget _buildProductGrid(
+    List<Product> products,
+    AppState state,
+    double width,
+  ) {
     if (products.isEmpty) return _buildEmptyState();
-    
+
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
@@ -452,7 +551,8 @@ class _POSScreenState extends State<POSScreen> {
         mainAxisExtent: 260,
       ),
       itemCount: products.length,
-      itemBuilder: (context, index) => _buildProductCard(products[index], state),
+      itemBuilder: (context, index) =>
+          _buildProductCard(products[index], state),
     );
   }
 
@@ -466,17 +566,24 @@ class _POSScreenState extends State<POSScreen> {
           state.addToCart(product);
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -487,9 +594,14 @@ class _POSScreenState extends State<POSScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                   image: product.imagePath != null
-                      ? DecorationImage(image: FileImage(File(product.imagePath!)), fit: BoxFit.cover)
+                      ? DecorationImage(
+                          image: FileImage(File(product.imagePath!)),
+                          fit: BoxFit.cover,
+                        )
                       : null,
                 ),
                 child: product.imagePath == null
@@ -497,15 +609,23 @@ class _POSScreenState extends State<POSScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withOpacity(0.05),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.05),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            state.categories.any((c) => c.id == product.categoryId && c.name == 'Ichimliklar')
+                            state.categories.any(
+                                  (c) =>
+                                      c.id == product.categoryId &&
+                                      c.name == 'Ichimliklar',
+                                )
                                 ? Icons.local_drink_rounded
                                 : Icons.restaurant_rounded,
                             size: 40,
-                            color: const Color(0xFF6366F1).withOpacity(0.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.5),
                           ),
                         ),
                       )
@@ -517,21 +637,42 @@ class _POSScreenState extends State<POSScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
+                  Text(
+                    product.name,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} s',
-                        style: const TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.w800, fontSize: 13),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: isLowStock ? Colors.red.shade50 : Colors.green.shade50, borderRadius: BorderRadius.circular(6)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isLowStock
+                              ? Colors.red.shade50
+                              : Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         child: Text(
-                          '${stock % 1 == 0 ? stock.toInt() : stock.toStringAsFixed(1)} ${product.unit}', 
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isLowStock ? Colors.red : Colors.green)
+                          '${stock % 1 == 0 ? stock.toInt() : stock.toStringAsFixed(1)} ${product.unit}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isLowStock ? Colors.red : Colors.green,
+                          ),
                         ),
                       ),
                     ],
@@ -549,19 +690,30 @@ class _POSScreenState extends State<POSScreen> {
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(left: BorderSide(color: Colors.grey.shade100)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(-5, 0))],
+        color: Theme.of(context).cardColor,
+        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+            ),
+            blurRadius: 15,
+            offset: const Offset(-5, 0),
+          ),
+        ],
       ),
       child: Column(
         children: [
           _buildCartHeader(state),
           Expanded(
-            child: state.cart.isEmpty ? _buildEmptyCart() : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: state.cart.length,
-              itemBuilder: (context, index) => _buildCartItem(state.cart[index], state),
-            ),
+            child: state.cart.isEmpty
+                ? _buildEmptyCart()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: state.cart.length,
+                    itemBuilder: (context, index) =>
+                        _buildCartItem(state.cart[index], state),
+                  ),
           ),
           _buildCartFooter(state),
         ],
@@ -574,24 +726,34 @@ class _POSScreenState extends State<POSScreen> {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-          const Expanded(child: Text('Savat', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
+          Expanded(
+            child: Text(
+              'Savat',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+          ),
           if (state.cart.isNotEmpty)
-            IconButton(icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent), onPressed: () => state.clearCart()),
+            IconButton(
+              icon: Icon(Icons.delete_sweep_outlined, color: Colors.redAccent),
+              onPressed: () => state.clearCart(),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildCartItem(SaleItem item, AppState state) {
-    final product = state.products.where((p) => p.id == item.productId).firstOrNull;
+    final product = state.products
+        .where((p) => p.id == item.productId)
+        .firstOrNull;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: [
@@ -602,46 +764,86 @@ class _POSScreenState extends State<POSScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade100),
-                  image: product?.imagePath != null ? DecorationImage(image: FileImage(File(product!.imagePath!)), fit: BoxFit.cover) : null,
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  image: product?.imagePath != null
+                      ? DecorationImage(
+                          image: FileImage(File(product!.imagePath!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: product?.imagePath == null ? const Icon(Icons.inventory_2_outlined, size: 20, color: Color(0xFF6366F1)) : null,
+                child: product?.imagePath == null
+                    ? Icon(
+                        Icons.inventory_2_outlined,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text('${item.price.toStringAsFixed(0)} so\'m', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      item.productName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      '${item.price.toStringAsFixed(0)} so\'m',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Text('${item.subtotal.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+              Text(
+                '${item.subtotal.toStringAsFixed(0)} so\'m',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 onPressed: () => state.removeFromCart(item.productId),
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                  size: 22,
+                ),
                 constraints: const BoxConstraints(),
                 padding: EdgeInsets.zero,
               ),
               Row(
                 children: [
-                  _buildQtyBtn(Icons.remove, () {
-                    try {
-                      state.decrementInCart(item.productId);
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
-                      );
-                    }
-                  }, color: Colors.red.shade50, iconColor: Colors.red),
+                  _buildQtyBtn(
+                    Icons.remove,
+                    () {
+                      try {
+                        state.decrementInCart(item.productId);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              e.toString().replaceAll('Exception: ', ''),
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    color: Colors.red.shade50,
+                    iconColor: Colors.red,
+                  ),
                   InkWell(
                     onTap: () => _showQuantityDialog(context, state, item),
                     borderRadius: BorderRadius.circular(8),
@@ -654,22 +856,37 @@ class _POSScreenState extends State<POSScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        item.quantity % 1 == 0 ? item.quantity.toInt().toString() : item.quantity.toStringAsFixed(3), 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
+                        item.quantity % 1 == 0
+                            ? item.quantity.toInt().toString()
+                            : item.quantity.toStringAsFixed(3),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
-                  _buildQtyBtn(Icons.add, () {
-                    if (product != null) {
-                      try {
-                        state.addToCart(product);
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
-                        );
+                  _buildQtyBtn(
+                    Icons.add,
+                    () {
+                      if (product != null) {
+                        try {
+                          state.addToCart(product);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceAll('Exception: ', ''),
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
-                    }
-                  }, color: Colors.green.shade50, iconColor: Colors.green),
+                    },
+                    color: Colors.green.shade50,
+                    iconColor: Colors.green,
+                  ),
                 ],
               ),
             ],
@@ -679,13 +896,25 @@ class _POSScreenState extends State<POSScreen> {
     );
   }
 
-  Widget _buildQtyBtn(IconData icon, VoidCallback onTap, {Color? color, Color? iconColor}) {
+  Widget _buildQtyBtn(
+    IconData icon,
+    VoidCallback onTap, {
+    Color? color,
+    Color? iconColor,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: color ?? Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color:
+              color ??
+              (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white10
+                  : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Icon(icon, size: 18, color: iconColor ?? Colors.black87),
       ),
     );
@@ -695,35 +924,60 @@ class _POSScreenState extends State<POSScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.05,
+            ),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Jami:', style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600)),
+              Text(
+                'Jami:',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               Text(
                 '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(state.cartTotal)} so\'m',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             height: 55,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 elevation: 0,
               ),
-              onPressed: state.cart.isEmpty ? null : () => _handlePayment(state),
-              child: const Text('TOLOVNI YAKUNLASH', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              onPressed: state.cart.isEmpty
+                  ? null
+                  : () => _handlePayment(state),
+              child: Text(
+                'TOLOVNI YAKUNLASH',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -738,10 +992,21 @@ class _POSScreenState extends State<POSScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
         child: Column(
           children: [
-            Container(margin: const EdgeInsets.symmetric(vertical: 12), width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Expanded(child: _buildCartSidebar(state, double.infinity)),
           ],
         ),
@@ -760,10 +1025,14 @@ class _POSScreenState extends State<POSScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, -5)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, -5),
+          ),
         ],
       ),
       child: Column(
@@ -777,31 +1046,65 @@ class _POSScreenState extends State<POSScreen> {
               children: [
                 TextButton.icon(
                   onPressed: () => setState(() => _showKeyboard = false),
-                  icon: const Icon(Icons.expand_more_rounded, size: 20, color: Colors.grey),
-                  label: const Text('Yashirish', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  icon: Icon(
+                    Icons.expand_more_rounded,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                  label: Text(
+                    'Yashirish',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => _onKeyTap('clear'),
-                  icon: const Icon(Icons.delete_sweep_outlined, size: 18, color: Colors.redAccent),
-                  label: const Text('Tozalash', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  icon: Icon(
+                    Icons.delete_sweep_outlined,
+                    size: 18,
+                    color: Colors.redAccent,
+                  ),
+                  label: Text(
+                    'Tozalash',
+                    style: TextStyle(color: Colors.redAccent, fontSize: 13),
+                  ),
                 ),
               ],
             ),
           ),
           // Row 1: Numbers
-          _buildKeyRow(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'back'], rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8]),
-          const SizedBox(height: 8),
+          _buildKeyRow(
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'back'],
+            rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8],
+          ),
+          SizedBox(height: 8),
           // Row 2: QWERTY (Staggered by padding)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: _buildKeyRow(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']),
+            child: _buildKeyRow([
+              'q',
+              'w',
+              'e',
+              'r',
+              't',
+              'y',
+              'u',
+              'i',
+              'o',
+              'p',
+            ]),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Row 3: ASDF (Caps + Enter)
-          _buildKeyRow(['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'enter'], rowFlex: [1.4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8]),
-          const SizedBox(height: 8),
+          _buildKeyRow(
+            ['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'enter'],
+            rowFlex: [1.4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8],
+          ),
+          SizedBox(height: 8),
           // Row 4: ZXCV (Space)
-          _buildKeyRow(['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', ',', 'space'], rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 4.0]),
+          _buildKeyRow(
+            ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', ',', 'space'],
+            rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 4.0],
+          ),
         ],
       ),
     );
@@ -813,10 +1116,7 @@ class _POSScreenState extends State<POSScreen> {
         final idx = entry.key;
         final k = entry.value;
         final flex = rowFlex != null ? (rowFlex[idx] * 100).toInt() : 100;
-        return Expanded(
-          flex: flex,
-          child: _buildVirtualKey(k),
-        );
+        return Expanded(flex: flex, child: _buildVirtualKey(k));
       }).toList(),
     );
   }
@@ -826,33 +1126,46 @@ class _POSScreenState extends State<POSScreen> {
     final isEnter = k == 'enter';
     final isSpace = k == 'space';
     final isCaps = k == 'caps';
-    
+
     final Color bgColor;
     final Color textColor;
     Widget labelWidget;
 
     if (isEnter) {
-      bgColor = const Color(0xFF6366F1);
+      bgColor = Theme.of(context).colorScheme.primary;
       textColor = Colors.white;
-      labelWidget = const Icon(Icons.keyboard_return_rounded, color: Colors.white, size: 20);
+      labelWidget = Icon(
+        Icons.keyboard_return_rounded,
+        color: Colors.white,
+        size: 20,
+      );
     } else if (isBack) {
-      bgColor = const Color(0xFFE2E8F0);
+      bgColor = Theme.of(context).dividerColor;
       textColor = Colors.black87;
-      labelWidget = const Icon(Icons.backspace_outlined, size: 18);
+      labelWidget = Icon(Icons.backspace_outlined, size: 18);
     } else if (isCaps) {
-      bgColor = _isCaps ? const Color(0xFF94A3B8) : const Color(0xFFE2E8F0);
+      bgColor = _isCaps
+          ? Theme.of(context).hintColor
+          : Theme.of(context).dividerColor;
       textColor = _isCaps ? Colors.white : Colors.black87;
-      labelWidget = Text('ABC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor));
+      labelWidget = Text(
+        'ABC',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: textColor,
+        ),
+      );
     } else if (isSpace) {
       bgColor = Colors.white;
       textColor = Colors.black54;
-      labelWidget = const Text('Bo\'shliq', style: TextStyle(fontSize: 14));
+      labelWidget = Text('Bo\'shliq', style: TextStyle(fontSize: 14));
     } else {
       bgColor = Colors.white;
       textColor = Colors.black87;
       labelWidget = Text(
         _isCaps ? k.toUpperCase() : k.toLowerCase(),
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       );
     }
 
@@ -873,6 +1186,21 @@ class _POSScreenState extends State<POSScreen> {
     );
   }
 
-  Widget _buildEmptyState() => const Center(child: Text('Mahsulot topilmadi', style: TextStyle(color: Colors.grey)));
-  Widget _buildEmptyCart() => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.shopping_cart_outlined, size: 60, color: Color(0xFFE2E8F0)), const SizedBox(height: 16), Text('Savat bo\'sh', style: TextStyle(color: Colors.grey.shade400))]));
+  Widget _buildEmptyState() => Center(
+    child: Text('Mahsulot topilmadi', style: TextStyle(color: Colors.grey)),
+  );
+  Widget _buildEmptyCart() => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.shopping_cart_outlined,
+          size: 60,
+          color: Theme.of(context).dividerColor,
+        ),
+        SizedBox(height: 16),
+        Text('Savat bo\'sh', style: TextStyle(color: Colors.grey.shade400)),
+      ],
+    ),
+  );
 }

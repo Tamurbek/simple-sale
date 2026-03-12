@@ -15,7 +15,7 @@ class SyncService {
   static void broadcast(String type, Map<String, dynamic> data) {
     final message = jsonEncode({'type': type, 'data': data});
     final List<WebSocketChannel> toRemove = [];
-    
+
     for (var client in _clients) {
       try {
         client.sink.add(message);
@@ -23,7 +23,7 @@ class SyncService {
         toRemove.add(client);
       }
     }
-    
+
     for (var client in toRemove) {
       _clients.remove(client);
     }
@@ -34,12 +34,17 @@ class SyncService {
     required Function(Map<String, dynamic>) onSaleReceived,
     required Function(String type, Map<String, dynamic> data) onUpdateReceived,
     required Map<String, dynamic> Function() onSyncRequested,
-    required Future<Map<String, dynamic>> Function(String? registerId, String? deviceId, bool force) onRegisterSelectionRequested,
+    required Future<Map<String, dynamic>> Function(
+      String? registerId,
+      String? deviceId,
+      bool force,
+    )
+    onRegisterSelectionRequested,
   }) async {
     final router = Router();
 
     router.get('/ws', (Request request) {
-      return webSocketHandler((WebSocketChannel socket) {
+      return webSocketHandler((WebSocketChannel socket, String? protocol) {
         _clients.add(socket);
         socket.stream.listen(
           (message) {
@@ -79,7 +84,11 @@ class SyncService {
       try {
         final payload = await request.readAsString();
         final data = jsonDecode(payload);
-        final result = await onRegisterSelectionRequested(data['registerId'], data['deviceId'], data['force'] ?? false);
+        final result = await onRegisterSelectionRequested(
+          data['registerId'],
+          data['deviceId'],
+          data['force'] ?? false,
+        );
         return Response.ok(jsonEncode(result));
       } catch (e) {
         return Response.internalServerError(body: e.toString());
@@ -101,17 +110,26 @@ class SyncService {
 
     // Simple status check endpoint
     router.get('/status', (Request request) {
-      return Response.ok(jsonEncode({'status': 'active', 'timestamp': DateTime.now().toIso8601String()}));
+      return Response.ok(
+        jsonEncode({
+          'status': 'active',
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
     });
 
-    _server = await io.serve(router, InternetAddress.anyIPv4, 8080);
+    _server = await io.serve(router.call, InternetAddress.anyIPv4, 8080);
     print('Server ishga tushdi: ${_server!.address.address}:${_server!.port}');
   }
 
   // Client fetches status from Master
-  static Future<Map<String, dynamic>?> fetchStatusFromMaster(String masterIp) async {
+  static Future<Map<String, dynamic>?> fetchStatusFromMaster(
+    String masterIp,
+  ) async {
     try {
-      final response = await http.get(Uri.parse('http://$masterIp:8080/status')).timeout(const Duration(seconds: 3));
+      final response = await http
+          .get(Uri.parse('http://$masterIp:8080/status'))
+          .timeout(const Duration(seconds: 3));
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
@@ -136,7 +154,10 @@ class SyncService {
   }
 
   // Client (Secondary Register) sends sale to Master
-  static Future<bool> sendSaleToMaster(String masterIp, Map<String, dynamic> saleData) async {
+  static Future<bool> sendSaleToMaster(
+    String masterIp,
+    Map<String, dynamic> saleData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('http://$masterIp:8080/sale'),
@@ -151,7 +172,11 @@ class SyncService {
   }
 
   // Client sends generic update to Master
-  static Future<bool> sendUpdateToMaster(String masterIp, String type, Map<String, dynamic> data) async {
+  static Future<bool> sendUpdateToMaster(
+    String masterIp,
+    String type,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('http://$masterIp:8080/update'),
@@ -165,11 +190,20 @@ class SyncService {
     }
   }
 
-  static Future<Map<String, dynamic>?> selectRegisterOnMaster(String masterIp, String? registerId, String? deviceId, bool force) async {
+  static Future<Map<String, dynamic>?> selectRegisterOnMaster(
+    String masterIp,
+    String? registerId,
+    String? deviceId,
+    bool force,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('http://$masterIp:8080/select-register'),
-        body: jsonEncode({'registerId': registerId, 'deviceId': deviceId, 'force': force}),
+        body: jsonEncode({
+          'registerId': registerId,
+          'deviceId': deviceId,
+          'force': force,
+        }),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {

@@ -23,19 +23,23 @@ class _ActivationScreenState extends State<ActivationScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
+          : Theme.of(context).colorScheme.surface,
       body: Center(
         child: Container(
           width: 450,
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(
+                  Theme.of(context).brightness == Brightness.dark ? 0.4 : 0.2,
+                ),
                 blurRadius: 30,
                 offset: const Offset(0, 15),
               ),
@@ -46,86 +50,121 @@ class _ActivationScreenState extends State<ActivationScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.asset('assets/icon.png', width: 100, height: 100, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'Dastur faollashtirilmagan',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'Ushbu kompyuterda dasturdan foydalanish uchun litsenziya kodi talab qilinadi.',
-                style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
-              
+              SizedBox(height: 32),
+
               // Device ID Section
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'SO\'ROV KODI (DEVICE ID):',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                            letterSpacing: 1,
+                          ),
                         ),
                         InkWell(
                           onTap: () {
-                            Clipboard.setData(ClipboardData(text: state.activationRequestCode));
+                            Clipboard.setData(
+                              ClipboardData(text: state.activationRequestCode),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Suro\'v kodi nusxalandi!'), duration: Duration(seconds: 2)),
+                              const SnackBar(
+                                content: Text('Suro\'v kodi nusxalandi!'),
+                                duration: Duration(seconds: 2),
+                              ),
                             );
                           },
-                          child: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF6366F1)),
+                          child: Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     SelectableText(
                       state.activationRequestCode,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF6366F1), letterSpacing: 4),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.primary,
+                        letterSpacing: 4,
+                      ),
                     ),
                   ],
                 ),
               ),
-              
-              const SizedBox(height: 32),
-              
+
+              SizedBox(height: 32),
+
               TextField(
                 controller: _codeController,
                 decoration: InputDecoration(
                   labelText: 'Aktivatsiya kodi',
                   hintText: 'SS-XXXX-OK',
                   errorText: _error,
-                  prefixIcon: const Icon(Icons.vpn_key_rounded),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  prefixIcon: Icon(Icons.vpn_key_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Theme.of(context).cardColor,
                 ),
-                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
                 onChanged: (_) => setState(() => _error = null),
               ),
-              
-              const SizedBox(height: 24),
-              
+
+              SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () async {
@@ -136,23 +175,39 @@ class _ActivationScreenState extends State<ActivationScreen> {
                     try {
                       await state.activate(_codeController.text);
                     } catch (e) {
-                      setState(() => _error = e.toString().replaceAll('Exception: ', ''));
+                      setState(
+                        () =>
+                            _error = e.toString().replaceAll('Exception: ', ''),
+                      );
                     }
                   },
-                  child: const Text('FAOLLASHTIRISH', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                  child: Text(
+                    'FAOLLASHTIRISH',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 ),
               ),
-              
-              const SizedBox(height: 24),
-              const Text(
+
+              SizedBox(height: 24),
+              Text(
                 'Kodni olish uchun Telegram botga murojaat qiling:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 '@SimpleSaleBot',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

@@ -15,10 +15,10 @@ class SettingsScreen extends StatelessWidget {
     final state = context.watch<AppState>();
 
     return Container(
-      color: const Color(0xFFF1F5F9),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(24),
@@ -28,59 +28,76 @@ class SettingsScreen extends StatelessWidget {
                   'Asosiy Sozlamalar',
                   'Kassa va unga bog\'langan omborlarni sozlash',
                   [
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.storefront,
                       color: Colors.blue,
                       title: 'Joriy Kassa',
                       subtitle: state.currentRegister?.name ?? 'Tanlanmagan',
                       onTap: () => _showRegisterPicker(context, state),
                     ),
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.terminal_rounded,
                       color: Colors.indigo,
                       title: 'Kassa Terminallari',
                       subtitle: 'Terminallarni qo\'shish va tahrirlash',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TerminalManagementScreen())),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TerminalManagementScreen(),
+                        ),
+                      ),
                     ),
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.warehouse_rounded,
                       color: Colors.orange,
                       title: 'Omborlar',
                       subtitle: 'Omborlarni qo\'shish va tahrirlash',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WarehouseManagementScreen())),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WarehouseManagementScreen(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 if (state.isMaster == false) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSection(
                     context,
                     'Ma\'lumotlar almashinuvi',
                     'Asosiy server bilan bog\'lanish',
                     [
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.sync,
-                        color: const Color(0xFF6366F1),
+                        color: Theme.of(context).colorScheme.primary,
                         title: 'Sinxronizatsiya',
                         subtitle: 'Asosiy kompyuterdan bazani yangilash',
                         onTap: () async {
-                           try {
-                             await state.syncWithMaster();
-                             if (context.mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                 const SnackBar(content: Text('Ma\'lumotlar muvaffaqiyatli yangilandi')),
-                               );
-                             }
-                           } catch (e) {
-                             if (context.mounted) {
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                 SnackBar(content: Text('Xatolik: $e'), backgroundColor: Colors.red),
-                               );
-                             }
-                           }
+                          try {
+                            await state.syncWithMaster();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Ma\'lumotlar muvaffaqiyatli yangilandi',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Xatolik: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                       ),
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.lan,
                         color: Colors.blueGrey,
                         title: 'Server IP',
@@ -90,17 +107,19 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 _buildSection(
                   context,
                   'Apparat Ta\'minoti',
                   'Printer va skaner sozlamalari',
                   [
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.print_outlined,
                       color: Colors.teal,
                       title: 'Asosiy Printer',
-                      subtitle: state.selectedPrinterName ?? 'Tizim primteri (Tanlang)',
+                      subtitle:
+                          state.selectedPrinterName ??
+                          'Tizim primteri (Tanlang)',
                       onTap: () async {
                         final printers = await Printing.listPrinters();
                         if (context.mounted) {
@@ -108,7 +127,7 @@ class SettingsScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.qr_code_scanner,
                       color: Colors.purple,
                       title: 'Shtrix-kod Skaner',
@@ -117,20 +136,20 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 _buildSection(
                   context,
                   'Tizim Ma\'lumotlari',
                   'Dastur versiyasi va litsenziya',
                   [
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.info_outline,
                       color: Colors.grey,
                       title: 'Dastur Versiyasi',
                       subtitle: 'v1.0.4 • 2026',
                       onTap: () {},
                     ),
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.logout,
                       color: Colors.redAccent,
                       title: 'Tizimdan chiqish',
@@ -140,13 +159,13 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
                 if (state.isMaster == true) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSection(
                     context,
                     'Ma\'lumotlar xavfsizligi',
                     'Ma\'lumotlar bazasini saqlash va tiklash',
                     [
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.cloud_upload_rounded,
                         color: Colors.green,
                         title: 'Zaxira nusxasini yaratish',
@@ -155,7 +174,7 @@ class SettingsScreen extends StatelessWidget {
                           await state.exportDatabase();
                         },
                       ),
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.cloud_download_rounded,
                         color: Colors.red,
                         title: 'Zaxiradan tiklash',
@@ -166,33 +185,50 @@ class SettingsScreen extends StatelessWidget {
                             await state.importDatabase();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Baza muvaffaqiyatli tiklandi!')),
+                                const SnackBar(
+                                  content: Text(
+                                    'Baza muvaffaqiyatli tiklandi!',
+                                  ),
+                                ),
                               );
                             }
                           }
                         },
                       ),
                       const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.cloud_sync_rounded,
-                        color: const Color(0xFF6366F1),
+                        color: Theme.of(context).colorScheme.primary,
                         title: 'Bulutli zaxira (Railway)',
                         subtitle: 'Ma\'lumotlarni serverga saqlash',
                         onTap: () async {
                           try {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaxira yuklanmoqda...')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Zaxira yuklanmoqda...'),
+                              ),
+                            );
                             await state.uploadDatabaseToCloud();
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaxira serverga yuborildi!')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Zaxira serverga yuborildi!'),
+                                ),
+                              );
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
                           }
                         },
                       ),
-                      _buildSettingsTile(
+                      _buildSettingsTile(context,  
                         icon: Icons.settings_backup_restore_rounded,
                         color: Colors.orange,
                         title: 'Bulutdan tiklash',
@@ -201,24 +237,49 @@ class SettingsScreen extends StatelessWidget {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Serverdan tiklash'),
-                              content: const Text('Bu amal hozirgi barcha ma\'lumotlarni serverdagi zaxira bilan almashtiradi. Davom etasizmi?'),
+                              title: Text('Serverdan tiklash'),
+                              content: Text(
+                                'Bu amal hozirgi barcha ma\'lumotlarni serverdagi zaxira bilan almashtiradi. Davom etasizmi?',
+                              ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Yo\'q')),
-                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ha')),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text('Yo\'q'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: Text('Ha'),
+                                ),
                               ],
                             ),
                           );
                           if (confirm == true) {
                             try {
-                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tiklanmoqda...')));
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Tiklanmoqda...'),
+                                  ),
+                                );
+                              }
                               await state.restoreDatabaseFromCloud();
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ma\'lumotlar muvaffaqiyatli tiklandi!')));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Ma\'lumotlar muvaffaqiyatli tiklandi!',
+                                    ),
+                                  ),
+                                );
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.toString()),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
                               }
                             }
                           }
@@ -227,29 +288,37 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 _buildSection(
                   context,
                   'Tizimni Tozalash',
                   'Dasturni boshlang\'ich holatga qaytarish',
                   [
-                    _buildSettingsTile(
+                    _buildSettingsTile(context,  
                       icon: Icons.delete_forever_rounded,
                       color: Colors.red,
                       title: 'Barcha ma\'lumotlarni o\'chirish',
-                      subtitle: 'Dasturni tozalash va qayta o\'rnatish holatiga keltirish',
+                      subtitle:
+                          'Dasturni tozalash va qayta o\'rnatish holatiga keltirish',
                       onTap: () async {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            title: const Text('Diqqat!'),
-                            content: const Text('Ushbu amal barcha ma\'lumotlarni (mahsulotlar, sotuvlar, sozlamalar) butunlay o\'chirib yuboradi. Dastur qayta o\'rnatilgan holatga qaytadi. Davom etasizmi?'),
+                            title: Text('Diqqat!'),
+                            content: Text(
+                              'Ushbu amal barcha ma\'lumotlarni (mahsulotlar, sotuvlar, sozlamalar) butunlay o\'chirib yuboradi. Dastur qayta o\'rnatilgan holatga qaytadi. Davom etasizmi?',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Yo\'q')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text('Yo\'q'),
+                              ),
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                child: const Text('Ha, hammasini o\'chirish'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: Text('Ha, hammasini o\'chirish'),
                               ),
                             ],
                           ),
@@ -269,10 +338,10 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -280,19 +349,31 @@ class SettingsScreen extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(width: 16),
-              const Column(
+              SizedBox(width: 16),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Sozlamalar',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   Text(
                     'Dasturiy va texnik sozlamalarni boshqarish',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
                 ],
               ),
@@ -300,11 +381,19 @@ class SettingsScreen extends StatelessWidget {
           ),
           if (onMenuPressed != null)
             IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              icon: Icon(
+                Icons.menu_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 28,
+              ),
               onPressed: onMenuPressed,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF8FAFC),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
         ],
@@ -312,7 +401,12 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, String title, String description, List<Widget> children) {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    String description,
+    List<Widget> children,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -321,29 +415,46 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-              Text(description, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+                ),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
   }
 
-  Widget _buildSettingsTile({
+  Widget _buildSettingsTile(BuildContext context, {
     required IconData icon,
     required Color color,
     required String title,
@@ -359,16 +470,25 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(width: 20),
+            SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                  Text(
+                    title,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  ),
                 ],
               ),
             ),
@@ -383,16 +503,21 @@ class SettingsScreen extends StatelessWidget {
   void _showRegisterPicker(BuildContext context, AppState state) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Kassani tanlang', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
+            Text(
+              'Kassani tanlang',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 24),
             ListView.builder(
               shrinkWrap: true,
               itemCount: state.registers.length,
@@ -400,10 +525,24 @@ class SettingsScreen extends StatelessWidget {
                 final reg = state.registers[index];
                 final isSelected = state.currentRegister?.id == reg.id;
                 return ListTile(
-                  leading: const Icon(Icons.storefront),
-                  title: Text(reg.name, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                  trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF6366F1)) : null,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  leading: Icon(Icons.storefront),
+                  title: Text(
+                    reg.name,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(
+                          Icons.check_circle,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   onTap: () async {
                     try {
                       await state.setRegister(reg);
@@ -412,7 +551,9 @@ class SettingsScreen extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(e.toString().replaceAll('Exception: ', '')),
+                            content: Text(
+                              e.toString().replaceAll('Exception: ', ''),
+                            ),
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -429,11 +570,15 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showPrinterPicker(BuildContext context, AppState state, List<Printer> printers) {
+  void _showPrinterPicker(
+    BuildContext context,
+    AppState state,
+    List<Printer> printers,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Printerni tanlang'),
+        title: Text('Printerni tanlang'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: SizedBox(
           width: 350,
@@ -443,7 +588,7 @@ class SettingsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final p = printers[index];
               return ListTile(
-                leading: const Icon(Icons.print),
+                leading: Icon(Icons.print),
                 title: Text(p.name),
                 onTap: () {
                   state.updatePrinter(p.name);
@@ -461,17 +606,23 @@ class SettingsScreen extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Bazani tiklash'),
-        content: const Text(
+        title: Text('Bazani tiklash'),
+        content: Text(
           'Diqqat! Yangi baza faylini tanlasangiz, hozirgi barcha ma\'lumotlaringiz (mahsulotlar, sotuvlar) o\'chiriladi va tanlangan fayl bilan almashadi. Davom etasizmi?',
-          style: TextStyle(color: Color(0xFF64748B)),
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Bekor qilish'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Ha, tiklash'),
+            child: Text('Ha, tiklash'),
           ),
         ],
       ),

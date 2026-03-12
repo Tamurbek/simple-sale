@@ -16,27 +16,27 @@ class DashboardScreen extends StatelessWidget {
         final isNarrow = constraints.maxWidth < 900;
 
         return Container(
-          color: const Color(0xFFF1F5F9),
+          color: Theme.of(context).colorScheme.surface,
           child: Column(
             children: [
-              _buildHeader(constraints.maxWidth),
+              _buildHeader(context, constraints.maxWidth),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    _buildStatsSummary(state, constraints.maxWidth),
-                    const SizedBox(height: 24),
+                    _buildStatsSummary(context, state, constraints.maxWidth),
+                    SizedBox(height: 24),
                     if (isNarrow) ...[
-                      _buildRecentSales(state),
-                      const SizedBox(height: 24),
-                      _buildTopProducts(state),
+                      _buildRecentSales(context, state),
+                      SizedBox(height: 24),
+                      _buildTopProducts(context, state),
                     ] else
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(flex: 2, child: _buildRecentSales(state)),
-                          const SizedBox(width: 24),
-                          Expanded(flex: 1, child: _buildTopProducts(state)),
+                          Expanded(flex: 2, child: _buildRecentSales(context, state)),
+                          SizedBox(width: 24),
+                          Expanded(flex: 1, child: _buildTopProducts(context, state)),
                         ],
                       ),
                   ],
@@ -49,10 +49,10 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(double width) {
+  Widget _buildHeader(BuildContext context, double width) {
     return Container(
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -60,19 +60,27 @@ class DashboardScreen extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(width: 16),
-              const Column(
+              SizedBox(width: 16),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Dashboard',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   Text(
                     'Savdo va ko\'rsatkichlar tahlili',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
                 ],
               ),
@@ -80,18 +88,34 @@ class DashboardScreen extends StatelessWidget {
           ),
           if (width > 600)
             Chip(
-              label: Text('Bugun: ${DateFormat('dd MMMM, yyyy').format(DateTime.now())}'),
-              avatar: const Icon(Icons.calendar_today, size: 16, color: Color(0xFF6366F1)),
-              backgroundColor: const Color(0xFFF8FAFC),
+              label: Text(
+                'Bugun: ${DateFormat('dd MMMM, yyyy').format(DateTime.now())}',
+              ),
+              avatar: Icon(
+                Icons.calendar_today,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withOpacity(0.05),
             ),
           if (onMenuPressed != null) ...[
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              icon: Icon(
+                Icons.menu_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 28,
+              ),
               onPressed: onMenuPressed,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF8FAFC),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -100,9 +124,17 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSummary(AppState state, double width) {
-    int crossAxisCount = width < 600 ? 1 : width < 1200 ? 2 : 4;
-    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+  Widget _buildStatsSummary(BuildContext context, AppState state, double width) {
+    int crossAxisCount = width < 600
+        ? 1
+        : width < 1200
+        ? 2
+        : 4;
+    final fmt = NumberFormat.currency(
+      locale: 'uz_UZ',
+      symbol: '',
+      decimalDigits: 0,
+    );
 
     return GridView.count(
       shrinkWrap: true,
@@ -112,25 +144,66 @@ class DashboardScreen extends StatelessWidget {
       mainAxisSpacing: 24,
       childAspectRatio: 2.2,
       children: [
-        _buildStatCard('Bugungi Savdo', '${fmt.format(state.todaySalesTotal)} so\'m', Icons.payments_outlined, Colors.green, 'Live'),
-        _buildStatCard('Cheklar soni', '${state.todaySalesCount} ta', Icons.receipt_long_outlined, Colors.blue, 'Live'),
-        _buildStatCard('O\'rtacha chek', '${fmt.format(state.averageCheck)} so\'m', Icons.analytics_outlined, Colors.orange, 'Live'),
-        _buildStatCard('Mahsulotlar', '${state.products.length} turda', Icons.inventory_2_outlined, Colors.purple, 'Baza'),
+        _buildStatCard(
+          context,
+          'Bugungi Savdo',
+          '${fmt.format(state.todaySalesTotal)} so\'m',
+          Icons.payments_outlined,
+          Colors.green,
+          'Live',
+        ),
+        _buildStatCard(
+          context,
+          'Cheklar soni',
+          '${state.todaySalesCount} ta',
+          Icons.receipt_long_outlined,
+          Colors.blue,
+          'Live',
+        ),
+        _buildStatCard(
+          context,
+          'O\'rtacha chek',
+          '${fmt.format(state.averageCheck)} so\'m',
+          Icons.analytics_outlined,
+          Colors.orange,
+          'Live',
+        ),
+        _buildStatCard(
+          context,
+          'Mahsulotlar',
+          '${state.products.length} turda',
+          Icons.inventory_2_outlined,
+          Colors.purple,
+          'Baza',
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, String status) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    String status,
+  ) {
     final isBaza = status == 'Baza';
     final statusColor = isBaza ? Colors.blue : Colors.green;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -142,7 +215,10 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Icon(icon, color: color, size: 18),
               ),
               Container(
@@ -153,42 +229,74 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 child: Text(
                   status,
-                  style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+          SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRecentSales(AppState state) {
+  Widget _buildRecentSales(BuildContext context, AppState state) {
     final recentSales = state.sales.take(5).toList();
-    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+    final fmt = NumberFormat.currency(
+      locale: 'uz_UZ',
+      symbol: '',
+      decimalDigits: 0,
+    );
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Oxirgi Sotuvlar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.arrow_forward_rounded, size: 20)),
+              Text(
+                'Oxirgi Sotuvlar',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(Icons.arrow_forward_rounded, size: 20),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (recentSales.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(child: Text('Hozircha sotuvlar yo\'q', style: TextStyle(color: Colors.grey))),
+              child: Center(
+                child: Text(
+                  'Hozircha sotuvlar yo\'q',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
             )
           else
             for (var sale in recentSales)
@@ -199,21 +307,45 @@ class DashboardScreen extends StatelessWidget {
                     Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-                      child: const Icon(Icons.shopping_bag_outlined, size: 20, color: Color(0xFF64748B)),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Sotuv #${sale.id.substring(0, 5)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text(DateFormat('HH:mm').format(sale.date), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text(
+                            'Sotuv #${sale.id.substring(0, 5)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('HH:mm').format(sale.date),
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),
-                    Text('${fmt.format(sale.total)} so\'m',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14)),
+                    Text(
+                      '${fmt.format(sale.total)} so\'m',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -222,21 +354,32 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopProducts(AppState state) {
+  Widget _buildTopProducts(BuildContext context, AppState state) {
     final topProducts = state.topSellingProducts;
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Top Mahsulotlar (Bugun)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
+          Text(
+            'Top Mahsulotlar (Bugun)',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 24),
           if (topProducts.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(child: Text('Bugun sotuv bo\'lmadi', style: TextStyle(color: Colors.grey))),
+              child: Center(
+                child: Text(
+                  'Bugun sotuv bo\'lmadi',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
             )
           else
             for (var entry in topProducts)
@@ -248,15 +391,33 @@ class DashboardScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                        Text('${entry.value.toStringAsFixed(0)} ta', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text(
+                          entry.key,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${entry.value.toStringAsFixed(0)} ta',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     LinearProgressIndicator(
-                      value: entry.value / (topProducts.first.value == 0 ? 1 : topProducts.first.value),
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      color: const Color(0xFF6366F1),
+                      value:
+                          entry.value /
+                          (topProducts.first.value == 0
+                              ? 1
+                              : topProducts.first.value),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.05),
+                      color: Theme.of(context).colorScheme.primary,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(3),
                     ),

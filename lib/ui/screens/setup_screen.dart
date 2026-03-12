@@ -10,7 +10,7 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-   final TextEditingController _ipController = TextEditingController();
+  final TextEditingController _ipController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool isMasterChoice = true;
   bool isLoading = false;
@@ -25,17 +25,19 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Container(
           width: 500,
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(
+                  Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.05,
+                ),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -46,20 +48,31 @@ class _SetupScreenState extends State<SetupScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.asset('assets/icon.png', width: 80, height: 80, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'Tizimni sozlash',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Ushbu terminal turini tanlang',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
               ),
-              const SizedBox(height: 32),
-              
+              SizedBox(height: 32),
+
               // Master/Client Toggle
               Row(
                 children: [
@@ -72,7 +85,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       onTap: () => setState(() => isMasterChoice = true),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: _buildChoiceCard(
                       title: 'Qo\'shimcha',
@@ -84,102 +97,137 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 32),
-              
+
+              SizedBox(height: 32),
+
               if (isMasterChoice) ...[
-                 FutureBuilder<String?>(
-                   future: context.read<AppState>().localIp,
-                   builder: (context, snapshot) {
-                     return Container(
-                       padding: const EdgeInsets.all(16),
-                       decoration: BoxDecoration(
-                         color: Colors.amber.shade50,
-                         borderRadius: BorderRadius.circular(12),
-                         border: Border.all(color: Colors.amber.shade200),
-                       ),
-                       child: Row(
-                         children: [
-                           const Icon(Icons.info_outline, color: Colors.amber),
-                           const SizedBox(width: 12),
-                           Expanded(
-                             child: Text(
-                               'Ushbu kompyuter IP manzili: ${snapshot.data ?? "Aniqlanmoqda..."}\nUni boshqa kompyuterda kiriting.',
-                               style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
-                             ),
-                           ),
-                         ],
-                       ),
-                     );
-                   }
-                 ),
-                 const SizedBox(height: 24),
-                 TextField(
-                   controller: _passwordController,
-                   decoration: InputDecoration(
-                     labelText: "Xo'jayin paroli (Tiklash uchun)",
-                     hintText: "Kamida 4 ta belgi",
-                     prefixIcon: const Icon(Icons.vpn_key_outlined),
-                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                   ),
-                   obscureText: true,
-                 ),
+                FutureBuilder<String?>(
+                  future: context.read<AppState>().localIp,
+                  builder: (context, snapshot) {
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.amber),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Ushbu kompyuter IP manzili: ${snapshot.data ?? "Aniqlanmoqda..."}\nUni boshqa kompyuterda kiriting.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 24),
+                TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: "Xo'jayin paroli (Tiklash uchun)",
+                    hintText: "Kamida 4 ta belgi",
+                    prefixIcon: Icon(Icons.vpn_key_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  obscureText: true,
+                ),
               ],
-              
+
               if (!isMasterChoice) ...[
                 TextField(
                   controller: _ipController,
                   decoration: InputDecoration(
                     labelText: 'Asosiy kompyuter IP manzili',
                     hintText: 'Masalan: 192.168.1.10',
-                    prefixIcon: const Icon(Icons.lan_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: Icon(Icons.lan_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
               ],
-              
-              const SizedBox(height: 16),
-              
+
+              SizedBox(height: 16),
+
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
-                  onPressed: isLoading ? null : () async {
-                    if (isMasterChoice && _passwordController.text.length < 4) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Parol kamida 4 belgidan iborat bo\'lishi kerak')),
-                      );
-                      return;
-                    }
-                    
-                    setState(() => isLoading = true);
-                    try {
-                      await context.read<AppState>().setTerminalMode(
-                        isMasterChoice, 
-                        ip: _ipController.text,
-                        password: _passwordController.text,
-                      );
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
-                        );
-                      }
-                    } finally {
-                      if (mounted) setState(() => isLoading = false);
-                    }
-                  },
-                  child: isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(isMasterChoice ? 'DAVOM ETISH' : 'ULANISH VA DAVOM ETISH', 
-                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (isMasterChoice &&
+                              _passwordController.text.length < 4) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Parol kamida 4 belgidan iborat bo\'lishi kerak',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setState(() => isLoading = true);
+                          try {
+                            await context.read<AppState>().setTerminalMode(
+                              isMasterChoice,
+                              ip: _ipController.text,
+                              password: _passwordController.text,
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    e.toString().replaceAll('Exception: ', ''),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => isLoading = false);
+                          }
+                        },
+                  child: isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          isMasterChoice
+                              ? 'DAVOM ETISH'
+                              : 'ULANISH VA DAVOM ETISH',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -202,19 +250,43 @@ class _SetupScreenState extends State<SetupScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6366F1).withOpacity(0.05) : Colors.white,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6366F1) : Colors.grey.shade200,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).dividerColor,
             width: 2,
           ),
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? const Color(0xFF6366F1) : Colors.grey, size: 32),
-            const SizedBox(height: 12),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? const Color(0xFF6366F1) : Colors.black87)),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+            Icon(
+              icon,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey,
+              size: 32,
+            ),
+            SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
           ],
         ),
       ),

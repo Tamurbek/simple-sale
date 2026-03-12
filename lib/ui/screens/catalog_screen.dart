@@ -14,7 +14,8 @@ class CatalogScreen extends StatefulWidget {
   State<CatalogScreen> createState() => _CatalogScreenState();
 }
 
-class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProviderStateMixin {
+class _CatalogScreenState extends State<CatalogScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -36,9 +37,9 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 700;
-        
+
         return Container(
-          color: const Color(0xFFF1F5F9),
+          color: Theme.of(context).colorScheme.surface,
           child: Column(
             children: [
               _buildHeader(isNarrow),
@@ -62,47 +63,87 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
   Widget _buildHeader(bool isNarrow) {
     return Container(
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/icon.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
           ),
-          const SizedBox(width: 16),
-          const Column(
+          SizedBox(width: 16),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Katalog', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-              Text('Mahsulotlar va turlarni boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+              Text(
+                'Katalog',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                'Mahsulotlar va turlarni boshqarish',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
             ],
           ),
           const Spacer(),
           ElevatedButton.icon(
             onPressed: () {
               if (_tabController.index == 0) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductFormScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProductFormScreen(),
+                  ),
+                );
               } else {
                 _showCategoryDialog(null);
               }
             },
-            icon: const Icon(Icons.add),
-            label: isNarrow ? const Text('Qo\'shish') : Text(_tabController.index == 0 ? 'Yangi mahsulot' : 'Yangi tur'),
+            icon: Icon(Icons.add),
+            label: isNarrow
+                ? Text('Qo\'shish')
+                : Text(
+                    _tabController.index == 0 ? 'Yangi mahsulot' : 'Yangi tur',
+                  ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: isNarrow ? 16 : 24, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: EdgeInsets.symmetric(
+                horizontal: isNarrow ? 16 : 24,
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           if (widget.onMenuPressed != null) ...[
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+              icon: Icon(
+                Icons.menu_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 28,
+              ),
               onPressed: widget.onMenuPressed,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF8FAFC),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -113,13 +154,13 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
 
   Widget _buildTabBar() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: TabBar(
         controller: _tabController,
         onTap: (index) => setState(() {}),
-        labelColor: const Color(0xFF6366F1),
+        labelColor: Theme.of(context).colorScheme.primary,
         unselectedLabelColor: Colors.grey,
-        indicatorColor: const Color(0xFF6366F1),
+        indicatorColor: Theme.of(context).colorScheme.primary,
         tabs: const [
           Tab(text: 'Mahsulotlar'),
           Tab(text: 'Kategoriyalar'),
@@ -132,8 +173,18 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
     return Consumer<AppState>(
       builder: (context, state, child) {
         final query = _searchController.text.toLowerCase();
-        final filtered = state.activeProducts.where((p) => p.name.toLowerCase().contains(query) || p.barcode.contains(query)).toList();
-        final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+        final filtered = state.activeProducts
+            .where(
+              (p) =>
+                  p.name.toLowerCase().contains(query) ||
+                  p.barcode.contains(query),
+            )
+            .toList();
+        final fmt = NumberFormat.currency(
+          locale: 'uz_UZ',
+          symbol: '',
+          decimalDigits: 0,
+        );
 
         return Column(
           children: [
@@ -144,10 +195,16 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Mahsulotlarni qidirish...',
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6366F1)),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  fillColor: Theme.of(context).cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
@@ -158,12 +215,21 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final product = filtered[index];
-                  final category = state.activeCategories.firstWhere((c) => c.id == product.categoryId, orElse: () => Category(id: '', name: ''));
+                  final category = state.activeCategories.firstWhere(
+                    (c) => c.id == product.categoryId,
+                    orElse: () => Category(id: '', name: ''),
+                  );
                   return _buildItemCard(
                     title: product.name,
                     subtitle: '${category.name} • ${product.barcode}',
                     trailing: '${fmt.format(product.price)} s',
-                    onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProductFormScreen(product: product))),
+                    onEdit: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProductFormScreen(product: product),
+                      ),
+                    ),
                     onDelete: () => state.deleteProduct(product.id),
                     isNarrow: isNarrow,
                     imagePath: product.imagePath,
@@ -186,7 +252,9 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
           itemCount: activeCategories.length,
           itemBuilder: (context, index) {
             final category = activeCategories[index];
-            final count = state.activeProducts.where((p) => p.categoryId == category.id).length;
+            final count = state.activeProducts
+                .where((p) => p.categoryId == category.id)
+                .length;
             return _buildItemCard(
               title: category.name,
               subtitle: '$count ta mahsulot',
@@ -214,9 +282,17 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -224,27 +300,56 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              image: imagePath != null ? DecorationImage(image: FileImage(File(imagePath)), fit: BoxFit.cover) : null,
+              image: imagePath != null
+                  ? DecorationImage(
+                      image: FileImage(File(imagePath)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: imagePath == null ? const Icon(Icons.inventory_2_outlined, color: Color(0xFF6366F1), size: 20) : null,
+            child: imagePath == null
+                ? Icon(
+                    Icons.inventory_2_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  )
+                : null,
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                ),
               ],
             ),
           ),
           if (!isNarrow && trailing.isNotEmpty)
-            Text(trailing, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-          const SizedBox(width: 8),
-          IconButton(icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blue), onPressed: onEdit),
-          IconButton(icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent), onPressed: onDelete),
+            Text(
+              trailing,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
+            onPressed: onEdit,
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+            onPressed: onDelete,
+          ),
         ],
       ),
     );
@@ -255,22 +360,33 @@ class _CatalogScreenState extends State<CatalogScreen> with SingleTickerProvider
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(category == null ? 'Yangi kategoriya' : 'Kategoriyani tahrirlash'),
-        content: TextField(controller: controller, decoration: InputDecoration(hintText: 'Kategoriya nomi')),
+        title: Text(
+          category == null ? 'Yangi kategoriya' : 'Kategoriyani tahrirlash',
+        ),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: 'Kategoriya nomi'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
           ElevatedButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
                 if (category == null) {
                   context.read<AppState>().addCategory(controller.text);
                 } else {
-                  context.read<AppState>().updateCategory(category.id, controller.text);
+                  context.read<AppState>().updateCategory(
+                    category.id,
+                    controller.text,
+                  );
                 }
                 Navigator.pop(context);
               }
             },
-            child: const Text('Saqlash'),
+            child: Text('Saqlash'),
           ),
         ],
       ),

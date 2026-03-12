@@ -20,14 +20,17 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    
+
     final filteredSales = state.sales.where((s) {
       // Date filter
       bool matchesDate = true;
       if (_dateRange != null) {
         final date = DateTime(s.date.year, s.date.month, s.date.day);
-        matchesDate = (date.isAtSameMomentAs(_dateRange!.start) || date.isAfter(_dateRange!.start)) &&
-                     (date.isAtSameMomentAs(_dateRange!.end) || date.isBefore(_dateRange!.end));
+        matchesDate =
+            (date.isAtSameMomentAs(_dateRange!.start) ||
+                date.isAfter(_dateRange!.start)) &&
+            (date.isAtSameMomentAs(_dateRange!.end) ||
+                date.isBefore(_dateRange!.end));
       }
 
       // Register filter
@@ -39,10 +42,13 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       return matchesDate && matchesRegister;
     }).toList();
 
-    final totalAmount = filteredSales.fold<double>(0, (sum, item) => sum + item.total);
+    final totalAmount = filteredSales.fold<double>(
+      0,
+      (sum, item) => sum + item.total,
+    );
 
     return Container(
-      color: const Color(0xFFF1F5F9),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           _buildHeader(state),
@@ -51,25 +57,56 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               margin: const EdgeInsets.fromLTRB(24, 0, 24, 0),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4F46E5)]),
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Jami savdo:', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(
+                        'Jami savdo:',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       Text(
                         '${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(totalAmount)} so\'m',
-                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ],
                   ),
@@ -77,16 +114,16 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
               ),
             ),
           Expanded(
-            child: filteredSales.isEmpty 
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: filteredSales.length,
-                  itemBuilder: (context, index) {
-                    final sale = filteredSales[index];
-                    return _buildSaleCard(sale, state);
-                  },
-                ),
+            child: filteredSales.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: filteredSales.length,
+                    itemBuilder: (context, index) {
+                      final sale = filteredSales[index];
+                      return _buildSaleCard(sale, state);
+                    },
+                  ),
           ),
         ],
       ),
@@ -96,7 +133,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   Widget _buildHeader(AppState state) {
     return Container(
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Column(
         children: [
           Row(
@@ -104,54 +141,103 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(width: 16),
-              const Expanded(
+              SizedBox(width: 16),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sotuvlar Tarixi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-                    Text('Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                    Text(
+                      'Sotuvlar Tarixi',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Barcha amalga oshirilgan savdolarni ko\'rish va filtrlash',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
                   ],
                 ),
               ),
               if (widget.onMenuPressed != null)
                 IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
                   onPressed: widget.onMenuPressed,
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF8FAFC),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Row(
             children: [
               Expanded(child: _buildFilterButton()),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: _selectedRegisterId != null ? const Color(0xFF6366F1).withOpacity(0.1) : const Color(0xFFF8FAFC),
+                    color: _selectedRegisterId != null
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                        : (Theme.of(context).cardColor),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _selectedRegisterId != null ? const Color(0xFF6366F1).withOpacity(0.2) : Colors.grey.shade100),
+                    border: Border.all(
+                      color: _selectedRegisterId != null
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.2)
+                          : Theme.of(context).dividerColor,
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedRegisterId,
-                      hint: const Text('Kassa bo\'yicha', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                      hint: Text(
+                        'Kassa bo\'yicha',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
                       isExpanded: true,
-                      onChanged: (val) => setState(() => _selectedRegisterId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedRegisterId = val),
                       items: [
-                        const DropdownMenuItem(value: null, child: Text('Barcha kassalar', style: TextStyle(fontSize: 13))),
-                        ...state.registers.map((r) => DropdownMenuItem(
-                          value: r.id,
-                          child: Text(r.name, style: const TextStyle(fontSize: 13)),
-                        )),
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text(
+                            'Barcha kassalar',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        ...state.registers.map(
+                          (r) => DropdownMenuItem(
+                            value: r.id,
+                            child: Text(r.name, style: TextStyle(fontSize: 13)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -175,11 +261,9 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: Color(0xFF6366F1),
-                  onPrimary: Colors.white,
-                  surface: Colors.white,
-                  onSurface: Color(0xFF1E293B),
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: Theme.of(context).colorScheme.primary,
+                  brightness: Theme.of(context).brightness,
                 ),
               ),
               child: child!,
@@ -195,28 +279,42 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: _dateRange != null ? const Color(0xFF6366F1).withOpacity(0.1) : const Color(0xFFF8FAFC),
+          color: _dateRange != null
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              : (Theme.of(context).cardColor),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _dateRange != null ? const Color(0xFF6366F1).withOpacity(0.2) : Colors.grey.shade100),
+          border: Border.all(
+            color: _dateRange != null
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                : Theme.of(context).dividerColor,
+          ),
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today_rounded, size: 18, color: _dateRange != null ? const Color(0xFF6366F1) : const Color(0xFF64748B)),
-            const SizedBox(width: 12),
+            Icon(
+              Icons.calendar_today_rounded,
+              size: 18,
+              color: _dateRange != null
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).textTheme.bodySmall?.color,
+            ),
+            SizedBox(width: 12),
             Text(
-              _dateRange == null 
-                ? 'Sana bo\'yicha filter' 
-                : '${DateFormat('dd.MM.yyyy').format(_dateRange!.start)} - ${DateFormat('dd.MM.yyyy').format(_dateRange!.end)}',
+              _dateRange == null
+                  ? 'Sana bo\'yicha filter'
+                  : '${DateFormat('dd.MM.yyyy').format(_dateRange!.start)} - ${DateFormat('dd.MM.yyyy').format(_dateRange!.end)}',
               style: TextStyle(
-                color: _dateRange != null ? const Color(0xFF6366F1) : const Color(0xFF1E293B),
+                color: _dateRange != null
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
             ),
             if (_dateRange != null) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.close, size: 16),
+                icon: Icon(Icons.close, size: 16),
                 onPressed: () => setState(() => _dateRange = null),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -229,29 +327,70 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   }
 
   Widget _buildSaleCard(Sale sale, AppState state) {
-    final registerName = state.registers.where((r) => r.id == sale.registerId).firstOrNull?.name ?? 'Kassa';
+    final registerName =
+        state.registers
+            .where((r) => r.id == sale.registerId)
+            .firstOrNull
+            ?.name ??
+        'Kassa';
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.receipt_long_rounded, color: Colors.green, size: 20),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.receipt_long_rounded,
+            color: Colors.green,
+            size: 20,
+          ),
         ),
-        title: Text('Sotuv #${sale.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text('${DateFormat('dd.MM.yyyy, HH:mm').format(sale.date)} • $registerName', style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-        trailing: Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF1E293B))),
+        title: Text(
+          'Sotuv #${sale.id.substring(0, 8).toUpperCase()}',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Text(
+          '${DateFormat('dd.MM.yyyy, HH:mm').format(sale.date)} • $registerName',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+            fontSize: 12,
+          ),
+        ),
+        trailing: Text(
+          '${sale.total.toStringAsFixed(0)} so\'m',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16))),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            ),
             child: Column(
               children: [
                 for (var item in sale.items)
@@ -264,12 +403,27 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.productName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                              Text('${item.quantity} x ${item.price.toStringAsFixed(0)}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              Text(
+                                item.productName,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '${item.quantity} x ${item.price.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        Text('${(item.quantity * item.price).toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          '${(item.quantity * item.price).toStringAsFixed(0)} so\'m',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                   ),
@@ -277,11 +431,24 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Jami:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('${sale.total.toStringAsFixed(0)} so\'m', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF6366F1))),
+                    Text(
+                      'Jami:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      '${sale.total.toStringAsFixed(0)} so\'m',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
@@ -289,12 +456,20 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.redAccent,
                           side: const BorderSide(color: Colors.redAccent),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () => _confirmReturn(context, state, sale),
-                        icon: const Icon(Icons.assignment_return_outlined, size: 18),
-                        label: const Text('Vazvrat qilish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        icon: Icon(Icons.assignment_return_outlined, size: 18),
+                        label: Text(
+                          'Vazvrat qilish',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -312,12 +487,20 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Vazvratni tasdiqlang'),
-        content: Text('Sotuv #${sale.id.substring(0, 8).toUpperCase()} uchun barcha mahsulotlarni omborga qaytarmoqchimisiz?'),
+        title: Text('Vazvratni tasdiqlang'),
+        content: Text(
+          'Sotuv #${sale.id.substring(0, 8).toUpperCase()} uchun barcha mahsulotlarni omborga qaytarmoqchimisiz?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               final ret = SaleReturn(
                 id: Uuid().v4(),
@@ -325,20 +508,28 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 date: DateTime.now(),
                 total: sale.total,
                 warehouseId: sale.warehouseId,
-                items: sale.items.map((i) => SaleReturnItem(
-                  productId: i.productId,
-                  productName: i.productName,
-                  quantity: i.quantity,
-                  price: i.price,
-                )).toList(),
+                items: sale.items
+                    .map(
+                      (i) => SaleReturnItem(
+                        productId: i.productId,
+                        productName: i.productName,
+                        quantity: i.quantity,
+                        price: i.price,
+                      ),
+                    )
+                    .toList(),
               );
               await state.addReturn(ret);
               if (mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vazvrat muvaffaqiyatli amalga oshirildi')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vazvrat muvaffaqiyatli amalga oshirildi'),
+                  ),
+                );
               }
             },
-            child: const Text('Muvaffaqiyatli qaytarish'),
+            child: Text('Muvaffaqiyatli qaytarish'),
           ),
         ],
       ),
@@ -351,10 +542,20 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history_rounded, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          const Text('Sotuvlar topilmadi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+          SizedBox(height: 16),
+          Text(
+            'Sotuvlar topilmadi',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
           if (_dateRange != null)
-            TextButton(onPressed: () => setState(() => _dateRange = null), child: const Text('Filtrni tozalash')),
+            TextButton(
+              onPressed: () => setState(() => _dateRange = null),
+              child: Text('Filtrni tozalash'),
+            ),
         ],
       ),
     );

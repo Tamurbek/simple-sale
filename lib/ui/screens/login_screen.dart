@@ -43,10 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('PIN kod xato!', style: TextStyle(color: Colors.white)),
+          content: Text('PIN kod xato!', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -58,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('PIN kodni tiklash'),
+        title: Text('PIN kodni tiklash'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,21 +70,25 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const InputDecoration(labelText: 'Xo\'jayin paroli'),
               obscureText: true,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Foydalanuvchilar soni: ${state.users.length}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor'),
+          ),
           ElevatedButton(
             onPressed: () {
               final enteredPass = passCtrl.text;
               final masterPass = state.masterPassword;
               // 7777 har doim ishlaydi, yoki to'g'ri master parol
-              final isValid = enteredPass == '7777' ||
+              final isValid =
+                  enteredPass == '7777' ||
                   (masterPass != null && enteredPass == masterPass);
               if (isValid) {
                 Navigator.pop(context);
@@ -98,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               }
             },
-            child: const Text('Tasdiqlash'),
+            child: Text('Tasdiqlash'),
           ),
         ],
       ),
@@ -111,34 +117,49 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Admin yaratish'),
+        title: Text('Admin yaratish'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Tizimda foydalanuvchi yo\'q. Yangi admin PIN yarating:', style: TextStyle(color: Colors.orange)),
-            const SizedBox(height: 16),
+            Text(
+              'Tizimda foydalanuvchi yo\'q. Yangi admin PIN yarating:',
+              style: TextStyle(color: Colors.orange),
+            ),
+            SizedBox(height: 16),
             TextField(
               controller: pinCtrl,
-              decoration: const InputDecoration(labelText: 'Yangi 4 xonali PIN'),
+              decoration: const InputDecoration(
+                labelText: 'Yangi 4 xonali PIN',
+              ),
               keyboardType: TextInputType.number,
               maxLength: 4,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (pinCtrl.text.length == 4) {
-                final newAdmin = User(id: 'admin', name: 'Admin', pin: pinCtrl.text, role: UserRole.admin);
+                final newAdmin = User(
+                  id: 'admin',
+                  name: 'Admin',
+                  pin: pinCtrl.text,
+                  role: UserRole.admin,
+                );
                 await state.addUser(newAdmin);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Admin yaratildi! Endi login turing.')),
+                  const SnackBar(
+                    content: Text('Admin yaratildi! Endi login turing.'),
+                  ),
                 );
               }
             },
-            child: const Text('Saqlash'),
+            child: Text('Saqlash'),
           ),
         ],
       ),
@@ -150,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Foydalanuvchini tanlang'),
+        title: Text('Foydalanuvchini tanlang'),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -186,17 +207,29 @@ class _LoginScreenState extends State<LoginScreen> {
           maxLength: 4,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (pinCtrl.text.length == 4) {
-                final newUser = User(id: user.id, name: user.name, pin: pinCtrl.text, role: user.role);
+                final newUser = User(
+                  id: user.id,
+                  name: user.name,
+                  pin: pinCtrl.text,
+                  role: user.role,
+                );
                 await state.addUser(newUser);
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN muvaffaqiyatli yangilandi!')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('PIN muvaffaqiyatli yangilandi!'),
+                  ),
+                );
               }
             },
-            child: const Text('Saqlash'),
+            child: Text('Saqlash'),
           ),
         ],
       ),
@@ -206,12 +239,20 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    Theme.of(context).colorScheme.onSurface,
+                    const Color(0xFF0F172A),
+                  ]
+                : [
+                    Theme.of(context).colorScheme.primary,
+                    const Color(0xFF4F46E5),
+                  ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -225,7 +266,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   margin: const EdgeInsets.all(24),
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.03)
+                        : Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Column(
@@ -233,27 +276,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.asset('assets/icon.png', width: 100, height: 100, fit: BoxFit.cover),
+                        child: Image.asset(
+                          'assets/icon.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
+                      SizedBox(height: 24),
+                      Text(
                         'Tizimga Kirish',
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       Text(
-                        state.isMaster == true ? '🖥 Master terminal' : '💻 Klient terminal',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        state.isMaster == true
+                            ? '🖥 Master terminal'
+                            : '💻 Klient terminal',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32),
                       _buildPinDisplay(),
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32),
                       _buildNumpad(),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       TextButton(
                         onPressed: _showRecoveryDialog,
-                        child: const Text(
+                        child: Text(
                           'PINni unutdingizmi?',
-                          style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
                     ],
@@ -268,7 +325,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: SafeArea(
                 child: IconButton(
                   onPressed: _resetTerminalMode,
-                  icon: const Icon(Icons.settings_rounded, color: Colors.white54, size: 28),
+                  icon: Icon(
+                    Icons.settings_rounded,
+                    color: Colors.white54,
+                    size: 28,
+                  ),
                   tooltip: 'Terminal sozlamalari',
                 ),
               ),
@@ -283,17 +344,22 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Terminal sozlamalari'),
-        content: const Text('Terminal rejimini qayta sozlashni xohlaysizmi? Barcha mahalliy ma\'lumotlar o\'chiriladi.'),
+        title: Text('Terminal sozlamalari'),
+        content: Text(
+          'Terminal rejimini qayta sozlashni xohlaysizmi? Barcha mahalliy ma\'lumotlar o\'chiriladi.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Bekor')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Bekor')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               await context.read<AppState>().resetTerminalMode();
             },
-            child: const Text('Qayta sozlash'),
+            child: Text('Qayta sozlash'),
           ),
         ],
       ),
@@ -313,7 +379,14 @@ class _LoginScreenState extends State<LoginScreen> {
             shape: BoxShape.circle,
             color: filled ? Colors.white : Colors.white24,
             border: Border.all(color: Colors.white54, width: 2),
-            boxShadow: filled ? [BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 10)] : [],
+            boxShadow: filled
+                ? [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.5),
+                      blurRadius: 10,
+                    ),
+                  ]
+                : [],
           ),
         );
       }),
@@ -327,21 +400,21 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: ['1', '2', '3'].map((n) => _buildNumButton(n)).toList(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: ['4', '5', '6'].map((n) => _buildNumButton(n)).toList(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: ['7', '8', '9'].map((n) => _buildNumButton(n)).toList(),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const SizedBox(width: 80),
+            SizedBox(width: 80),
             _buildNumButton('0'),
             _buildIconButton(Icons.backspace_rounded, _onDelete),
           ],
@@ -364,7 +437,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Text(
           n,
-          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
     );

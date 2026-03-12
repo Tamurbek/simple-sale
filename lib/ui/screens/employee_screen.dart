@@ -13,7 +13,7 @@ class EmployeeScreen extends StatelessWidget {
     final state = context.watch<AppState>();
 
     return Container(
-      color: const Color(0xFFF1F5F9),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           _buildHeader(context, state),
@@ -35,7 +35,7 @@ class EmployeeScreen extends StatelessWidget {
   Widget _buildHeader(BuildContext context, AppState state) {
     return Container(
       padding: const EdgeInsets.all(24),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -43,14 +43,32 @@ class EmployeeScreen extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset('assets/icon.png', width: 40, height: 40, fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
-              const SizedBox(width: 16),
-              const Column(
+              SizedBox(width: 16),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hodimlar', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-                  Text('Tizim foydalanuvchilarini boshqarish', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+                  Text(
+                    'Hodimlar',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    'Tizim foydalanuvchilarini boshqarish',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -59,23 +77,36 @@ class EmployeeScreen extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () => _showAddUserDialog(context, state),
-                icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('Yangi hodim'),
+                icon: Icon(Icons.person_add_alt_1_rounded),
+                label: Text('Yangi hodim'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               if (onMenuPressed != null) ...[
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: Color(0xFF6366F1), size: 28),
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 28,
+                  ),
                   onPressed: onMenuPressed,
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF8FAFC),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -92,35 +123,63 @@ class EmployeeScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.02,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: (isAdmin ? Colors.amber : Colors.blue).withOpacity(0.1),
-            child: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person, color: isAdmin ? Colors.amber : Colors.blue),
+            backgroundColor: (isAdmin ? Colors.amber : Colors.blue).withOpacity(
+              0.1,
+            ),
+            child: Icon(
+              isAdmin ? Icons.admin_panel_settings : Icons.person,
+              color: isAdmin ? Colors.amber : Colors.blue,
+            ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(isAdmin ? 'Administrator' : 'Kassir', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                Text(
+                  user.name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  isAdmin ? 'Administrator' : 'Kassir',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                ),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('PIN: ${user.pin}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
+              Text(
+                'PIN: ${user.pin}',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               if (user.id != 'admin')
                 TextButton(
                   onPressed: () => state.deleteUser(user.id),
-                  child: const Text('O\'chirish', style: TextStyle(color: Colors.red, fontSize: 12)),
+                  child: Text(
+                    'O\'chirish',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
                 ),
             ],
           ),
@@ -138,44 +197,55 @@ class EmployeeScreen extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Yangi Hodim Qo\'shish'),
+          title: Text('Yangi Hodim Qo\'shish'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Ism sharif')),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Ism sharif'),
+              ),
               TextField(
                 controller: pinCtrl,
                 decoration: const InputDecoration(labelText: 'PIN kod'),
                 keyboardType: TextInputType.number,
                 maxLength: 4,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               DropdownButtonFormField<UserRole>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 decoration: const InputDecoration(labelText: 'Huquqi'),
                 items: const [
                   DropdownMenuItem(value: UserRole.admin, child: Text('Admin')),
-                  DropdownMenuItem(value: UserRole.cashier, child: Text('Kassir')),
+                  DropdownMenuItem(
+                    value: UserRole.cashier,
+                    child: Text('Kassir'),
+                  ),
                 ],
                 onChanged: (val) => setDialogState(() => selectedRole = val!),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Bekor qilish'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (nameCtrl.text.isNotEmpty && pinCtrl.text.length == 4) {
-                  state.addUser(User(
-                    id: Uuid().v4(),
-                    name: nameCtrl.text,
-                    pin: pinCtrl.text,
-                    role: selectedRole,
-                  ));
+                  state.addUser(
+                    User(
+                      id: Uuid().v4(),
+                      name: nameCtrl.text,
+                      pin: pinCtrl.text,
+                      role: selectedRole,
+                    ),
+                  );
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Saqlash'),
+              child: Text('Saqlash'),
             ),
           ],
         ),

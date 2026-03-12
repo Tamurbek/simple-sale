@@ -14,7 +14,11 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   String paymentMethod = 'Naqd';
   final TextEditingController receivedController = TextEditingController();
-  final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+  final fmt = NumberFormat.currency(
+    locale: 'uz_UZ',
+    symbol: '',
+    decimalDigits: 0,
+  );
 
   @override
   void initState() {
@@ -29,7 +33,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         receivedController.clear();
       } else if (val == 'back') {
         if (receivedController.text.isNotEmpty) {
-          receivedController.text = receivedController.text.substring(0, receivedController.text.length - 1);
+          receivedController.text = receivedController.text.substring(
+            0,
+            receivedController.text.length - 1,
+          );
         }
       } else {
         receivedController.text += val;
@@ -48,7 +55,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (context) =>
+          Center(child: CircularProgressIndicator(color: Colors.white)),
     );
 
     try {
@@ -60,7 +68,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           printerName: state.selectedPrinterName,
         );
       }
-      
+
       await state.processSale();
       if (mounted) {
         Navigator.pop(context); // close loader
@@ -69,7 +77,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: $e'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -83,31 +93,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
-              child: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 64,
+              ),
             ),
-            const SizedBox(height: 24),
-            const Text('Sotuv yakunlandi!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('Ombor yangilandi va chek chiqarildi.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
+            Text(
+              'Sotuv yakunlandi!',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Ombor yangilandi va chek chiqarildi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 onPressed: () {
-                   Navigator.pop(context); // close success dialog
-                   Navigator.pop(context); // back to POS
+                  Navigator.pop(context); // close success dialog
+                  Navigator.pop(context); // back to POS
                 },
-                child: const Text('Davom Etish', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Davom Etish',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
@@ -125,30 +154,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final change = received - total;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset('assets/icon.png', width: 32, height: 32, fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/icon.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
             ),
-            const SizedBox(width: 12),
-            const Text('To\'lovni Yakunlash', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+            SizedBox(width: 12),
+            Text(
+              'To\'lovni Yakunlash',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Theme.of(context).colorScheme.onSurface,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isSmall = constraints.maxWidth < 950;
-          
+
           if (isSmall) {
             return Column(
               children: [
@@ -158,9 +202,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Column(
                       children: [
                         _buildSummaryCard(total, change),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         _buildPaymentMethods(),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         _buildNumpadSection(total),
                       ],
                     ),
@@ -176,7 +220,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Expanded(
                 flex: 4,
                 child: Container(
-                  color: const Color(0xFFF1F5F9),
+                  color: Theme.of(context).colorScheme.surface,
                   child: Column(
                     children: [
                       Expanded(
@@ -186,9 +230,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildSummaryCard(total, change),
-                              const SizedBox(height: 32),
+                              SizedBox(height: 32),
                               _buildPaymentMethods(),
-                              const SizedBox(height: 32),
+                              SizedBox(height: 32),
                               _buildBigDisplay(receivedStr),
                             ],
                           ),
@@ -201,7 +245,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               Container(
                 width: 450,
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 child: _buildNumpadSection(total),
               ),
             ],
@@ -215,10 +259,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.03,
+            ),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
@@ -226,17 +276,48 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('To\'lanishi kerak:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
-              Text('${fmt.format(total)} so\'m', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+              Text(
+                'To\'lanishi kerak:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+              Text(
+                '${fmt.format(total)} so\'m',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             ],
           ),
           if (change > 0 && paymentMethod == 'Naqd') ...[
-            const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Divider(height: 1, color: Color(0xFFF1F5F9))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Divider(height: 1, color: Theme.of(context).dividerColor),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Qaytim:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.green)),
-                Text('${fmt.format(change)} so\'m', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.green)),
+                Text(
+                  'Qaytim:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+                Text(
+                  '${fmt.format(change)} so\'m',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.green,
+                  ),
+                ),
               ],
             ),
           ],
@@ -249,13 +330,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('  TO\'LOV USULI', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 1.2)),
-        const SizedBox(height: 12),
+        Text(
+          '  TO\'LOV USULI',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+            letterSpacing: 1.2,
+          ),
+        ),
+        SizedBox(height: 12),
         Row(
           children: [
-            _buildMethodBtn('Naqd', Icons.payments_rounded, const Color(0xFF6366F1)),
-            const SizedBox(width: 16),
-            _buildMethodBtn('Plastik', Icons.credit_card_rounded, const Color(0xFF0EA5E9)),
+            _buildMethodBtn(
+              'Naqd',
+              Icons.payments_rounded,
+              Theme.of(context).colorScheme.primary,
+            ),
+            SizedBox(width: 16),
+            _buildMethodBtn(
+              'Plastik',
+              Icons.credit_card_rounded,
+              Colors.lightBlue,
+            ),
           ],
         ),
       ],
@@ -272,16 +369,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
-            color: isSelected ? color : Colors.white,
+            color: isSelected ? color : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isSelected ? color : const Color(0xFFE2E8F0), width: 2),
-            boxShadow: isSelected ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))] : [],
+            border: Border.all(
+              color: isSelected ? color : Theme.of(context).dividerColor,
+              width: 2,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [],
           ),
           child: Column(
             children: [
               Icon(icon, color: isSelected ? Colors.white : color, size: 28),
-              const SizedBox(height: 12),
-              Text(method, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.w800, fontSize: 16)),
+              SizedBox(height: 12),
+              Text(
+                method,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
         ),
@@ -294,26 +411,46 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('OLINGAN SUMMA', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1)),
-          const SizedBox(height: 16),
+          Text(
+            'OLINGAN SUMMA',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Text(
                   val.isEmpty ? '0' : val,
-                  style: const TextStyle(color: Color(0xFF1E293B), fontSize: 48, fontWeight: FontWeight.w900, fontFamily: 'monospace'),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Text('SO\'M', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 24, fontWeight: FontWeight.w900)),
+              Text(
+                'SO\'M',
+                style: TextStyle(
+                  color: Theme.of(context).dividerColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
           ),
         ],
@@ -324,30 +461,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildNumpadSection(double total) {
     return Column(
       children: [
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [1000, 5000, 10000, 20000, 50000, 100000, 200000].map((amount) {
+            children: [1000, 5000, 10000, 20000, 50000, 100000, 200000].map((
+              amount,
+            ) {
               return InkWell(
                 onTap: () => onQuickAdd(amount.toDouble()),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
-                  child: Text('+${fmt.format(amount).trim()}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF475569))),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Text(
+                    '+${fmt.format(amount).trim()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ),
               );
             }).toList(),
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Expanded(
           child: GridView.count(
             padding: const EdgeInsets.all(24),
@@ -357,33 +506,53 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             childAspectRatio: 1.2,
             children: [
               for (var i = 1; i <= 9; i++) _buildNumBtn(i.toString()),
-              _buildNumBtn('C', color: Colors.red.shade50, textColor: Colors.red),
+              _buildNumBtn(
+                'C',
+                color: Colors.red.withOpacity(0.1),
+                textColor: Colors.red,
+              ),
               _buildNumBtn('0'),
-              _buildNumBtn('back', icon: Icons.backspace_rounded, color: const Color(0xFFF1F5F9)),
+              _buildNumBtn(
+                'back',
+                icon: Icons.backspace_rounded,
+                color: Theme.of(context).colorScheme.surface,
+              ),
             ],
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(24),
           child: ElevatedButton(
-            onPressed: () => setState(() => receivedController.text = total.toStringAsFixed(0)),
+            onPressed: () => setState(
+              () => receivedController.text = total.toStringAsFixed(0),
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF1F5F9),
-              foregroundColor: const Color(0xFF475569),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
               minimumSize: const Size.fromHeight(60),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            child: const Text('ANIQ SUMMA', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+            child: Text(
+              'ANIQ SUMMA',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildNumBtn(String val, {Color? color, Color? textColor, IconData? icon}) {
+  Widget _buildNumBtn(
+    String val, {
+    Color? color,
+    Color? textColor,
+    IconData? icon,
+  }) {
     return Material(
-      color: color ?? const Color(0xFFF8FAFC),
+      color: color ?? (Theme.of(context).cardColor),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: () => onNumPressed(val),
@@ -391,12 +560,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0).withOpacity(0.5)),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.5),
+            ),
           ),
           child: Center(
-            child: icon != null 
-              ? Icon(icon, color: const Color(0xFF475569), size: 24)
-              : Text(val, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: textColor ?? const Color(0xFF1E293B))),
+            child: icon != null
+                ? Icon(
+                    icon,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    size: 24,
+                  )
+                : Text(
+                    val,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color:
+                          textColor ?? Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -406,9 +591,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildSimpleFooter(AppState state) {
     return Container(
       padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [
@@ -417,25 +602,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
                 minimumSize: const Size.fromHeight(64),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-              child: const Text('Bekor qilish', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 16)),
+              child: Text(
+                'Bekor qilish',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
-          const SizedBox(width: 20),
+          SizedBox(width: 20),
           Expanded(
             flex: 2,
             child: ElevatedButton(
               onPressed: () => _executeSale(state),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(64),
                 elevation: 8,
-                shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                shadowColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
-              child: const Text('TASDIQLASH VA BOSISH', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5)),
+              child: Text(
+                'TASDIQLASH VA BOSISH',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],

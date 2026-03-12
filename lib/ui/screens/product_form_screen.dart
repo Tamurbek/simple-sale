@@ -30,8 +30,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product?.name ?? '');
-    _priceController = TextEditingController(text: widget.product?.price.toStringAsFixed(0) ?? '');
-    _barcodeController = TextEditingController(text: widget.product?.barcode ?? '');
+    _priceController = TextEditingController(
+      text: widget.product?.price.toStringAsFixed(0) ?? '',
+    );
+    _barcodeController = TextEditingController(
+      text: widget.product?.barcode ?? '',
+    );
     _selectedCategoryId = widget.product?.categoryId;
     _imagePath = widget.product?.imagePath;
     _trackStock = widget.product?.trackStock ?? true;
@@ -62,8 +66,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         await imagesDir.create(recursive: true);
       }
 
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}${path.extension(pickedFile.path)}';
-      final savedImage = await File(pickedFile.path).copy(path.join(imagesDir.path, fileName));
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}${path.extension(pickedFile.path)}';
+      final savedImage = await File(
+        pickedFile.path,
+      ).copy(path.join(imagesDir.path, fileName));
 
       setState(() {
         _imagePath = savedImage.path;
@@ -74,12 +81,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void _save() async {
     if (_formKey.currentState!.validate()) {
       final state = context.read<AppState>();
-      
+
       if (_selectedCategoryId == null && state.categories.isEmpty) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avval kategoriya yarating')));
-         return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Avval kategoriya yarating')),
+        );
+        return;
       }
-      
+
       if (_selectedCategoryId == null && state.categories.isNotEmpty) {
         _selectedCategoryId = state.categories.first.id;
       }
@@ -122,24 +131,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset('assets/icon.png', width: 30, height: 30, fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/icon.png',
+                width: 30,
+                height: 30,
+                fit: BoxFit.cover,
+              ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(widget.product == null ? 'Yangi Mahsulot' : 'Tahrirlash'),
           ],
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -150,35 +164,60 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildImagePicker(),
-              const SizedBox(height: 32),
-              _buildTextField('Mahsulot nomi', _nameController, Icons.inventory_2_outlined),
-              const SizedBox(height: 20),
+              SizedBox(height: 32),
+              _buildTextField(
+                'Mahsulot nomi',
+                _nameController,
+                Icons.inventory_2_outlined,
+              ),
+              SizedBox(height: 20),
               _buildCategoryDropdown(state),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: _buildTextField('Narxi (so\'m)', _priceController, Icons.payments_outlined, isNumber: true)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildTextField('Asosiy Shtrix-kod', _barcodeController, Icons.qr_code_scanner_outlined)),
+                  Expanded(
+                    child: _buildTextField(
+                      'Narxi (so\'m)',
+                      _priceController,
+                      Icons.payments_outlined,
+                      isNumber: true,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      'Asosiy Shtrix-kod',
+                      _barcodeController,
+                      Icons.qr_code_scanner_outlined,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _buildAdditionalBarcodes(),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _buildTrackStockToggle(),
-              const SizedBox(height: 48),
+              SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
                   onPressed: _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('SAQLASH', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  child: Text(
+                    'SAQLASH',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -199,19 +238,46 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               width: 160,
               height: 160,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(30),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))],
-                image: _imagePath != null ? DecorationImage(image: FileImage(File(_imagePath!)), fit: BoxFit.cover) : null,
-              ),
-              child: _imagePath == null ? const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo_outlined, size: 48, color: Color(0xFF94A3B8)),
-                  SizedBox(height: 8),
-                  Text('Rasm yuklash', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.3
+                          : 0.05,
+                    ),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
                 ],
-              ) : null,
+                image: _imagePath != null
+                    ? DecorationImage(
+                        image: FileImage(File(_imagePath!)),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: _imagePath == null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 48,
+                          color: Theme.of(context).hintColor,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Rasm yuklash',
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    )
+                  : null,
             ),
             if (_imagePath != null)
               Positioned(
@@ -221,7 +287,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   radius: 18,
                   backgroundColor: Colors.black.withOpacity(0.5),
                   child: IconButton(
-                    icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                    icon: Icon(Icons.close, size: 18, color: Colors.white),
                     onPressed: () => setState(() => _imagePath = null),
                   ),
                 ),
@@ -232,27 +298,50 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {bool isNumber = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    bool isNumber = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF64748B))),
-        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
+        ),
+        SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade100),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: TextFormField(
             controller: controller,
-            keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+            keyboardType: isNumber
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: const Color(0xFF6366F1), size: 20),
+              prefixIcon: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
+              hintStyle: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
-            validator: (v) => v == null || v.isEmpty ? 'Maydonni to\'ldiring' : null,
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Maydonni to\'ldiring' : null,
           ),
         ),
       ],
@@ -263,22 +352,36 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kategoriya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF64748B))),
-        const SizedBox(height: 8),
+        Text(
+          'Kategoriya',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
+        ),
+        SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade100),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedCategoryId,
-              hint: const Text('Kategoriyani tanlang'),
+              hint: Text('Kategoriyani tanlang'),
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF6366F1)),
-              items: state.categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              items: state.categories
+                  .map(
+                    (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
+                  )
+                  .toList(),
               onChanged: (v) => setState(() => _selectedCategoryId = v),
             ),
           ),
@@ -294,15 +397,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Qo\'shimcha Shtrix-kodlar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF64748B))),
+            Text(
+              'Qo\'shimcha Shtrix-kodlar',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
             TextButton.icon(
-              onPressed: () => setState(() => _additionalBarcodeControllers.add(TextEditingController())),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Qo\'shish', style: TextStyle(fontSize: 12)),
+              onPressed: () => setState(
+                () =>
+                    _additionalBarcodeControllers.add(TextEditingController()),
+              ),
+              icon: Icon(Icons.add, size: 18),
+              label: Text('Qo\'shish', style: TextStyle(fontSize: 12)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         ..._additionalBarcodeControllers.asMap().entries.map((entry) {
           final idx = entry.key;
           final controller = entry.value;
@@ -310,27 +423,37 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade100),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: TextFormField(
                 controller: controller,
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF94A3B8), size: 20),
+                  prefixIcon: Icon(
+                    Icons.qr_code,
+                    color: Theme.of(context).hintColor,
+                    size: 20,
+                  ),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
-                    onPressed: () => setState(() => _additionalBarcodeControllers.removeAt(idx)),
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(
+                      () => _additionalBarcodeControllers.removeAt(idx),
+                    ),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(12),
                   hintText: 'Shtrix-kodni kiriting',
-                  hintStyle: const TextStyle(fontSize: 13),
+                  hintStyle: TextStyle(fontSize: 13),
                 ),
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -338,16 +461,26 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Widget _buildTrackStockToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: SwitchListTile(
-        title: const Text('Ombor hisobini yuritish', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))),
-        subtitle: const Text('Sotilganda ombordan ayiriladi', style: TextStyle(fontSize: 12)),
+        title: Text(
+          'Ombor hisobini yuritish',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        subtitle: Text(
+          'Sotilganda ombordan ayiriladi',
+          style: TextStyle(fontSize: 12),
+        ),
         value: _trackStock,
         onChanged: (v) => setState(() => _trackStock = v),
-        activeColor: const Color(0xFF6366F1),
+        activeThumbColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }

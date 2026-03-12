@@ -17,50 +17,82 @@ class TerminalManagementScreen extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset('assets/icon.png', width: 28, height: 28, fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/icon.png',
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
+              ),
             ),
-            const SizedBox(width: 12),
-            const Text('Kassa Terminallari', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(width: 12),
+            Text(
+              'Kassa Terminallari',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         centerTitle: true,
       ),
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: ListView.builder(
         padding: const EdgeInsets.all(24),
         itemCount: state.registers.length,
         itemBuilder: (context, index) {
           final reg = state.registers[index];
-          final warehouse = state.warehouses.firstWhere((w) => w.id == reg.warehouseId, orElse: () => Warehouse(id: '', name: 'Noma\'lum'));
+          final warehouse = state.warehouses.firstWhere(
+            (w) => w.id == reg.warehouseId,
+            orElse: () => Warehouse(id: '', name: 'Noma\'lum'),
+          );
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? 0.3
+                        : 0.02,
+                  ),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.storefront_rounded, color: Colors.blue),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.storefront_rounded, color: Colors.blue),
               ),
-              title: Text(reg.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              subtitle: Text('ID: ${reg.id.substring(0, reg.id.length < 8 ? reg.id.length : 8)}${reg.id.length > 8 ? "..." : ""} \nOmbor: ${warehouse.name}'),
+              title: Text(
+                reg.name,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              subtitle: Text(
+                'ID: ${reg.id.substring(0, reg.id.length < 8 ? reg.id.length : 8)}${reg.id.length > 8 ? "..." : ""} \nOmbor: ${warehouse.name}',
+              ),
               isThreeLine: true,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                    onPressed: () => _showRegisterDialog(context, state, register: reg),
+                    icon: Icon(Icons.edit_outlined, color: Colors.blue),
+                    onPressed: () =>
+                        _showRegisterDialog(context, state, register: reg),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                    ),
                     onPressed: () => _confirmDelete(context, state, reg),
                   ),
                 ],
@@ -71,23 +103,37 @@ class TerminalManagementScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showRegisterDialog(context, state),
-        backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Yangi Kassa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        icon: Icon(Icons.add, color: Colors.white),
+        label: Text(
+          'Yangi Kassa',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
-  void _showRegisterDialog(BuildContext context, AppState state, {Register? register}) {
+  void _showRegisterDialog(
+    BuildContext context,
+    AppState state, {
+    Register? register,
+  }) {
     final nameController = TextEditingController(text: register?.name);
-    String? selectedWarehouseId = register?.warehouseId ?? (state.warehouses.isNotEmpty ? state.warehouses.first.id : null);
+    String? selectedWarehouseId =
+        register?.warehouseId ??
+        (state.warehouses.isNotEmpty ? state.warehouses.first.id : null);
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(register == null ? 'Yangi Kassa' : 'Kassani Tahrirlash', style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(
+            register == null ? 'Yangi Kassa' : 'Kassani Tahrirlash',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -98,44 +144,72 @@ class TerminalManagementScreen extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: 'Kassa nomi',
                     filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    fillColor: Theme.of(context).colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedWarehouseId,
+                  initialValue: selectedWarehouseId,
                   decoration: InputDecoration(
                     labelText: 'Biriktirilgan ombor',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  items: state.warehouses.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
-                  onChanged: (val) => setDialogState(() => selectedWarehouseId = val),
-                  validator: (val) => val == null ? 'Ombor tanlanishi shart' : null,
+                  items: state.warehouses
+                      .map(
+                        (w) =>
+                            DropdownMenuItem(value: w.id, child: Text(w.name)),
+                      )
+                      .toList(),
+                  onChanged: (val) =>
+                      setDialogState(() => selectedWarehouseId = val),
+                  validator: (val) =>
+                      val == null ? 'Ombor tanlanishi shart' : null,
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Bekor qilish'),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () {
-                if (nameController.text.isNotEmpty && selectedWarehouseId != null) {
+                if (nameController.text.isNotEmpty &&
+                    selectedWarehouseId != null) {
                   if (register == null) {
-                    state.addRegister(nameController.text, selectedWarehouseId!);
+                    state.addRegister(
+                      nameController.text,
+                      selectedWarehouseId!,
+                    );
                   } else {
-                    state.updateRegister(register.id, nameController.text, selectedWarehouseId!);
+                    state.updateRegister(
+                      register.id,
+                      nameController.text,
+                      selectedWarehouseId!,
+                    );
                   }
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Saqlash'),
+              child: Text('Saqlash'),
             ),
           ],
         ),
@@ -147,16 +221,19 @@ class TerminalManagementScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('O\'chirishni tasdiqlang'),
+        title: Text('O\'chirishni tasdiqlang'),
         content: Text('"${register.name}" kassasini o\'chirmoqchimisiz?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
           TextButton(
             onPressed: () {
               state.deleteRegister(register.id);
               Navigator.pop(context);
             },
-            child: const Text('O\'chirish', style: TextStyle(color: Colors.red)),
+            child: Text('O\'chirish', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
