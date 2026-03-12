@@ -209,12 +209,12 @@ class AppState extends ChangeNotifier {
       _connectRealtime();
     }
 
-    // If master and already activated, check blocking status
-    if (isMaster == true && isActivated && activationCode != null) {
-      checkBlockingStatus();
-      // Periodically check every 5 minutes
+    // License and remote logout check
+    if (isActivated && activationCode != null) {
+      checkBlockingStatus(); // Initial check
+      // Periodically check every 5 minutes (for both Master and Clients)
       Timer.periodic(const Duration(minutes: 5), (timer) {
-        if (isActivated && !isBlocked) {
+        if (!isBlocked) {
           checkBlockingStatus();
         }
       });
@@ -1459,7 +1459,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> checkBlockingStatus() async {
-    if (isMaster != true || !isActivated || activationCode == null) return;
+    if (!isActivated || activationCode == null) return;
 
     try {
       const backendUrl = "https://web-production-afb90.up.railway.app/verify";
