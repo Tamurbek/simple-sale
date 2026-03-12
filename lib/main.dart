@@ -198,6 +198,7 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildSidebar(bool slim) {
+    final state = context.watch<AppState>();
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: slim ? 80 : 250,
