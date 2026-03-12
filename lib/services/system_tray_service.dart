@@ -34,9 +34,18 @@ class SystemTrayService with TrayListener, WindowListener {
   }
 
   Future<void> initTray() async {
-    const String iconPath = 'assets/icon.png';
-    await trayManager.setIcon(iconPath);
-    await windowManager.setIcon(iconPath); // Sets the window icon for taskbar
+    String iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/icon.png';
+    
+    // On Windows, tray_manager works better if we provide the path carefully
+    if (Platform.isWindows) {
+      // In release mode, assets are in data/flutter_assets
+      // But tray_manager usually handles assets/ correctly if bundled.
+      // Let's ensure we are using the correct method.
+      await trayManager.setIcon(iconPath);
+      await windowManager.setIcon(iconPath);
+    } else {
+      await trayManager.setIcon(iconPath);
+    }
     
     List<MenuItem> items = [
       MenuItem(
