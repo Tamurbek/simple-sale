@@ -346,7 +346,7 @@ class DatabaseService {
 
   static Future<List<Category>> getCategories() async {
     final db = await database;
-    final res = await db.query('categories');
+    final res = await db.query('categories', orderBy: 'name ASC');
     return res
         .map(
           (c) => Category.fromJson({
@@ -375,7 +375,7 @@ class DatabaseService {
 
   static Future<List<Warehouse>> getWarehouses() async {
     final db = await database;
-    final res = await db.query('warehouses');
+    final res = await db.query('warehouses', orderBy: 'name ASC');
     return res
         .map(
           (w) => Warehouse.fromJson({
@@ -403,7 +403,7 @@ class DatabaseService {
 
   static Future<List<Register>> getRegisters() async {
     final db = await database;
-    final res = await db.query('registers');
+    final res = await db.query('registers', orderBy: 'name ASC');
     return res
         .map(
           (r) => Register.fromJson({
@@ -464,7 +464,7 @@ class DatabaseService {
 
   static Future<List<Product>> getProducts() async {
     final db = await database;
-    final prodRes = await db.query('products');
+    final prodRes = await db.query('products', orderBy: 'name ASC');
     final List<Product> products = [];
 
     for (var pMap in prodRes) {
@@ -716,7 +716,7 @@ class DatabaseService {
 
   static Future<List<User>> getUsers() async {
     final db = await database;
-    final res = await db.query('users');
+    final res = await db.query('users', orderBy: 'name ASC');
     return res
         .map(
           (u) => User.fromJson({
