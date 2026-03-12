@@ -3,13 +3,14 @@
 
 #define MyAppName "Simple Sale POS"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "Your Company"
-#define MyAppURL "https://example.com"
+#define MyAppPublisher "SimpleSale Team"
+#define MyAppURL "https://simplesale.uz"
 #define MyAppExeName "simple_sale.exe"
+#define MyAppIconName "runner\resources\app_icon.ico"
 
 [Setup]
 ; AppId is uniquely identified for this application.
-AppId={{D3E6B22C-4A3C-4C6E-9F1B-4A3D1E2C3D4E}
+AppId={{D3E6B22C-4A3C-4C6E-9F1B-4A3D1E2C3D4E}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -21,6 +22,7 @@ DisableProgramGroupPage=yes
 ; Output info
 OutputDir=..\build\windows\x64\runner\Release\installer
 OutputBaseFilename=SimpleSale_Setup
+SetupIconFile={#MyAppIconName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -38,8 +40,8 @@ Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignore
 Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
