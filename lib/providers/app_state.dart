@@ -592,6 +592,8 @@ class AppState extends ChangeNotifier {
     masterAddress = null;
     masterPassword = null;
     currentUser = null;
+    initializationError = null;
+    isInitialized = true;
 
     notifyListeners();
   }
