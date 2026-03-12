@@ -578,7 +578,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
               onPressed: () {
                 if (items.isNotEmpty && returnWarehouseId != null) {
                   final ret = SaleReturn(
-                    id: const Uuid().v4(),
+                    id: Uuid().v4(),
                     saleId: saleIdCtrl.text.isEmpty ? 'HAND_RETURN' : saleIdCtrl.text,
                     date: DateTime.now(),
                     warehouseId: returnWarehouseId!,
@@ -660,7 +660,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
               onPressed: () {
                 if (items.isNotEmpty && woWarehouseId != null) {
                   final wo = WriteOff(
-                    id: const Uuid().v4(),
+                    id: Uuid().v4(),
                     date: DateTime.now(),
                     warehouseId: woWarehouseId!,
                     description: descCtrl.text,
@@ -741,7 +741,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
               onPressed: () {
                 if (items.isNotEmpty && invWarehouseId != null) {
                   final inv = InventoryEntry(
-                    id: const Uuid().v4(),
+                    id: Uuid().v4(),
                     date: DateTime.now(),
                     warehouseId: invWarehouseId!,
                     items: items.where((i) => i['productId'] != null).map((i) => InventoryItem(productId: i['productId'], productName: i['productName'], expectedQuantity: i['expected'], actualQuantity: i['actual'])).toList(),
@@ -860,7 +860,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
 
                   if (finalItems.isNotEmpty) {
                     final entry = StockEntry(
-                      id: const Uuid().v4(),
+                      id: Uuid().v4(),
                       warehouseId: entryWarehouseId!,
                       date: DateTime.now(),
                       description: descriptionCtrl.text,

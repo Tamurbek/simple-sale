@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
 
@@ -319,7 +320,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
             onPressed: () async {
               final ret = SaleReturn(
-                id: const Uuid().v4(),
+                id: Uuid().v4(),
                 saleId: sale.id,
                 date: DateTime.now(),
                 total: sale.total,

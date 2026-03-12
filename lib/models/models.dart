@@ -6,7 +6,7 @@ class Warehouse {
 
   Warehouse({required this.id, required this.name});
 
-  factory Warehouse.create(String name) => Warehouse(id: const Uuid().v4(), name: name);
+  factory Warehouse.create(String name) => Warehouse(id: Uuid().v4(), name: name);
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
   factory Warehouse.fromJson(Map<String, dynamic> json) => Warehouse(
@@ -25,7 +25,7 @@ class Register {
   Register({required this.id, required this.name, required this.warehouseId, this.activeDeviceId});
 
   factory Register.create(String name, String warehouseId) => 
-      Register(id: const Uuid().v4(), name: name, warehouseId: warehouseId, activeDeviceId: null);
+      Register(id: Uuid().v4(), name: name, warehouseId: warehouseId, activeDeviceId: null);
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'warehouseId': warehouseId, 'activeDeviceId': activeDeviceId};
   factory Register.fromJson(Map<String, dynamic> json) => 
@@ -44,7 +44,7 @@ class Category {
 
   Category({required this.id, required this.name, this.isDeleted = false});
 
-  factory Category.create(String name) => Category(id: const Uuid().v4(), name: name);
+  factory Category.create(String name) => Category(id: Uuid().v4(), name: name);
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'isDeleted': isDeleted};
   factory Category.fromJson(Map<String, dynamic> json) => 
@@ -82,7 +82,7 @@ class Product {
   });
 
   factory Product.create(String name, double price, String categoryId, String barcode, {String? imagePath, String unit = 'dona', bool trackStock = true}) => 
-      Product(id: const Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, additionalBarcodes: [], stocks: {}, imagePath: imagePath, unit: unit, trackStock: trackStock);
+      Product(id: Uuid().v4(), name: name, price: price, categoryId: categoryId, barcode: barcode, additionalBarcodes: [], stocks: {}, imagePath: imagePath, unit: unit, trackStock: trackStock);
 
   Product copyWith({
     String? name,

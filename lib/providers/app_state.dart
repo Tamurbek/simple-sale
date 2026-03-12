@@ -126,7 +126,7 @@ class AppState extends ChangeNotifier {
     
     isMaster = master;
     masterAddress = ip;
-    deviceId = prefs.getString('deviceId') ?? const Uuid().v4();
+    deviceId = prefs.getString('deviceId') ?? Uuid().v4();
     await prefs.setString('deviceId', deviceId!);
     isActivated = prefs.getBool('isActivated') ?? false;
     activationCode = prefs.getString('activationCode');
