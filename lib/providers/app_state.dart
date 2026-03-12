@@ -980,6 +980,7 @@ class AppState extends ChangeNotifier {
       }
     } catch (e) {
       rethrow;
+    }
   }
 
   Future<void> clearAllData() async {
