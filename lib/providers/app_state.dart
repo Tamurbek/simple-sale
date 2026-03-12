@@ -31,6 +31,7 @@ class AppState extends ChangeNotifier {
   Register? currentRegister;
   List<SaleItem> cart = [];
   String? selectedPrinterName;
+  String? networkPrinterIp;
 
   bool? isMaster;
   String? masterAddress;
@@ -181,6 +182,7 @@ class AppState extends ChangeNotifier {
       }
 
       _isBarcodeScanMode = prefs.getBool('isBarcodeScanMode') ?? false;
+      networkPrinterIp = prefs.getString('networkPrinterIp');
 
       // Load data from DB
       await _loadFromDb();
@@ -1141,6 +1143,17 @@ class AppState extends ChangeNotifier {
 
   void updatePrinter(String name) {
     selectedPrinterName = name;
+    notifyListeners();
+  }
+
+  Future<void> updateNetworkPrinterIp(String? ip) async {
+    networkPrinterIp = ip;
+    final prefs = await SharedPreferences.getInstance();
+    if (ip == null || ip.isEmpty) {
+      await prefs.remove('networkPrinterIp');
+    } else {
+      await prefs.setString('networkPrinterIp', ip);
+    }
     notifyListeners();
   }
 

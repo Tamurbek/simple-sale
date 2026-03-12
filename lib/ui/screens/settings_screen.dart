@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
 import '../../providers/app_state.dart';
-import '../../models/models.dart';
 import 'terminal_management_screen.dart';
 import 'warehouse_management_screen.dart';
 
@@ -28,14 +27,16 @@ class SettingsScreen extends StatelessWidget {
                   'Asosiy Sozlamalar',
                   'Kassa va unga bog\'langan omborlarni sozlash',
                   [
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.storefront,
                       color: Colors.blue,
                       title: 'Joriy Kassa',
                       subtitle: state.currentRegister?.name ?? 'Tanlanmagan',
                       onTap: () => _showRegisterPicker(context, state),
                     ),
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.terminal_rounded,
                       color: Colors.indigo,
                       title: 'Kassa Terminallari',
@@ -47,7 +48,8 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.warehouse_rounded,
                       color: Colors.orange,
                       title: 'Omborlar',
@@ -68,7 +70,8 @@ class SettingsScreen extends StatelessWidget {
                     'Ma\'lumotlar almashinuvi',
                     'Asosiy server bilan bog\'lanish',
                     [
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.sync,
                         color: Theme.of(context).colorScheme.primary,
                         title: 'Sinxronizatsiya',
@@ -97,7 +100,8 @@ class SettingsScreen extends StatelessWidget {
                           }
                         },
                       ),
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.lan,
                         color: Colors.blueGrey,
                         title: 'Server IP',
@@ -113,7 +117,8 @@ class SettingsScreen extends StatelessWidget {
                   'Apparat Ta\'minoti',
                   'Printer va skaner sozlamalari',
                   [
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.print_outlined,
                       color: Colors.teal,
                       title: 'Asosiy Printer',
@@ -127,16 +132,39 @@ class SettingsScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.qr_code_scanner,
                       color: Colors.purple,
                       title: 'Shtrix-kod Skaner Rejimi',
-                      subtitle: state.isBarcodeScanMode ? 'Avtomatik skanerlash yoqilgan' : 'Skanerdan izlash o\'chiq',
+                      subtitle: state.isBarcodeScanMode
+                          ? 'Avtomatik skanerlash yoqilgan'
+                          : 'Skanerdan izlash o\'chiq',
                       trailing: Switch(
                         value: state.isBarcodeScanMode,
                         onChanged: (val) => state.toggleBarcodeScanMode(),
                       ),
                       onTap: () => state.toggleBarcodeScanMode(),
+                    ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.wifi,
+                      color: Colors.indigo,
+                      title: 'Tarmoq Printeri (IP)',
+                      subtitle:
+                          state.networkPrinterIp != null &&
+                              state.networkPrinterIp!.isNotEmpty
+                          ? state.networkPrinterIp!
+                          : 'Sozlanmagan',
+                      onTap: () async {
+                        final ip = await _showIpInputDialog(
+                          context,
+                          state.networkPrinterIp,
+                        );
+                        if (ip != null) {
+                          await state.updateNetworkPrinterIp(ip);
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -146,14 +174,16 @@ class SettingsScreen extends StatelessWidget {
                   'Tizim Ma\'lumotlari',
                   'Dastur versiyasi va litsenziya',
                   [
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.info_outline,
                       color: Colors.grey,
                       title: 'Dastur Versiyasi',
                       subtitle: 'v1.0.4 • 2026',
                       onTap: () {},
                     ),
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.logout,
                       color: Colors.redAccent,
                       title: 'Tizimdan chiqish',
@@ -169,7 +199,8 @@ class SettingsScreen extends StatelessWidget {
                     'Ma\'lumotlar xavfsizligi',
                     'Ma\'lumotlar bazasini saqlash va tiklash',
                     [
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.cloud_upload_rounded,
                         color: Colors.green,
                         title: 'Zaxira nusxasini yaratish',
@@ -178,7 +209,8 @@ class SettingsScreen extends StatelessWidget {
                           await state.exportDatabase();
                         },
                       ),
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.cloud_download_rounded,
                         color: Colors.red,
                         title: 'Zaxiradan tiklash',
@@ -200,7 +232,8 @@ class SettingsScreen extends StatelessWidget {
                         },
                       ),
                       const Divider(height: 1, indent: 20, endIndent: 20),
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.cloud_sync_rounded,
                         color: Theme.of(context).colorScheme.primary,
                         title: 'Bulutli zaxira (Railway)',
@@ -232,7 +265,8 @@ class SettingsScreen extends StatelessWidget {
                           }
                         },
                       ),
-                      _buildSettingsTile(context,  
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.settings_backup_restore_rounded,
                         color: Colors.orange,
                         title: 'Bulutdan tiklash',
@@ -298,7 +332,8 @@ class SettingsScreen extends StatelessWidget {
                   'Tizimni Tozalash',
                   'Dasturni boshlang\'ich holatga qaytarish',
                   [
-                    _buildSettingsTile(context,  
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.delete_forever_rounded,
                       color: Colors.red,
                       title: 'Barcha ma\'lumotlarni o\'chirish',
@@ -351,7 +386,6 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -459,7 +493,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsTile(BuildContext context, {
+  Widget _buildSettingsTile(
+    BuildContext context, {
     required IconData icon,
     required Color color,
     required String title,
@@ -631,6 +666,34 @@ class SettingsScreen extends StatelessWidget {
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text('Ha, tiklash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showIpInputDialog(BuildContext context, String? currentIp) {
+    final controller = TextEditingController(text: currentIp ?? '');
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Tarmoq printeri IP manzili'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: 'Masalan: 192.168.1.100',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text('Saqlash'),
           ),
         ],
       ),

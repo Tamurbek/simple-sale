@@ -60,12 +60,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     try {
-      if (state.selectedPrinterName != null) {
+      if (state.selectedPrinterName != null ||
+          (state.networkPrinterIp != null &&
+              state.networkPrinterIp!.isNotEmpty)) {
         await PrintService.printReceipt(
           items: state.cart,
           total: state.cartTotal,
           registerName: state.currentRegister?.name ?? 'Kassa',
           printerName: state.selectedPrinterName,
+          ipAddress: state.networkPrinterIp,
         );
       }
 
