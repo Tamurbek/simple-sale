@@ -150,6 +150,13 @@ class _MainLayoutState extends State<MainLayout> {
     SettingsScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
   ];
 
+  bool _canAccess(int index, UserRole? role) {
+    if (role == UserRole.admin) return true;
+    // Cashier can only access POS (0) and Tarix (2) - History is useful for them too? 
+    // User said "Faqat sotishi kerak" - so let's stick to ONLY POS (0).
+    return index == 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,13 +210,13 @@ class _MainLayoutState extends State<MainLayout> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 _buildNavItem(0, Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Sotuv', slim),
-                _buildNavItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
-                _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'Sotuvlar Tarixi', slim),
-                _buildNavItem(3, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
-                _buildNavItem(4, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
-                _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
-                _buildNavItem(6, Icons.delete_outline_rounded, Icons.delete_rounded, 'Savat', slim),
-                _buildNavItem(7, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
+                if (_canAccess(1, state.currentUser?.role)) _buildNavItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
+                if (_canAccess(2, state.currentUser?.role)) _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'Sotuvlar Tarixi', slim),
+                if (_canAccess(3, state.currentUser?.role)) _buildNavItem(3, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
+                if (_canAccess(4, state.currentUser?.role)) _buildNavItem(4, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
+                if (_canAccess(5, state.currentUser?.role)) _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
+                if (_canAccess(6, state.currentUser?.role)) _buildNavItem(6, Icons.delete_outline_rounded, Icons.delete_rounded, 'Savat', slim),
+                if (_canAccess(7, state.currentUser?.role)) _buildNavItem(7, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
               ],
             ),
           ),
@@ -220,6 +227,9 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildBottomNav() {
+    final state = context.watch<AppState>();
+    final isAdmin = state.currentUser?.role == UserRole.admin;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -228,23 +238,26 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       ),
       child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        currentIndex: _selectedIndex >= (isAdmin ? 8 : 1) ? 0 : _selectedIndex,
+        onTap: (index) {
+          if (!isAdmin && index > 0) return;
+          setState(() => _selectedIndex = index);
+        },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF6366F1),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart_rounded), label: 'Sotuv'),
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), activeIcon: Icon(Icons.history_rounded), label: 'Tarix'),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Ombor'),
-          BottomNavigationBarItem(icon: Icon(Icons.category_outlined), activeIcon: Icon(Icons.category_rounded), label: 'Kat'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outlined), activeIcon: Icon(Icons.people_rounded), label: 'Hodim'),
-          BottomNavigationBarItem(icon: Icon(Icons.delete_outline_rounded), activeIcon: Icon(Icons.delete_rounded), label: 'Savat'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: 'Soz'),
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart_rounded), label: 'Sotuv'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.history_rounded), activeIcon: Icon(Icons.history_rounded), label: 'Tarix'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Ombor'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.category_outlined), activeIcon: Icon(Icons.category_rounded), label: 'Kat'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.people_outlined), activeIcon: Icon(Icons.people_rounded), label: 'Hodim'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.delete_outline_rounded), activeIcon: Icon(Icons.delete_rounded), label: 'Savat'),
+          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: 'Soz'),
         ],
       ),
     );
