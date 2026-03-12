@@ -21,7 +21,6 @@ class _POSScreenState extends State<POSScreen> {
   String _barcodeBuffer = '';
   final TextEditingController _searchController = TextEditingController();
   bool _showKeyboard = false;
-  bool _isScanMode = false;
   final FocusNode _searchFocusNode = FocusNode();
 
   @override
@@ -32,10 +31,11 @@ class _POSScreenState extends State<POSScreen> {
     });
 
     _searchFocusNode.addListener(() {
-      if (_isScanMode && !_searchFocusNode.hasFocus) {
+      final isScanMode = context.read<AppState>().isBarcodeScanMode;
+      if (isScanMode && !_searchFocusNode.hasFocus) {
         // Short delay to avoid focus fighting and ensure it returns
         Future.delayed(const Duration(milliseconds: 100), () {
-          if (_isScanMode && mounted) {
+          if (context.read<AppState>().isBarcodeScanMode && mounted) {
             _searchFocusNode.requestFocus();
           }
         });
@@ -371,7 +371,7 @@ class _POSScreenState extends State<POSScreen> {
                 onSubmitted: (v) {
                   _processBarcode(v);
                   _searchController.clear();
-                  if (_isScanMode) _searchFocusNode.requestFocus();
+                  if (state.isBarcodeScanMode) _searchFocusNode.requestFocus();
                 },
                 decoration: InputDecoration(
                   hintText: 'Qidirish yoki shtrix kodni o\'qing...',
@@ -394,21 +394,21 @@ class _POSScreenState extends State<POSScreen> {
                       ),
                       IconButton(
                         icon: Icon(
-                          _isScanMode
+                          state.isBarcodeScanMode
                               ? Icons.qr_code_scanner_rounded
                               : Icons.barcode_reader,
-                          color: _isScanMode
+                          color: state.isBarcodeScanMode
                               ? Theme.of(context).colorScheme.primary
                               : Colors.grey.shade400,
                         ),
                         onPressed: () {
-                          setState(() {
-                            _isScanMode = !_isScanMode;
-                            if (_isScanMode) {
-                              _searchFocusNode.requestFocus();
+                          state.toggleBarcodeScanMode();
+                          if (state.isBarcodeScanMode) {
+                            _searchFocusNode.requestFocus();
+                            setState(() {
                               _showKeyboard = false;
-                            }
-                          });
+                            });
+                          }
                         },
                       ),
                     ],

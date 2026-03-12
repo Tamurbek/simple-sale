@@ -46,6 +46,9 @@ class AppState extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
 
+  bool _isBarcodeScanMode = false;
+  bool get isBarcodeScanMode => _isBarcodeScanMode;
+
   double get todaySalesTotal {
     final now = DateTime.now();
     return sales
@@ -176,6 +179,8 @@ class AppState extends ChangeNotifier {
       } else {
         _themeMode = ThemeMode.system;
       }
+
+      _isBarcodeScanMode = prefs.getBool('isBarcodeScanMode') ?? false;
 
       // Load data from DB
       await _loadFromDb();
@@ -457,7 +462,14 @@ class AppState extends ChangeNotifier {
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('themeMode', mode.name);
+    await prefs.setString('themeMode', mode.toString().split('.').last);
+    notifyListeners();
+  }
+
+  Future<void> toggleBarcodeScanMode() async {
+    _isBarcodeScanMode = !_isBarcodeScanMode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isBarcodeScanMode', _isBarcodeScanMode);
     notifyListeners();
   }
 

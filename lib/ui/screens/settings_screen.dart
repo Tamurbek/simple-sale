@@ -130,9 +130,13 @@ class SettingsScreen extends StatelessWidget {
                     _buildSettingsTile(context,  
                       icon: Icons.qr_code_scanner,
                       color: Colors.purple,
-                      title: 'Shtrix-kod Skaner',
-                      subtitle: 'Skaner ishchi holatda',
-                      onTap: () {},
+                      title: 'Shtrix-kod Skaner Rejimi',
+                      subtitle: state.isBarcodeScanMode ? 'Avtomatik skanerlash yoqilgan' : 'Skanerdan izlash o\'chiq',
+                      trailing: Switch(
+                        value: state.isBarcodeScanMode,
+                        onChanged: (val) => state.toggleBarcodeScanMode(),
+                      ),
+                      onTap: () => state.toggleBarcodeScanMode(),
                     ),
                   ],
                 ),
@@ -461,6 +465,7 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required VoidCallback? onTap,
+    Widget? trailing,
   }) {
     return InkWell(
       onTap: onTap,
@@ -493,7 +498,9 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            if (onTap != null)
+            if (trailing != null)
+              trailing
+            else if (onTap != null)
               Icon(Icons.chevron_right, color: Colors.grey.shade300),
           ],
         ),

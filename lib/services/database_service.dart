@@ -931,4 +931,16 @@ class DatabaseService {
       );
     });
   }
+
+  static Future<void> deleteInventory(String id) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('inventories', where: 'id = ?', whereArgs: [id]);
+      await txn.delete(
+        'inventory_items',
+        where: 'inventoryId = ?',
+        whereArgs: [id],
+      );
+    });
+  }
 }
