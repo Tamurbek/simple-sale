@@ -76,6 +76,38 @@ class InitializationWrapper extends StatelessWidget {
       return const ActivationScreen();
     }
 
+    if (state.isMaster == true && state.isBlocked) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.block_rounded, color: Colors.red, size: 80),
+              const SizedBox(height: 24),
+              const Text(
+                'Litsenziya bloklangan',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Ushbu terminal administrator tomonidan bloklangan. Iltimos, to\'lov yoki boshqa masalalar bo\'yicha administratorga murojaat qiling.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () => state.checkBlockingStatus(),
+                child: const Text('Qayta tekshirish'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (state.currentUser == null) {
       return const LoginScreen();
     }

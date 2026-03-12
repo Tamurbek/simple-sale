@@ -32,6 +32,7 @@ class AppState extends ChangeNotifier {
   String? deviceId;
   bool isInitialized = false;
   bool isActivated = false;
+  bool isBlocked = false;
   String? activationCode;
 
   double get todaySalesTotal {
@@ -161,6 +162,11 @@ class AppState extends ChangeNotifier {
       await syncWithMaster();
     }
     
+    // If master and already activated, check blocking status in background
+    if (isMaster == true && isActivated && activationCode != null) {
+      checkBlockingStatus();
+    }
+
     isInitialized = true;
     notifyListeners();
   }
@@ -847,55 +853,88 @@ class AppState extends ChangeNotifier {
     
     if (online) {
       const backendUrl = "https://web-production-afb90.up.railway.app/verify";
-      
       try {
-        final resp = await http.post(
+        final response = await http.post(
           Uri.parse(backendUrl),
-          body: jsonEncode({
-            "device_id": deviceId, 
-            "activation_code": code.trim().toUpperCase()
-          }),
           headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "device_id": deviceId,
+            "activation_code": code
+          }),
         ).timeout(const Duration(seconds: 10));
 
-        if (resp.statusCode == 200) {
-          final cleanCode = code.trim().toUpperCase();
-          await prefs.setBool('isActivated', true);
-          await prefs.setString('activationCode', cleanCode);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
           isActivated = true;
-          activationCode = cleanCode;
+          activationCode = code;
+          isBlocked = false;
+          await prefs.setBool('isActivated', true);
+          await prefs.setString('activationCode', code);
           
-          // Try to see if there's a cloud backup for this account
-          try {
-            await restoreDatabaseFromCloud();
-          } catch (_) {
-            // No backup found, that's fine for new users
-          }
+          // Attempt cloud restore after activation
+          await restoreDatabaseFromCloud();
           
           notifyListeners();
+        } else if (response.statusCode == 403) {
+          final data = jsonDecode(response.body);
+          final detail = data['detail'] ?? "Aktivatsiya xatosi";
+          if (detail.toString().contains("bloklangan")) {
+            isBlocked = true;
+            notifyListeners();
+          }
+          throw Exception(detail);
         } else {
-          String errorMessage = 'Noto\'g\'ri kod!';
-          try {
-            final data = jsonDecode(resp.body);
-            errorMessage = data['detail'] ?? errorMessage;
-          } catch (_) {}
-          throw Exception(errorMessage);
+          throw Exception("Server xatosi: ${response.statusCode}");
         }
       } catch (e) {
-        if (e.toString().contains('Noto\'g\'ri kod')) {
-          rethrow;
-        }
-        throw Exception('Serverga ulanib bo\'lmadi. Backend ishlayotganini tekshiring.');
+        if (e.toString().contains("bloklangan")) rethrow;
+        throw Exception("Internet ulanishini tekshiring: $e");
       }
     } else {
+      // Offline fallback
       if (checkActivationCode(code)) {
-        await prefs.setBool('isActivated', true);
         isActivated = true;
+        activationCode = code;
+        await prefs.setBool('isActivated', true);
+        await prefs.setString('activationCode', code);
         notifyListeners();
       } else {
-        throw Exception('Noto\'g\'ri aktivatsiya kodi!');
+        throw Exception("Noto'g'ri aktivatsiya kodi");
       }
     }
+  }
+
+  Future<void> checkBlockingStatus() async {
+    if (isMaster != true || !isActivated || activationCode == null) return;
+    
+    try {
+      const backendUrl = "https://web-production-afb90.up.railway.app/verify";
+      final response = await http.post(
+        Uri.parse(backendUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "device_id": deviceId,
+          "activation_code": activationCode
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 403) {
+        final data = jsonDecode(response.body);
+        if (data['detail']?.toString().contains("bloklangan") == true) {
+          isBlocked = true;
+          notifyListeners();
+        }
+      } else if (response.statusCode == 200) {
+        if (isBlocked) {
+          isBlocked = false;
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      // Ignore network errors for background check, just keep current state
+      debugPrint("Blocking check failed: $e");
+    }
+  }
   }
 
   Future<void> uploadDatabaseToCloud() async {
