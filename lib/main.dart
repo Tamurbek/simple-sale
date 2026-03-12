@@ -54,7 +54,9 @@ class SimpleSaleApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA), // Clean, professional light grey
+        scaffoldBackgroundColor: const Color(
+          0xFFF8F9FA,
+        ), // Clean, professional light grey
         cardColor: Colors.white,
         dividerColor: const Color(0xFFE9ECEF),
         colorScheme: ColorScheme.fromSeed(
@@ -72,7 +74,9 @@ class SimpleSaleApp extends StatelessWidget {
           color: Colors.white,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4), // Slightly more square/professional
+            borderRadius: BorderRadius.circular(
+              4,
+            ), // Slightly more square/professional
             side: const BorderSide(color: Color(0xFFE9ECEF)),
           ),
         ),
@@ -86,12 +90,16 @@ class SimpleSaleApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF1A1A1A), // Deep charcoal black
-        cardColor: const Color(0xFF262626), // Slightly lighter charcoal for layers
+        cardColor: const Color(
+          0xFF262626,
+        ), // Slightly lighter charcoal for layers
         dividerColor: Colors.white.withOpacity(0.08),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF818CF8),
           brightness: Brightness.dark,
-          primary: const Color(0xFF818CF8), // Brighter indigo for actions and prices
+          primary: const Color(
+            0xFF818CF8,
+          ), // Brighter indigo for actions and prices
           onPrimary: Colors.white,
           surface: const Color(0xFF1A1A1A),
           onSurface: const Color(0xFFE9ECEF),
@@ -402,9 +410,8 @@ class _MainLayoutState extends State<MainLayout> {
 
   bool _canAccess(int index, UserRole? role) {
     if (role == UserRole.admin) return true;
-    // Cashier can only access POS (0) and Tarix (2) - History is useful for them too?
-    // User said "Faqat sotishi kerak" - so let's stick to ONLY POS (0).
-    return index == 0;
+    // Cashier can only access POS (0) and Settings (7)
+    return index == 0 || index == 7;
   }
 
   @override
@@ -419,47 +426,47 @@ class _MainLayoutState extends State<MainLayout> {
           return KeyEventResult.ignored;
         },
         child: Scaffold(
-      key: _scaffoldKey,
-      endDrawer: Drawer(width: 250, child: _buildSidebar(false)),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isSmall = constraints.maxWidth < 700;
-          final isMedium =
-              constraints.maxWidth >= 700 && constraints.maxWidth < 1200;
+          key: _scaffoldKey,
+          endDrawer: Drawer(width: 250, child: _buildSidebar(false)),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 700;
+              final isMedium =
+                  constraints.maxWidth >= 700 && constraints.maxWidth < 1200;
 
-          // Disable permanent sidebar everywhere, just like POS
-          const bool showPermanentSidebar = false;
+              // Disable permanent sidebar everywhere, just like POS
+              const bool showPermanentSidebar = false;
 
-          return Column(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    if (showPermanentSidebar) _buildSidebar(isMedium),
-                    if (showPermanentSidebar)
-                      const VerticalDivider(
-                        thickness: 1,
-                        width: 1,
-                        color: Color(0xFFF1F5F9),
-                      ),
-                    Expanded(
-                      child: IndexedStack(
-                        index: _selectedIndex,
-                        children: _screens,
-                      ),
+              return Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (showPermanentSidebar) _buildSidebar(isMedium),
+                        if (showPermanentSidebar)
+                          const VerticalDivider(
+                            thickness: 1,
+                            width: 1,
+                            color: Color(0xFFF1F5F9),
+                          ),
+                        Expanded(
+                          child: IndexedStack(
+                            index: _selectedIndex,
+                            children: _screens,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              if (isSmall) _buildBottomNav(),
-            ],
-          );
-        },
+                  ),
+                  if (isSmall) _buildBottomNav(),
+                ],
+              );
+            },
+          ),
+        ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _buildSidebar(bool slim) {
     final state = context.watch<AppState>();

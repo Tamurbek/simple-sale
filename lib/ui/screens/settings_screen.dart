@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
 import '../../providers/app_state.dart';
+import '../../models/models.dart';
 import 'terminal_management_screen.dart';
 import 'warehouse_management_screen.dart';
 
@@ -12,6 +13,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final isAdmin = state.currentUser?.role == UserRole.admin;
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
@@ -22,48 +24,49 @@ class SettingsScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                _buildSection(
-                  context,
-                  'Asosiy Sozlamalar',
-                  'Kassa va unga bog\'langan omborlarni sozlash',
-                  [
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.storefront,
-                      color: Colors.blue,
-                      title: 'Joriy Kassa',
-                      subtitle: state.currentRegister?.name ?? 'Tanlanmagan',
-                      onTap: () => _showRegisterPicker(context, state),
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.terminal_rounded,
-                      color: Colors.indigo,
-                      title: 'Kassa Terminallari',
-                      subtitle: 'Terminallarni qo\'shish va tahrirlash',
-                      onTap: () => Navigator.push(
+                if (isAdmin)
+                  _buildSection(
+                    context,
+                    'Asosiy Sozlamalar',
+                    'Kassa va unga bog\'langan omborlarni sozlash',
+                    [
+                      _buildSettingsTile(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const TerminalManagementScreen(),
+                        icon: Icons.storefront,
+                        color: Colors.blue,
+                        title: 'Joriy Kassa',
+                        subtitle: state.currentRegister?.name ?? 'Tanlanmagan',
+                        onTap: () => _showRegisterPicker(context, state),
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.terminal_rounded,
+                        color: Colors.indigo,
+                        title: 'Kassa Terminallari',
+                        subtitle: 'Terminallarni qo\'shish va tahrirlash',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TerminalManagementScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.warehouse_rounded,
-                      color: Colors.orange,
-                      title: 'Omborlar',
-                      subtitle: 'Omborlarni qo\'shish va tahrirlash',
-                      onTap: () => Navigator.push(
+                      _buildSettingsTile(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const WarehouseManagementScreen(),
+                        icon: Icons.warehouse_rounded,
+                        color: Colors.orange,
+                        title: 'Omborlar',
+                        subtitle: 'Omborlarni qo\'shish va tahrirlash',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WarehouseManagementScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                if (state.isMaster == false) ...[
+                    ],
+                  ),
+                if (isAdmin && state.isMaster == false) ...[
                   SizedBox(height: 24),
                   _buildSection(
                     context,
@@ -111,7 +114,7 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
-                SizedBox(height: 24),
+                if (isAdmin) SizedBox(height: 24),
                 _buildSection(
                   context,
                   'Apparat Ta\'minoti',
@@ -192,7 +195,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (state.isMaster == true) ...[
+                if (isAdmin && state.isMaster == true) ...[
                   SizedBox(height: 24),
                   _buildSection(
                     context,
@@ -326,49 +329,51 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
-                SizedBox(height: 24),
-                _buildSection(
-                  context,
-                  'Tizimni Tozalash',
-                  'Dasturni boshlang\'ich holatga qaytarish',
-                  [
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.delete_forever_rounded,
-                      color: Colors.red,
-                      title: 'Barcha ma\'lumotlarni o\'chirish',
-                      subtitle:
-                          'Dasturni tozalash va qayta o\'rnatish holatiga keltirish',
-                      onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text('Diqqat!'),
-                            content: Text(
-                              'Ushbu amal barcha ma\'lumotlarni (mahsulotlar, sotuvlar, sozlamalar) butunlay o\'chirib yuboradi. Dastur qayta o\'rnatilgan holatga qaytadi. Davom etasizmi?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: Text('Yo\'q'),
+                if (isAdmin) ...[
+                  SizedBox(height: 24),
+                  _buildSection(
+                    context,
+                    'Tizimni Tozalash',
+                    'Dasturni boshlang\'ich holatga qaytarish',
+                    [
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.delete_forever_rounded,
+                        color: Colors.red,
+                        title: 'Barcha ma\'lumotlarni o\'chirish',
+                        subtitle:
+                            'Dasturni tozalash va qayta o\'rnatish holatiga keltirish',
+                        onTap: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text('Diqqat!'),
+                              content: Text(
+                                'Ushbu amal barcha ma\'lumotlarni (mahsulotlar, sotuvlar, sozlamalar) butunlay o\'chirib yuboradi. Dastur qayta o\'rnatilgan holatga qaytadi. Davom etasizmi?',
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text('Yo\'q'),
                                 ),
-                                child: Text('Ha, hammasini o\'chirish'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await state.clearAllData();
-                        }
-                      },
-                    ),
-                  ],
-                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: Text('Ha, hammasini o\'chirish'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await state.clearAllData();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
