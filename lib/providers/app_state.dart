@@ -209,9 +209,15 @@ class AppState extends ChangeNotifier {
       _connectRealtime();
     }
 
-    // If master and already activated, check blocking status in background
+    // If master and already activated, check blocking status
     if (isMaster == true && isActivated && activationCode != null) {
       checkBlockingStatus();
+      // Periodically check every 5 minutes
+      Timer.periodic(const Duration(minutes: 5), (timer) {
+        if (isActivated && !isBlocked) {
+          checkBlockingStatus();
+        }
+      });
     }
 
     isInitialized = true;
@@ -1475,6 +1481,10 @@ class AppState extends ChangeNotifier {
           notifyListeners();
         }
       } else if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['force_logout'] == true && currentUser != null) {
+          logout();
+        }
         if (isBlocked) {
           isBlocked = false;
           notifyListeners();
