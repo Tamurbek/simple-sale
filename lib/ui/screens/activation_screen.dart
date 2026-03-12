@@ -208,6 +208,22 @@ class _ActivationScreenState extends State<ActivationScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
+              SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () => state.resetTerminalMode(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: const Text(
+                    'Ortga (Boshlang\'ich sozlamalarga qaytish)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
