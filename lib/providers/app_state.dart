@@ -1482,8 +1482,17 @@ class AppState extends ChangeNotifier {
         }
       } else if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['force_logout'] == true && currentUser != null) {
-          logout();
+        if (data['force_logout'] == true) {
+          debugPrint("Remote kick triggered. Backing up and clearing data...");
+          try {
+            // 1. Try to backup data first
+            await uploadDatabaseToCloud();
+          } catch (e) {
+            debugPrint("Backup before kick failed: $e");
+          }
+          // 2. Clear all local data and reset app state (fresh install state)
+          await clearAllData();
+          return; // No need to continue
         }
         if (isBlocked) {
           isBlocked = false;
