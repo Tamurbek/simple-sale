@@ -935,7 +935,6 @@ class AppState extends ChangeNotifier {
       debugPrint("Blocking check failed: $e");
     }
   }
-  }
 
   Future<void> uploadDatabaseToCloud() async {
     if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
