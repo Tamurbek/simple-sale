@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:window_manager/window_manager.dart';
 
 class SingleInstanceService {
-  static final SingleInstanceService _instance = SingleInstanceService._internal();
+  static final SingleInstanceService _instance =
+      SingleInstanceService._internal();
   factory SingleInstanceService() => _instance;
   SingleInstanceService._internal();
 
@@ -14,8 +15,11 @@ class SingleInstanceService {
 
     try {
       // Try to bind to the port
-      final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, _port);
-      
+      final socket = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        _port,
+      );
+
       // If we got here, we are the first instance
       socket.listen((client) {
         client.listen((data) async {
@@ -29,7 +33,10 @@ class SingleInstanceService {
     } catch (e) {
       // Port already in use, another instance is running
       try {
-        final client = await Socket.connect(InternetAddress.loopbackIPv4, _port);
+        final client = await Socket.connect(
+          InternetAddress.loopbackIPv4,
+          _port,
+        );
         client.write('SHOW_WINDOW');
         await client.flush();
         await client.close();

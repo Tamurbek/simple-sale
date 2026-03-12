@@ -25,7 +25,7 @@ void main() async {
 
   // Ensure only one instance is running
   await SingleInstanceService().ensureSingleInstance();
-  
+
   // Initialize system tray and window management for Desktop
   if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
     await SystemTrayService().init();
@@ -44,25 +44,57 @@ class SimpleSaleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+
     return MaterialApp(
       title: 'Simple Sale POS',
       debugShowCheckedModeBanner: false,
+      themeMode: state.themeMode,
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6366F1),
           primary: const Color(0xFF6366F1),
+          onPrimary: Colors.white,
           surface: Colors.white,
+          onSurface: const Color(0xFF1E293B),
           background: const Color(0xFFF1F5F9),
+          onBackground: const Color(0xFF1E293B),
         ),
         textTheme: GoogleFonts.interTextTheme(),
         cardTheme: CardThemeData(
           elevation: 0,
+          color: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: Colors.grey.shade100),
           ),
         ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF818CF8),
+          brightness: Brightness.dark,
+          primary: const Color(0xFF818CF8),
+          onPrimary: Colors.white,
+          surface: const Color(0xFF1E293B),
+          onSurface: Colors.white,
+          background: const Color(0xFF0F172A),
+          onBackground: Colors.white,
+        ),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          color: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          ),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
       ),
       home: const InitializationWrapper(),
     );
@@ -75,17 +107,19 @@ class InitializationWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    
+
     if (!state.isInitialized) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF6366F1))),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+        ),
       );
     }
-    
+
     if (state.isMaster == null) {
       return const SetupScreen();
     }
-    
+
     if (state.isMaster == true && !state.isActivated) {
       return const ActivationScreen();
     }
@@ -125,7 +159,7 @@ class InitializationWrapper extends StatelessWidget {
     if (state.currentUser == null) {
       return const LoginScreen();
     }
-    
+
     return const MainLayout();
   }
 }
@@ -143,20 +177,38 @@ class _MainLayoutState extends State<MainLayout> {
 
   List<Widget> get _screens => [
     POSScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    DashboardScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    SalesHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    WarehouseScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    CatalogScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    EmployeeScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    TrashScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    SettingsScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    ReturnsHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
-    WriteOffsHistoryScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
+    DashboardScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    SalesHistoryScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    WarehouseScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    CatalogScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    EmployeeScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    TrashScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    SettingsScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    ReturnsHistoryScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    WriteOffsHistoryScreen(
+      onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
   ];
 
   bool _canAccess(int index, UserRole? role) {
     if (role == UserRole.admin) return true;
-    // Cashier can only access POS (0) and Tarix (2) - History is useful for them too? 
+    // Cashier can only access POS (0) and Tarix (2) - History is useful for them too?
     // User said "Faqat sotishi kerak" - so let's stick to ONLY POS (0).
     return index == 0;
   }
@@ -165,15 +217,13 @@ class _MainLayoutState extends State<MainLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      endDrawer: Drawer(
-        width: 250,
-        child: _buildSidebar(false),
-      ),
+      endDrawer: Drawer(width: 250, child: _buildSidebar(false)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isSmall = constraints.maxWidth < 700;
-          final isMedium = constraints.maxWidth >= 700 && constraints.maxWidth < 1200;
-          
+          final isMedium =
+              constraints.maxWidth >= 700 && constraints.maxWidth < 1200;
+
           // Disable permanent sidebar everywhere, just like POS
           const bool showPermanentSidebar = false;
 
@@ -183,7 +233,12 @@ class _MainLayoutState extends State<MainLayout> {
                 child: Row(
                   children: [
                     if (showPermanentSidebar) _buildSidebar(isMedium),
-                    if (showPermanentSidebar) const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFF1F5F9)),
+                    if (showPermanentSidebar)
+                      const VerticalDivider(
+                        thickness: 1,
+                        width: 1,
+                        color: Color(0xFFF1F5F9),
+                      ),
                     Expanded(
                       child: IndexedStack(
                         index: _selectedIndex,
@@ -203,28 +258,100 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildSidebar(bool slim) {
     final state = context.watch<AppState>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       width: slim ? 80 : 250,
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Column(
         children: [
           _buildLogo(slim),
+          _buildThemeToggle(slim),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                _buildNavItem(0, Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Sotuv', slim),
-                if (_canAccess(1, state.currentUser?.role)) _buildNavItem(1, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Dashboard', slim),
-                if (_canAccess(2, state.currentUser?.role)) _buildNavItem(2, Icons.history_rounded, Icons.history_rounded, 'Sotuvlar Tarixi', slim),
-                if (_canAccess(3, state.currentUser?.role)) _buildNavItem(3, Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Ombor', slim),
-                if (_canAccess(4, state.currentUser?.role)) _buildNavItem(4, Icons.category_outlined, Icons.category_rounded, 'Katalog', slim),
-                if (_canAccess(5, state.currentUser?.role)) _buildNavItem(5, Icons.people_outline, Icons.people_rounded, 'Hodimlar', slim),
-                if (_canAccess(6, state.currentUser?.role)) _buildNavItem(6, Icons.delete_outline_rounded, Icons.delete_rounded, 'Savat', slim),
-                if (_canAccess(7, state.currentUser?.role)) _buildNavItem(7, Icons.settings_outlined, Icons.settings_rounded, 'Sozlamalar', slim),
+                _buildNavItem(
+                  0,
+                  Icons.shopping_cart_outlined,
+                  Icons.shopping_cart_rounded,
+                  'Sotuv',
+                  slim,
+                ),
+                if (_canAccess(1, state.currentUser?.role))
+                  _buildNavItem(
+                    1,
+                    Icons.grid_view_outlined,
+                    Icons.grid_view_rounded,
+                    'Dashboard',
+                    slim,
+                  ),
+                if (_canAccess(2, state.currentUser?.role))
+                  _buildNavItem(
+                    2,
+                    Icons.history_rounded,
+                    Icons.history_rounded,
+                    'Sotuvlar Tarixi',
+                    slim,
+                  ),
+                if (_canAccess(3, state.currentUser?.role))
+                  _buildNavItem(
+                    3,
+                    Icons.inventory_2_outlined,
+                    Icons.inventory_2_rounded,
+                    'Ombor',
+                    slim,
+                  ),
+                if (_canAccess(4, state.currentUser?.role))
+                  _buildNavItem(
+                    4,
+                    Icons.category_outlined,
+                    Icons.category_rounded,
+                    'Katalog',
+                    slim,
+                  ),
+                if (_canAccess(5, state.currentUser?.role))
+                  _buildNavItem(
+                    5,
+                    Icons.people_outline,
+                    Icons.people_rounded,
+                    'Hodimlar',
+                    slim,
+                  ),
+                if (_canAccess(6, state.currentUser?.role))
+                  _buildNavItem(
+                    6,
+                    Icons.delete_outline_rounded,
+                    Icons.delete_rounded,
+                    'Savat',
+                    slim,
+                  ),
+                if (_canAccess(7, state.currentUser?.role))
+                  _buildNavItem(
+                    7,
+                    Icons.settings_outlined,
+                    Icons.settings_rounded,
+                    'Sozlamalar',
+                    slim,
+                  ),
                 const Divider(),
-                if (_canAccess(8, state.currentUser?.role)) _buildNavItem(8, Icons.assignment_return_outlined, Icons.assignment_return_rounded, 'Vazvratlar', slim),
-                if (_canAccess(9, state.currentUser?.role)) _buildNavItem(9, Icons.remove_circle_outline_rounded, Icons.remove_circle_rounded, 'Chiqarishlar', slim),
+                if (_canAccess(8, state.currentUser?.role))
+                  _buildNavItem(
+                    8,
+                    Icons.assignment_return_outlined,
+                    Icons.assignment_return_rounded,
+                    'Vazvratlar',
+                    slim,
+                  ),
+                if (_canAccess(9, state.currentUser?.role))
+                  _buildNavItem(
+                    9,
+                    Icons.remove_circle_outline_rounded,
+                    Icons.remove_circle_rounded,
+                    'Chiqarishlar',
+                    slim,
+                  ),
               ],
             ),
           ),
@@ -234,15 +361,65 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
+  Widget _buildThemeToggle(bool slim) {
+    final state = context.watch<AppState>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: () => state.toggleTheme(),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            vertical: 10,
+            horizontal: slim ? 0 : 16,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: slim
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+            children: [
+              Icon(
+                isDark ? Icons.light_mode_rounded : Icons.dark_mode_outlined,
+                color: isDark ? Colors.amber : Colors.blueGrey,
+              ),
+              if (!slim) const SizedBox(width: 16),
+              if (!slim)
+                Expanded(
+                  child: Text(
+                    isDark ? 'Yorug\' rejim' : 'Tungi rejim',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNav() {
     final state = context.watch<AppState>();
     final isAdmin = state.currentUser?.role == UserRole.admin;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: BottomNavigationBar(
@@ -252,20 +429,63 @@ class _MainLayoutState extends State<MainLayout> {
           setState(() => _selectedIndex = index);
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF6366F1),
+        backgroundColor: Theme.of(context).cardColor,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart_rounded), label: 'Sotuv'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Dash'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.history_rounded), activeIcon: Icon(Icons.history_rounded), label: 'Tarix'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Ombor'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.category_outlined), activeIcon: Icon(Icons.category_rounded), label: 'Kat'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.people_outlined), activeIcon: Icon(Icons.people_rounded), label: 'Hodim'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.delete_outline_rounded), activeIcon: Icon(Icons.delete_rounded), label: 'Savat'),
-          if (isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: 'Soz'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            activeIcon: Icon(Icons.shopping_cart_rounded),
+            label: 'Sotuv',
+          ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.grid_view_outlined),
+              activeIcon: Icon(Icons.grid_view_rounded),
+              label: 'Dash',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.history_rounded),
+              activeIcon: Icon(Icons.history_rounded),
+              label: 'Tarix',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2_rounded),
+              label: 'Ombor',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.category_outlined),
+              activeIcon: Icon(Icons.category_rounded),
+              label: 'Kat',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.people_outlined),
+              activeIcon: Icon(Icons.people_rounded),
+              label: 'Hodim',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.delete_outline_rounded),
+              activeIcon: Icon(Icons.delete_rounded),
+              label: 'Savat',
+            ),
+          if (isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings_rounded),
+              label: 'Soz',
+            ),
         ],
       ),
     );
@@ -290,15 +510,28 @@ class _MainLayoutState extends State<MainLayout> {
           if (!slim)
             const Text(
               'SimpleSale',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF1E293B), letterSpacing: -0.5),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF1E293B),
+                letterSpacing: -0.5,
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label, bool slim) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    IconData activeIcon,
+    String label,
+    bool slim,
+  ) {
     final isSelected = _selectedIndex == index;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: InkWell(
@@ -311,17 +544,24 @@ class _MainLayoutState extends State<MainLayout> {
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: slim ? 0 : 16),
+          padding: EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: slim ? 0 : 16,
+          ),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF6366F1).withOpacity(0.08) : Colors.transparent,
+            color: isSelected
+                ? primaryColor.withOpacity(0.08)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
-            mainAxisAlignment: slim ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: slim
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               Icon(
                 isSelected ? activeIcon : icon,
-                color: isSelected ? const Color(0xFF6366F1) : Colors.grey.shade500,
+                color: isSelected ? primaryColor : Colors.grey.shade500,
                 size: 24,
               ),
               if (!slim) const SizedBox(width: 16),
@@ -331,8 +571,10 @@ class _MainLayoutState extends State<MainLayout> {
                     label,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? const Color(0xFF6366F1) : Colors.grey.shade600,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: isSelected ? primaryColor : Colors.grey.shade600,
                     ),
                   ),
                 ),
@@ -340,7 +582,10 @@ class _MainLayoutState extends State<MainLayout> {
                 Container(
                   width: 4,
                   height: 20,
-                  decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
             ],
           ),
@@ -352,47 +597,72 @@ class _MainLayoutState extends State<MainLayout> {
   Widget _buildUserAvatar(bool slim) {
     final state = context.watch<AppState>();
     final user = state.currentUser;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Container(
-          padding: EdgeInsets.all(slim ? 8 : 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade100),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: const Color(0xFF6366F1).withOpacity(0.1),
-                child: Text(
-                  user?.name[0].toUpperCase() ?? '?',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
-                ),
-              ),
-              if (!slim) const SizedBox(width: 12),
-              if (!slim)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(user?.name ?? 'Tizimda yo\'q', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                      Text(user?.role == UserRole.admin ? 'Administrator' : 'Kassir', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-              if (!slim) 
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded, color: Colors.grey, size: 18),
-                  onPressed: () => state.logout(),
-                ),
-            ],
+        padding: EdgeInsets.all(slim ? 8 : 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.05)
+              : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade100,
           ),
         ),
-      );
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: primaryColor.withOpacity(0.1),
+              child: Text(
+                user?.name[0].toUpperCase() ?? '?',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+            if (!slim) const SizedBox(width: 12),
+            if (!slim)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      user?.name ?? 'Tizimda yo\'q',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      user?.role == UserRole.admin ? 'Administrator' : 'Kassir',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            if (!slim)
+              IconButton(
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+                onPressed: () => state.logout(),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

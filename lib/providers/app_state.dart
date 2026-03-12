@@ -42,17 +42,31 @@ class AppState extends ChangeNotifier {
   Timer? _syncTimer;
   WebSocketChannel? _wsChannel;
   bool _isConnectingWs = false;
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
 
   double get todaySalesTotal {
     final now = DateTime.now();
     return sales
-        .where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day)
+        .where(
+          (s) =>
+              s.date.year == now.year &&
+              s.date.month == now.month &&
+              s.date.day == now.day,
+        )
         .fold(0.0, (sum, s) => sum + s.total);
   }
 
   int get todaySalesCount {
     final now = DateTime.now();
-    return sales.where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day).length;
+    return sales
+        .where(
+          (s) =>
+              s.date.year == now.year &&
+              s.date.month == now.month &&
+              s.date.day == now.day,
+        )
+        .length;
   }
 
   double get averageCheck {
@@ -62,40 +76,53 @@ class AppState extends ChangeNotifier {
 
   List<MapEntry<String, double>> get topSellingProducts {
     final now = DateTime.now();
-    final todaySales = sales.where((s) => s.date.year == now.year && s.date.month == now.month && s.date.day == now.day);
-    
+    final todaySales = sales.where(
+      (s) =>
+          s.date.year == now.year &&
+          s.date.month == now.month &&
+          s.date.day == now.day,
+    );
+
     final Map<String, double> topMap = {};
     for (var sale in todaySales) {
       for (var item in sale.items) {
-        topMap[item.productName] = (topMap[item.productName] ?? 0.0) + item.quantity;
+        topMap[item.productName] =
+            (topMap[item.productName] ?? 0.0) + item.quantity;
       }
     }
-    
-    final sorted = topMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    final sorted = topMap.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(5).toList();
   }
 
   // Active items (not deleted)
-  List<Category> get activeCategories => categories.where((c) => !c.isDeleted).toList();
-  List<Product> get activeProducts => products.where((p) => !p.isDeleted).toList();
+  List<Category> get activeCategories =>
+      categories.where((c) => !c.isDeleted).toList();
+  List<Product> get activeProducts =>
+      products.where((p) => !p.isDeleted).toList();
   List<User> get activeUsers => users.where((u) => !u.isDeleted).toList();
 
   // Deleted items (Trash)
-  List<Category> get deletedCategories => categories.where((c) => c.isDeleted).toList();
-  List<Product> get deletedProducts => products.where((p) => p.isDeleted).toList();
+  List<Category> get deletedCategories =>
+      categories.where((c) => c.isDeleted).toList();
+  List<Product> get deletedProducts =>
+      products.where((p) => p.isDeleted).toList();
   List<User> get deletedUsers => users.where((u) => u.isDeleted).toList();
 
   Future<String?> get localIp async {
     try {
       final interfaces = await NetworkInterface.list();
       List<String> allIps = [];
-      
+
       for (var interface in interfaces) {
         // Skip common virtual/docker interfaces
-        if (interface.name.contains('utun') || 
-            interface.name.contains('docker') || 
-            interface.name.contains('vboxnet')) continue;
-            
+        if (interface.name.contains('utun') ||
+            interface.name.contains('docker') ||
+            interface.name.contains('vboxnet')) {
+          continue;
+        }
+
         for (var addr in interface.addresses) {
           if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
             allIps.add(addr.address);
@@ -108,7 +135,10 @@ class AppState extends ChangeNotifier {
       // Prioritize common local network patterns
       try {
         return allIps.firstWhere(
-          (ip) => ip.startsWith('192.168.') || ip.startsWith('10.0.') || ip.startsWith('172.'),
+          (ip) =>
+              ip.startsWith('192.168.') ||
+              ip.startsWith('10.0.') ||
+              ip.startsWith('172.'),
           orElse: () => allIps.first,
         );
       } catch (e) {
@@ -128,17 +158,25 @@ class AppState extends ChangeNotifier {
     final master = prefs.getBool('isMaster');
     final ip = prefs.getString('masterAddress');
     masterPassword = prefs.getString('masterPassword');
-    
+
     isMaster = master;
     masterAddress = ip;
     deviceId = prefs.getString('deviceId') ?? Uuid().v4();
     await prefs.setString('deviceId', deviceId!);
     isActivated = prefs.getBool('isActivated') ?? false;
     activationCode = prefs.getString('activationCode');
-    
+
+    final savedTheme = prefs.getString('themeMode');
+    if (savedTheme == 'light') {
+      _themeMode = ThemeMode.light;
+    } else if (savedTheme == 'dark')
+      _themeMode = ThemeMode.dark;
+    else
+      _themeMode = ThemeMode.system;
+
     // Load data from DB
     await _loadFromDb();
-    
+
     // Safety check: ensure no nulls
     categories = categories.whereType<Category>().toList();
     products = products.whereType<Product>().toList();
@@ -170,7 +208,7 @@ class AppState extends ChangeNotifier {
       await syncWithMaster();
       _connectRealtime();
     }
-    
+
     // If master and already activated, check blocking status in background
     if (isMaster == true && isActivated && activationCode != null) {
       checkBlockingStatus();
@@ -193,7 +231,12 @@ class AppState extends ChangeNotifier {
     inventories = await DatabaseService.getInventories();
 
     if (users.isEmpty && isMaster == true) {
-      final admin = User(id: 'admin', name: 'Admin', pin: '1234', role: UserRole.admin);
+      final admin = User(
+        id: 'admin',
+        name: 'Admin',
+        pin: '1234',
+        role: UserRole.admin,
+      );
       await DatabaseService.saveUser(admin);
       users.add(admin);
     }
@@ -203,41 +246,109 @@ class AppState extends ChangeNotifier {
     final c1 = Category(id: 'c1', name: 'Ichimliklar');
     final c2 = Category(id: 'c2', name: 'Taomlar');
     final c3 = Category(id: 'c3', name: 'Non mahsulotlari');
-    
+
     await DatabaseService.saveCategory(c1);
     await DatabaseService.saveCategory(c2);
     await DatabaseService.saveCategory(c3);
 
     final w1 = Warehouse(id: 'w1', name: 'Asosiy Ombor');
     final w2 = Warehouse(id: 'w2', name: 'Zaxira Ombor');
-    
+
     await DatabaseService.saveWarehouse(w1);
     await DatabaseService.saveWarehouse(w2);
 
-    await DatabaseService.saveRegister(Register(id: 'r1', name: 'Kassa 1', warehouseId: 'w1'));
-    await DatabaseService.saveRegister(Register(id: 'r2', name: 'Kassa 2', warehouseId: 'w2'));
+    await DatabaseService.saveRegister(
+      Register(id: 'r1', name: 'Kassa 1', warehouseId: 'w1'),
+    );
+    await DatabaseService.saveRegister(
+      Register(id: 'r2', name: 'Kassa 2', warehouseId: 'w2'),
+    );
 
-    await DatabaseService.saveProduct(Product(id: 'p1', name: 'Coca-Cola 0.5L', price: 6000, categoryId: 'c1', barcode: '111111', stocks: {'w1': 100, 'w2': 50}));
-    await DatabaseService.saveProduct(Product(id: 'p2', name: 'Osh (1 portsiya)', price: 25000, categoryId: 'c2', barcode: '222222', stocks: {'w1': 20, 'w2': 10}));
-    await DatabaseService.saveProduct(Product(id: 'p3', name: 'Non', price: 4000, categoryId: 'c3', barcode: '333333', stocks: {'w1': 50, 'w2': 0}));
-    await DatabaseService.saveProduct(Product(id: 'p4', name: 'Fanta 0.5L', price: 6000, categoryId: 'c1', barcode: '444444', stocks: {'w1': 80, 'w2': 40}));
-    await DatabaseService.saveProduct(Product(id: 'p5', name: 'Go\'sht (Mol)', price: 95000, categoryId: 'c2', barcode: '555555', stocks: {'w1': 10, 'w2': 5}, unit: 'kg'));
-    await DatabaseService.saveProduct(Product(id: 'p6', name: 'Un', price: 7000, categoryId: 'c3', barcode: '666666', stocks: {'w1': 200, 'w2': 100}, unit: 'kg'));
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p1',
+        name: 'Coca-Cola 0.5L',
+        price: 6000,
+        categoryId: 'c1',
+        barcode: '111111',
+        stocks: {'w1': 100, 'w2': 50},
+      ),
+    );
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p2',
+        name: 'Osh (1 portsiya)',
+        price: 25000,
+        categoryId: 'c2',
+        barcode: '222222',
+        stocks: {'w1': 20, 'w2': 10},
+      ),
+    );
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p3',
+        name: 'Non',
+        price: 4000,
+        categoryId: 'c3',
+        barcode: '333333',
+        stocks: {'w1': 50, 'w2': 0},
+      ),
+    );
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p4',
+        name: 'Fanta 0.5L',
+        price: 6000,
+        categoryId: 'c1',
+        barcode: '444444',
+        stocks: {'w1': 80, 'w2': 40},
+      ),
+    );
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p5',
+        name: 'Go\'sht (Mol)',
+        price: 95000,
+        categoryId: 'c2',
+        barcode: '555555',
+        stocks: {'w1': 10, 'w2': 5},
+        unit: 'kg',
+      ),
+    );
+    await DatabaseService.saveProduct(
+      Product(
+        id: 'p6',
+        name: 'Un',
+        price: 7000,
+        categoryId: 'c3',
+        barcode: '666666',
+        stocks: {'w1': 200, 'w2': 100},
+        unit: 'kg',
+      ),
+    );
   }
 
   Future<void> syncWithMaster() async {
     if (isMaster != false || masterAddress == null) return;
-    
+
     final data = await SyncService.fetchFullState(masterAddress!);
     if (data != null) {
-      final newCategories = (data['categories'] as List).map((c) => Category.fromJson(c)).toList();
-      final newProducts = (data['products'] as List).map((p) => Product.fromJson(p)).toList();
-      final newWarehouses = (data['warehouses'] as List).map((w) => Warehouse.fromJson(w)).toList();
-      final newRegisters = (data['registers'] as List).map((r) => Register.fromJson(r)).toList();
+      final newCategories = (data['categories'] as List)
+          .map((c) => Category.fromJson(c))
+          .toList();
+      final newProducts = (data['products'] as List)
+          .map((p) => Product.fromJson(p))
+          .toList();
+      final newWarehouses = (data['warehouses'] as List)
+          .map((w) => Warehouse.fromJson(w))
+          .toList();
+      final newRegisters = (data['registers'] as List)
+          .map((r) => Register.fromJson(r))
+          .toList();
       final newUsers = data['users'] != null
           ? (data['users'] as List).map((u) => User.fromJson(u)).toList()
           : <User>[];
-      
+
       await DatabaseService.clearAllAndReplace(
         categories: newCategories.whereType<Category>().toList(),
         products: newProducts.whereType<Product>().toList(),
@@ -245,7 +356,7 @@ class AppState extends ChangeNotifier {
         registers: newRegisters.whereType<Register>().toList(),
         users: newUsers.whereType<User>().toList(),
       );
-      
+
       await _loadFromDb();
 
       if (currentRegister != null) {
@@ -259,32 +370,41 @@ class AppState extends ChangeNotifier {
           currentRegister = null;
         }
       }
-      
+
       notifyListeners();
     } else {
-      throw Exception('Asosiy kompyuterga ulanib bo\'lmadi. IP manzilni tekshiring.');
+      throw Exception(
+        'Asosiy kompyuterga ulanib bo\'lmadi. IP manzilni tekshiring.',
+      );
     }
   }
 
-  Future<void> setTerminalMode(bool master, {String? ip, String? password}) async {
+  Future<void> setTerminalMode(
+    bool master, {
+    String? ip,
+    String? password,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (master == false) {
       // For secondary, try to sync first
       if (ip == null || ip.isEmpty) throw Exception('IP manzilni kiriting');
-      
+
       final oldIp = masterAddress;
       final oldMaster = isMaster;
-      
+
       masterAddress = ip;
       isMaster = false;
-      
+
       try {
         await syncWithMaster();
         // If sync success, save everything
         await prefs.setBool('isMaster', false);
         await prefs.setString('masterAddress', ip);
-        await prefs.setBool('isActivated', true); // Secondary terminals follow Master activation
+        await prefs.setBool(
+          'isActivated',
+          true,
+        ); // Secondary terminals follow Master activation
         isActivated = true;
       } catch (e) {
         // Rollback
@@ -302,9 +422,24 @@ class AppState extends ChangeNotifier {
       isMaster = true;
       _startServer();
     }
-    
+
     notifyListeners();
     if (isMaster == false) _connectRealtime();
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('themeMode', mode.name);
+    notifyListeners();
+  }
+
+  void toggleTheme() {
+    if (_themeMode == ThemeMode.dark) {
+      setThemeMode(ThemeMode.light);
+    } else {
+      setThemeMode(ThemeMode.dark);
+    }
   }
 
   void _connectRealtime() {
@@ -315,7 +450,7 @@ class AppState extends ChangeNotifier {
     try {
       final wsUrl = 'ws://$masterAddress:8080/ws';
       _wsChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      
+
       _wsChannel!.stream.listen(
         (message) async {
           final data = jsonDecode(message);
@@ -335,7 +470,7 @@ class AppState extends ChangeNotifier {
       _isConnectingWs = false;
       _reconnectRealtime();
     }
-    
+
     // Fallback polling for register status check
     _syncTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       if (isMaster == false && masterAddress != null) {
@@ -343,14 +478,19 @@ class AppState extends ChangeNotifier {
           // Check if current register is still ours (lightweight check)
           final data = await SyncService.fetchFullState(masterAddress!);
           if (data != null && data['registers'] != null) {
-             final regs = (data['registers'] as List).map((r) => Register.fromJson(r)).toList();
-             if (currentRegister != null) {
-                final latest = regs.firstWhere((r) => r.id == currentRegister!.id, orElse: () => currentRegister!);
-                if (latest.activeDeviceId != deviceId) {
-                  currentRegister = null;
-                  notifyListeners();
-                }
-             }
+            final regs = (data['registers'] as List)
+                .map((r) => Register.fromJson(r))
+                .toList();
+            if (currentRegister != null) {
+              final latest = regs.firstWhere(
+                (r) => r.id == currentRegister!.id,
+                orElse: () => currentRegister!,
+              );
+              if (latest.activeDeviceId != deviceId) {
+                currentRegister = null;
+                notifyListeners();
+              }
+            }
           }
         } catch (e) {}
       } else {
@@ -365,7 +505,10 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  Future<void> _handleRemoteUpdate(String type, Map<String, dynamic> data) async {
+  Future<void> _handleRemoteUpdate(
+    String type,
+    Map<String, dynamic> data,
+  ) async {
     switch (type) {
       case 'category':
         await DatabaseService.saveCategory(Category.fromJson(data));
@@ -416,13 +559,13 @@ class AppState extends ChangeNotifier {
     await prefs.remove('isMaster');
     await prefs.remove('masterAddress');
     await prefs.remove('masterPassword');
-    
+
     SyncService.stopServer();
     isMaster = null;
     masterAddress = null;
     masterPassword = null;
     currentUser = null;
-    
+
     notifyListeners();
   }
 
@@ -439,7 +582,7 @@ class AppState extends ChangeNotifier {
         'dir=in',
         'action=allow',
         'protocol=TCP',
-        'localport=8080'
+        'localport=8080',
       ]);
       print('Firewall rule added or already exists.');
     } catch (e) {
@@ -455,13 +598,20 @@ class AppState extends ChangeNotifier {
         sales.insert(0, sale);
 
         for (var item in sale.items) {
-          final productIndex = products.indexWhere((p) => p.id == item.productId);
+          final productIndex = products.indexWhere(
+            (p) => p.id == item.productId,
+          );
           if (productIndex >= 0) {
             final product = products[productIndex];
             if (product.trackStock) {
-              final newStock = (product.stocks[sale.warehouseId] ?? 0) - item.quantity;
+              final newStock =
+                  (product.stocks[sale.warehouseId] ?? 0) - item.quantity;
               product.stocks[sale.warehouseId] = newStock;
-              await DatabaseService.updateStock(item.productId, sale.warehouseId, newStock);
+              await DatabaseService.updateStock(
+                item.productId,
+                sale.warehouseId,
+                newStock,
+              );
             }
           }
         }
@@ -534,23 +684,33 @@ class AppState extends ChangeNotifier {
       },
       onRegisterSelectionRequested: (registerId, rDeviceId, force) async {
         if (registerId == null || rDeviceId == null) {
-          return {'status': 'error', 'message': 'Kassa yoki Qurilma ID topilmadi'};
+          return {
+            'status': 'error',
+            'message': 'Kassa yoki Qurilma ID topilmadi',
+          };
         }
         final regIndex = registers.indexWhere((r) => r.id == registerId);
-        if (regIndex < 0) return {'status': 'error', 'message': 'Kassa topilmadi'};
+        if (regIndex < 0) {
+          return {'status': 'error', 'message': 'Kassa topilmadi'};
+        }
 
         final reg = registers[regIndex];
-        if (!force && reg.activeDeviceId != null && reg.activeDeviceId != rDeviceId) {
+        if (!force &&
+            reg.activeDeviceId != null &&
+            reg.activeDeviceId != rDeviceId) {
           return {
-            'status': 'error', 
-            'message': 'Ushbu kassa hozirda boshqa qurilmada (${reg.activeDeviceId}) band!',
+            'status': 'error',
+            'message':
+                'Ushbu kassa hozirda boshqa qurilmada (${reg.activeDeviceId}) band!',
           };
         }
 
         // Clear ANY device from this register if force is true
-        if (force && reg.activeDeviceId != null && reg.activeDeviceId != rDeviceId) {
-           // If we are forcing, we just take over. 
-           // Clear other device's reference if they have it (optional but good)
+        if (force &&
+            reg.activeDeviceId != null &&
+            reg.activeDeviceId != rDeviceId) {
+          // If we are forcing, we just take over.
+          // Clear other device's reference if they have it (optional but good)
         }
 
         // Clear THIS device from any other register
@@ -569,7 +729,7 @@ class AppState extends ChangeNotifier {
 
         // Clear the target register from OTHER devices if forcing
         if (force) {
-          // It's already cleared from THIS device above. 
+          // It's already cleared from THIS device above.
           // Now just overwrite the target register's device ID.
         }
 
@@ -582,7 +742,7 @@ class AppState extends ChangeNotifier {
         await DatabaseService.saveRegister(updated);
         final finalIdx = registers.indexWhere((r) => r.id == registerId);
         if (finalIdx >= 0) registers[finalIdx] = updated;
-        
+
         notifyListeners();
         return {'status': 'success'};
       },
@@ -593,7 +753,11 @@ class AppState extends ChangeNotifier {
     if (isMaster == true) {
       SyncService.broadcast(type, data);
     } else if (isMaster == false && masterAddress != null) {
-      final success = await SyncService.sendUpdateToMaster(masterAddress!, type, data);
+      final success = await SyncService.sendUpdateToMaster(
+        masterAddress!,
+        type,
+        data,
+      );
       if (!success) {
         throw Exception('Ma\'lumotlarni serverga yuborib bo\'lmadi');
       }
@@ -623,7 +787,11 @@ class AppState extends ChangeNotifier {
   Future<void> deleteCategory(String id) async {
     final index = categories.indexWhere((c) => c.id == id);
     if (index >= 0) {
-      final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: true);
+      final updated = Category(
+        id: categories[index].id,
+        name: categories[index].name,
+        isDeleted: true,
+      );
       await DatabaseService.saveCategory(updated);
       await _sendUpdate('category', updated.toJson());
       categories[index] = updated;
@@ -634,7 +802,11 @@ class AppState extends ChangeNotifier {
   Future<void> restoreCategory(String id) async {
     final index = categories.indexWhere((c) => c.id == id);
     if (index >= 0) {
-      final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: false);
+      final updated = Category(
+        id: categories[index].id,
+        name: categories[index].name,
+        isDeleted: false,
+      );
       await DatabaseService.saveCategory(updated);
       await _sendUpdate('category', updated.toJson());
       categories[index] = updated;
@@ -685,9 +857,11 @@ class AppState extends ChangeNotifier {
   // --- Register & Cart ---
   Future<void> setRegister(Register register) async {
     final isAdmin = currentUser?.role == UserRole.admin;
-    
+
     if (isMaster == true) {
-      if (!isAdmin && register.activeDeviceId != null && register.activeDeviceId != deviceId) {
+      if (!isAdmin &&
+          register.activeDeviceId != null &&
+          register.activeDeviceId != deviceId) {
         throw Exception('Ushbu kassa hozirda boshqa qurilmada band!');
       }
 
@@ -716,7 +890,12 @@ class AppState extends ChangeNotifier {
       if (idx >= 0) registers[idx] = updated;
       currentRegister = updated;
     } else if (isMaster == false && masterAddress != null) {
-      final res = await SyncService.selectRegisterOnMaster(masterAddress!, register.id, deviceId!, isAdmin);
+      final res = await SyncService.selectRegisterOnMaster(
+        masterAddress!,
+        register.id,
+        deviceId!,
+        isAdmin,
+      );
       if (res != null && res['status'] == 'success') {
         final updated = Register(
           id: register.id,
@@ -731,14 +910,14 @@ class AppState extends ChangeNotifier {
     } else {
       currentRegister = register;
     }
-    
+
     final prefs = await SharedPreferences.getInstance();
     if (currentRegister != null) {
       await prefs.setString('currentRegisterId', currentRegister!.id);
     } else {
       await prefs.remove('currentRegisterId');
     }
-    
+
     notifyListeners();
   }
 
@@ -747,14 +926,18 @@ class AppState extends ChangeNotifier {
     final warehouseId = currentRegister!.warehouseId;
     final stock = product.stocks[warehouseId] ?? 0;
 
-    final existingIndex = cart.indexWhere((item) => item.productId == product.id);
+    final existingIndex = cart.indexWhere(
+      (item) => item.productId == product.id,
+    );
     double currentQty = 0;
     if (existingIndex >= 0) {
       currentQty = cart[existingIndex].quantity;
     }
 
     if (product.trackStock && currentQty + 1 > stock) {
-      throw Exception('Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})');
+      throw Exception(
+        'Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})',
+      );
     }
 
     if (existingIndex >= 0) {
@@ -766,12 +949,14 @@ class AppState extends ChangeNotifier {
         price: product.price,
       );
     } else {
-      cart.add(SaleItem(
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        price: product.price,
-      ));
+      cart.add(
+        SaleItem(
+          productId: product.id,
+          productName: product.name,
+          quantity: 1,
+          price: product.price,
+        ),
+      );
     }
     notifyListeners();
   }
@@ -779,12 +964,14 @@ class AppState extends ChangeNotifier {
   void updateCartQuantity(String productId, double quantity) {
     if (currentRegister == null) return;
     final warehouseId = currentRegister!.warehouseId;
-    
+
     final product = products.firstWhere((p) => p.id == productId);
     final stock = product.stocks[warehouseId] ?? 0;
 
     if (product.trackStock && quantity > stock) {
-      throw Exception('Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})');
+      throw Exception(
+        'Omborda yetarli mahsulot yo\'q! (Mavjud: ${stock.toInt()})',
+      );
     }
 
     final index = cart.indexWhere((item) => item.productId == productId);
@@ -844,7 +1031,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> processSale() async {
     if (currentRegister == null || cart.isEmpty) return;
-    
+
     final saleData = {
       'id': Uuid().v4(),
       'date': DateTime.now().toIso8601String(),
@@ -859,7 +1046,10 @@ class AppState extends ChangeNotifier {
     sales.insert(0, sale);
 
     if (isMaster == false && masterAddress != null) {
-      final success = await SyncService.sendSaleToMaster(masterAddress!, saleData);
+      final success = await SyncService.sendSaleToMaster(
+        masterAddress!,
+        saleData,
+      );
       if (!success) {
         throw Exception('Asosiy server bilan bog\'lanib bo\'lmadi');
       }
@@ -887,7 +1077,7 @@ class AppState extends ChangeNotifier {
   Future<void> addStockEntry(StockEntry entry) async {
     await DatabaseService.saveStockEntry(entry);
     await _sendUpdate('stock_entry', entry.toJson());
-    
+
     // Update local stocks
     for (var item in entry.items) {
       final productIndex = products.indexWhere((p) => p.id == item.productId);
@@ -896,10 +1086,14 @@ class AppState extends ChangeNotifier {
         final currentStock = product.stocks[entry.warehouseId] ?? 0;
         final newStock = currentStock + item.quantity;
         product.stocks[entry.warehouseId] = newStock;
-        await DatabaseService.updateStock(product.id, entry.warehouseId, newStock);
+        await DatabaseService.updateStock(
+          product.id,
+          entry.warehouseId,
+          newStock,
+        );
       }
     }
-    
+
     stockEntries.insert(0, entry);
     notifyListeners();
   }
@@ -952,7 +1146,10 @@ class AppState extends ChangeNotifier {
   }
 
   void login(String pin) {
-    final user = users.firstWhere((u) => u.pin == pin, orElse: () => throw Exception('PIN xato!'));
+    final user = users.firstWhere(
+      (u) => u.pin == pin,
+      orElse: () => throw Exception('PIN xato!'),
+    );
     currentUser = user;
     notifyListeners();
   }
@@ -984,7 +1181,9 @@ class AppState extends ChangeNotifier {
 
   Future<void> deleteWarehouse(String id) async {
     await DatabaseService.deleteWarehouse(id);
-    await _sendUpdate('warehouse_delete', {'id': id}); // Generic update for delete
+    await _sendUpdate('warehouse_delete', {
+      'id': id,
+    }); // Generic update for delete
     warehouses.removeWhere((w) => w.id == id);
     notifyListeners();
   }
@@ -998,7 +1197,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateRegister(String id, String name, String warehouseId) async {
+  Future<void> updateRegister(
+    String id,
+    String name,
+    String warehouseId,
+  ) async {
     final register = Register(id: id, name: name, warehouseId: warehouseId);
     await DatabaseService.saveRegister(register);
     await _sendUpdate('register', register.toJson());
@@ -1013,7 +1216,7 @@ class AppState extends ChangeNotifier {
   Future<void> addReturn(SaleReturn ret) async {
     await DatabaseService.saveReturn(ret);
     await _sendUpdate('return', ret.toJson());
-    
+
     // Update stock (Return increases stock if tracked)
     for (var item in ret.items) {
       final pIdx = products.indexWhere((p) => p.id == item.productId);
@@ -1034,7 +1237,7 @@ class AppState extends ChangeNotifier {
   Future<void> addWriteOff(WriteOff wo) async {
     await DatabaseService.saveWriteOff(wo);
     await _sendUpdate('write_off', wo.toJson());
-    
+
     // Update stock (Write off decreases stock if tracked)
     for (var item in wo.items) {
       final pIdx = products.indexWhere((p) => p.id == item.productId);
@@ -1055,7 +1258,7 @@ class AppState extends ChangeNotifier {
   Future<void> addInventory(InventoryEntry inv) async {
     await DatabaseService.saveInventory(inv);
     await _sendUpdate('inventory', inv.toJson());
-    
+
     // Update stock (Inventory sets stock to actual count)
     for (var item in inv.items) {
       final pIdx = products.indexWhere((p) => p.id == item.productId);
@@ -1063,7 +1266,11 @@ class AppState extends ChangeNotifier {
         final p = products[pIdx];
         if (p.trackStock) {
           p.stocks[inv.warehouseId] = item.actualQuantity;
-          await DatabaseService.updateStock(p.id, inv.warehouseId, item.actualQuantity);
+          await DatabaseService.updateStock(
+            p.id,
+            inv.warehouseId,
+            item.actualQuantity,
+          );
         }
       }
     }
@@ -1180,7 +1387,7 @@ class AppState extends ChangeNotifier {
 
   bool checkActivationCode(String code) {
     if (deviceId == null) return false;
-    // Simple secret algorithm: 
+    // Simple secret algorithm:
     // Take first 8 chars of deviceId, reverse them, and add a secret suffix
     final secret = deviceId!.substring(0, 8).split('').reversed.join('');
     final expected = "SS-$secret-OK".toUpperCase();
@@ -1189,18 +1396,20 @@ class AppState extends ChangeNotifier {
 
   Future<void> activate(String code, {bool online = true}) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (online) {
       const backendUrl = "https://web-production-afb90.up.railway.app/verify";
       try {
-        final response = await http.post(
-          Uri.parse(backendUrl),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({
-            "device_id": deviceId,
-            "activation_code": code
-          }),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              Uri.parse(backendUrl),
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({
+                "device_id": deviceId,
+                "activation_code": code,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -1209,10 +1418,10 @@ class AppState extends ChangeNotifier {
           isBlocked = false;
           await prefs.setBool('isActivated', true);
           await prefs.setString('activationCode', code);
-          
+
           // Attempt cloud restore after activation
           await restoreDatabaseFromCloud();
-          
+
           notifyListeners();
         } else if (response.statusCode == 403) {
           final data = jsonDecode(response.body);
@@ -1245,17 +1454,19 @@ class AppState extends ChangeNotifier {
 
   Future<void> checkBlockingStatus() async {
     if (isMaster != true || !isActivated || activationCode == null) return;
-    
+
     try {
       const backendUrl = "https://web-production-afb90.up.railway.app/verify";
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "device_id": deviceId,
-          "activation_code": activationCode
-        }),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .post(
+            Uri.parse(backendUrl),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "device_id": deviceId,
+              "activation_code": activationCode,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 403) {
         final data = jsonDecode(response.body);
@@ -1276,18 +1487,23 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> uploadDatabaseToCloud() async {
-    if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
-    
+    if (!isActivated || activationCode == null) {
+      throw Exception('Dastur faollashtirilmagan');
+    }
+
     final dbPath = await DatabaseService.getDatabasePath();
     final file = File(dbPath);
     if (!await file.exists()) throw Exception('Baza fayli topilmadi');
 
     const uploadUrl = "https://web-production-afb90.up.railway.app/backup";
-    
+
     try {
-      var request = http.MultipartRequest('POST', Uri.parse('$uploadUrl?activation_code=$activationCode'));
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$uploadUrl?activation_code=$activationCode'),
+      );
       request.files.add(await http.MultipartFile.fromPath('file', dbPath));
-      
+
       var response = await request.send().timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
         throw Exception('Zaxira yuklashda xatolik: ${response.statusCode}');
@@ -1298,13 +1514,18 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> restoreDatabaseFromCloud() async {
-    if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
+    if (!isActivated || activationCode == null) {
+      throw Exception('Dastur faollashtirilmagan');
+    }
 
-    final downloadUrl = "https://web-production-afb90.up.railway.app/backup/$activationCode";
-    
+    final downloadUrl =
+        "https://web-production-afb90.up.railway.app/backup/$activationCode";
+
     try {
-      final response = await http.get(Uri.parse(downloadUrl)).timeout(const Duration(seconds: 30));
-      
+      final response = await http
+          .get(Uri.parse(downloadUrl))
+          .timeout(const Duration(seconds: 30));
+
       if (response.statusCode == 200) {
         final tempDir = await getTemporaryDirectory();
         final tempFile = File(join(tempDir.path, 'restore.db'));
@@ -1326,20 +1547,20 @@ class AppState extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      
+
       // Close DB properly before deleting (Critical for Windows)
       await DatabaseService.closeDatabase();
-      
+
       final dbPath = await DatabaseService.getDatabasePath();
       final file = File(dbPath);
-      
+
       if (await file.exists()) {
         await file.delete();
       }
     } catch (e) {
       debugPrint('Data clear error: $e');
     }
-    
+
     // Reset local state regardless of file deletion success
     isMaster = null;
     isActivated = false;
@@ -1350,7 +1571,7 @@ class AppState extends ChangeNotifier {
     products = [];
     categories = [];
     sales = [];
-    
+
     notifyListeners();
   }
 }

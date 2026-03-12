@@ -12,7 +12,7 @@ class SystemTrayService with TrayListener, WindowListener {
   Future<void> init() async {
     if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
       await windowManager.ensureInitialized();
-      
+
       WindowOptions windowOptions = const WindowOptions(
         size: Size(1280, 800),
         center: true,
@@ -20,7 +20,7 @@ class SystemTrayService with TrayListener, WindowListener {
         skipTaskbar: false,
         titleBarStyle: TitleBarStyle.normal,
       );
-      
+
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         await windowManager.show();
         await windowManager.focus();
@@ -35,38 +35,40 @@ class SystemTrayService with TrayListener, WindowListener {
   }
 
   Future<void> initTray() async {
-    String iconPath = Platform.isWindows ? 'assets/app_icon.ico' : 'assets/icon.png';
-    
+    String iconPath = Platform.isWindows
+        ? 'assets/app_icon.ico'
+        : 'assets/icon.png';
+
     if (Platform.isWindows) {
       // In release mode, assets are in data/flutter_assets/assets/
       // In debug mode, we can use the relative 'assets/' path
       final exePath = Platform.resolvedExecutable;
       final exeDir = path.dirname(exePath);
-      final releaseIconPath = path.join(exeDir, 'data', 'flutter_assets', 'assets', 'app_icon.ico');
-      
+      final releaseIconPath = path.join(
+        exeDir,
+        'data',
+        'flutter_assets',
+        'assets',
+        'app_icon.ico',
+      );
+
       if (await File(releaseIconPath).exists()) {
         iconPath = releaseIconPath;
       }
-      
+
       await windowManager.setIcon(iconPath);
       await trayManager.setIcon(iconPath);
     } else {
       await trayManager.setIcon(iconPath);
     }
-    
+
     // Explicitly set tooltip
     await trayManager.setToolTip('Simple Sale');
-    
+
     List<MenuItem> items = [
-      MenuItem(
-        key: 'show_window',
-        label: 'Dasturni ochish',
-      ),
+      MenuItem(key: 'show_window', label: 'Dasturni ochish'),
       MenuItem.separator(),
-      MenuItem(
-        key: 'exit_app',
-        label: 'Dasturdan chiqish',
-      ),
+      MenuItem(key: 'exit_app', label: 'Dasturdan chiqish'),
     ];
     await trayManager.setContextMenu(Menu(items: items));
     trayManager.addListener(this);

@@ -21,38 +21,50 @@ class PrintService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
-                child: pw.Text('SIMPLE SALE POS', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                child: pw.Text(
+                  'SIMPLE SALE POS',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
               pw.Divider(),
               pw.Text('Kassa: $registerName'),
-              pw.Text('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}'),
-              pw.Divider(),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Nomi'),
-                  pw.Text('Soni'),
-                  pw.Text('Narxi'),
-                ],
+              pw.Text(
+                'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
               ),
               pw.Divider(),
-              ...items.map((item) => pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 2),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Expanded(child: pw.Text(item.productName)),
-                    pw.Text('${item.quantity}'),
-                    pw.Text('${item.price.toStringAsFixed(0)}'),
-                  ],
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [pw.Text('Nomi'), pw.Text('Soni'), pw.Text('Narxi')],
+              ),
+              pw.Divider(),
+              ...items.map(
+                (item) => pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Expanded(child: pw.Text(item.productName)),
+                      pw.Text('${item.quantity}'),
+                      pw.Text(item.price.toStringAsFixed(0)),
+                    ],
+                  ),
                 ),
-              )),
+              ),
               pw.Divider(),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('JAMI:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text('${total.toStringAsFixed(0)} so\'m', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                    'JAMI:',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.Text(
+                    '${total.toStringAsFixed(0)} so\'m',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
                 ],
               ),
               pw.SizedBox(height: 20),
@@ -65,8 +77,14 @@ class PrintService {
 
     if (printerName != null) {
       final printers = await Printing.listPrinters();
-      final printer = printers.firstWhere((p) => p.name == printerName, orElse: () => printers.first);
-      await Printing.directPrintPdf(printer: printer, onLayout: (format) => doc.save());
+      final printer = printers.firstWhere(
+        (p) => p.name == printerName,
+        orElse: () => printers.first,
+      );
+      await Printing.directPrintPdf(
+        printer: printer,
+        onLayout: (format) => doc.save(),
+      );
     } else {
       await Printing.layoutPdf(onLayout: (format) => doc.save());
     }
