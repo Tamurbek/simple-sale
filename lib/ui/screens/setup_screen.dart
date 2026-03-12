@@ -13,6 +13,7 @@ class _SetupScreenState extends State<SetupScreen> {
    final TextEditingController _ipController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool isMasterChoice = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -129,8 +130,6 @@ class _SetupScreenState extends State<SetupScreen> {
                  ),
               ],
               
-              const SizedBox(height: 32),
-              
               if (!isMasterChoice) ...[
                 TextField(
                   controller: _ipController,
@@ -144,6 +143,8 @@ class _SetupScreenState extends State<SetupScreen> {
                 const SizedBox(height: 24),
               ],
               
+              const SizedBox(height: 16),
+              
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -154,22 +155,43 @@ class _SetupScreenState extends State<SetupScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  onPressed: () {
+                  onPressed: isLoading ? null : () async {
                     if (isMasterChoice && _passwordController.text.length < 4) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Parol kamida 4 belgidan iborat bo\'lishi kerak')),
                       );
                       return;
                     }
-                    context.read<AppState>().setTerminalMode(
-                      isMasterChoice, 
-                      ip: _ipController.text,
-                      password: _passwordController.text,
-                    );
+                    
+                    setState(() => isLoading = true);
+                    try {
+                      await context.read<AppState>().setTerminalMode(
+                        isMasterChoice, 
+                        ip: _ipController.text,
+                        password: _passwordController.text,
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => isLoading = false);
+                    }
                   },
-                  child: const Text('DAVOM ETISH', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  child: isLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(isMasterChoice ? 'DAVOM ETISH' : 'ULANISH VA DAVOM ETISH', 
+                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
             ],
           ),
         ),

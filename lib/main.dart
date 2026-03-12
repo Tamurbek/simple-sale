@@ -68,12 +68,12 @@ class InitializationWrapper extends StatelessWidget {
       );
     }
     
-    if (!state.isActivated) {
-      return const ActivationScreen();
-    }
-    
     if (state.isMaster == null) {
       return const SetupScreen();
+    }
+    
+    if (state.isMaster == true && !state.isActivated) {
+      return const ActivationScreen();
     }
 
     if (state.currentUser == null) {

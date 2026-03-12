@@ -243,26 +243,46 @@ class AppState extends ChangeNotifier {
       }
       
       notifyListeners();
+    } else {
+      throw Exception('Asosiy kompyuterga ulanib bo\'lmadi. IP manzilni tekshiring.');
     }
   }
 
   Future<void> setTerminalMode(bool master, {String? ip, String? password}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isMaster', master);
-    if (ip != null) await prefs.setString('masterAddress', ip);
-    if (password != null) {
-      await prefs.setString('masterPassword', password);
-      masterPassword = password;
-    }
     
-    isMaster = master;
-    masterAddress = ip;
-    
-    if (isMaster == true) {
-      _startServer();
+    if (master == false) {
+      // For secondary, try to sync first
+      if (ip == null || ip.isEmpty) throw Exception('IP manzilni kiriting');
+      
+      final oldIp = masterAddress;
+      final oldMaster = isMaster;
+      
+      masterAddress = ip;
+      isMaster = false;
+      
+      try {
+        await syncWithMaster();
+        // If sync success, save everything
+        await prefs.setBool('isMaster', false);
+        await prefs.setString('masterAddress', ip);
+        await prefs.setBool('isActivated', true); // Secondary terminals follow Master activation
+        isActivated = true;
+      } catch (e) {
+        // Rollback
+        masterAddress = oldIp;
+        isMaster = oldMaster;
+        rethrow;
+      }
     } else {
-      SyncService.stopServer();
-      if (masterAddress != null) await syncWithMaster();
+      // For Master
+      await prefs.setBool('isMaster', true);
+      if (password != null) {
+        await prefs.setString('masterPassword', password);
+        masterPassword = password;
+      }
+      isMaster = true;
+      _startServer();
     }
     
     notifyListeners();
