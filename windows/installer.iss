@@ -50,3 +50,7 @@ Type: filesandordirs; Name: "{userappdata}\com.example\{#MyAppName}"
 Type: filesandordirs; Name: "{localappdata}\com.example\{#MyAppName}"
 ; Delete the database file from Documents (Old location)
 Type: files; Name: "{userdocs}\simple_sale.db"
+
+[Registry]
+; Clean up registry settings on uninstall (Shared Preferences)
+Root: HKCU; Subkey: "Software\com.example\{#MyAppName}"; Flags: uninsdeletekey
