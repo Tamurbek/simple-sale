@@ -347,25 +347,7 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (Navigator.canPop(context))
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Theme.of(context).dividerColor),
-                      ),
-                    ),
-                  ),
-                ),
+
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
