@@ -801,7 +801,7 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     
     if (online) {
-      const backendUrl = "http://localhost:8000/verify";
+      const backendUrl = "https://web-production-afb90.up.railway.app/verify";
       
       try {
         final resp = await http.post(
@@ -860,7 +860,7 @@ class AppState extends ChangeNotifier {
     final file = File(dbPath);
     if (!await file.exists()) throw Exception('Baza fayli topilmadi');
 
-    const uploadUrl = "http://localhost:8000/backup";
+    const uploadUrl = "https://web-production-afb90.up.railway.app/backup";
     
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$uploadUrl?activation_code=$activationCode'));
@@ -878,7 +878,7 @@ class AppState extends ChangeNotifier {
   Future<void> restoreDatabaseFromCloud() async {
     if (!isActivated || activationCode == null) throw Exception('Dastur faollashtirilmagan');
 
-    final downloadUrl = "http://localhost:8000/backup/$activationCode";
+    final downloadUrl = "https://web-production-afb90.up.railway.app/backup/$activationCode";
     
     try {
       final response = await http.get(Uri.parse(downloadUrl)).timeout(const Duration(seconds: 30));
