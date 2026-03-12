@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AppState extends ChangeNotifier {
   List<Warehouse> warehouses = [];
@@ -37,6 +39,9 @@ class AppState extends ChangeNotifier {
   bool isActivated = false;
   bool isBlocked = false;
   String? activationCode;
+  Timer? _syncTimer;
+  WebSocketChannel? _wsChannel;
+  bool _isConnectingWs = false;
 
   double get todaySalesTotal {
     final now = DateTime.now();
@@ -163,6 +168,7 @@ class AppState extends ChangeNotifier {
       }
     } else if (isMaster == false && masterAddress != null) {
       await syncWithMaster();
+      _connectRealtime();
     }
     
     // If master and already activated, check blocking status in background
@@ -298,6 +304,111 @@ class AppState extends ChangeNotifier {
     }
     
     notifyListeners();
+    if (isMaster == false) _connectRealtime();
+  }
+
+  void _connectRealtime() {
+    _syncTimer?.cancel();
+    if (isMaster != false || masterAddress == null || _isConnectingWs) return;
+
+    _isConnectingWs = true;
+    try {
+      final wsUrl = 'ws://$masterAddress:8080/ws';
+      _wsChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      
+      _wsChannel!.stream.listen(
+        (message) async {
+          final data = jsonDecode(message);
+          await _handleRemoteUpdate(data['type'], data['data']);
+        },
+        onDone: () {
+          _isConnectingWs = false;
+          _reconnectRealtime();
+        },
+        onError: (err) {
+          _isConnectingWs = false;
+          _reconnectRealtime();
+        },
+      );
+      print('WebSocket ulandi: $wsUrl');
+    } catch (e) {
+      _isConnectingWs = false;
+      _reconnectRealtime();
+    }
+    
+    // Fallback polling for register status check
+    _syncTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (isMaster == false && masterAddress != null) {
+        try {
+          // Check if current register is still ours (lightweight check)
+          final data = await SyncService.fetchFullState(masterAddress!);
+          if (data != null && data['registers'] != null) {
+             final regs = (data['registers'] as List).map((r) => Register.fromJson(r)).toList();
+             if (currentRegister != null) {
+                final latest = regs.firstWhere((r) => r.id == currentRegister!.id, orElse: () => currentRegister!);
+                if (latest.activeDeviceId != deviceId) {
+                  currentRegister = null;
+                  notifyListeners();
+                }
+             }
+          }
+        } catch (e) {}
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _reconnectRealtime() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (isMaster == false) _connectRealtime();
+    });
+  }
+
+  Future<void> _handleRemoteUpdate(String type, Map<String, dynamic> data) async {
+    switch (type) {
+      case 'category':
+        await DatabaseService.saveCategory(Category.fromJson(data));
+        break;
+      case 'product':
+        await DatabaseService.saveProduct(Product.fromJson(data));
+        break;
+      case 'warehouse':
+        await DatabaseService.saveWarehouse(Warehouse.fromJson(data));
+        break;
+      case 'register':
+        await DatabaseService.saveRegister(Register.fromJson(data));
+        break;
+      case 'user':
+        await DatabaseService.saveUser(User.fromJson(data));
+        break;
+      case 'stock_entry':
+        await DatabaseService.saveStockEntry(StockEntry.fromJson(data));
+        break;
+      case 'sale':
+        await DatabaseService.saveSale(Sale.fromJson(data));
+        break;
+      case 'return':
+        await DatabaseService.saveReturn(SaleReturn.fromJson(data));
+        break;
+      case 'write_off':
+        await DatabaseService.saveWriteOff(WriteOff.fromJson(data));
+        break;
+      case 'inventory':
+        await DatabaseService.saveInventory(InventoryEntry.fromJson(data));
+        break;
+      case 'warehouse_delete':
+        await DatabaseService.deleteWarehouse(data['id']);
+        break;
+      case 'register_delete':
+        await DatabaseService.deleteRegister(data['id']);
+        break;
+      case 'return_delete':
+        await DatabaseService.deleteReturn(data['id']);
+        break;
+    }
+    await _loadFromDb();
+    notifyListeners();
   }
 
   Future<void> resetTerminalMode() async {
@@ -354,6 +465,59 @@ class AppState extends ChangeNotifier {
             }
           }
         }
+        SyncService.broadcast('sale', saleData);
+        notifyListeners();
+      },
+      onUpdateReceived: (type, data) async {
+        switch (type) {
+          case 'category':
+            final category = Category.fromJson(data);
+            await DatabaseService.saveCategory(category);
+            break;
+          case 'product':
+            final product = Product.fromJson(data);
+            await DatabaseService.saveProduct(product);
+            break;
+          case 'warehouse':
+            final warehouse = Warehouse.fromJson(data);
+            await DatabaseService.saveWarehouse(warehouse);
+            break;
+          case 'register':
+            final register = Register.fromJson(data);
+            await DatabaseService.saveRegister(register);
+            break;
+          case 'user':
+            final user = User.fromJson(data);
+            await DatabaseService.saveUser(user);
+            break;
+          case 'stock_entry':
+            final entry = StockEntry.fromJson(data);
+            await DatabaseService.saveStockEntry(entry);
+            break;
+          case 'return':
+            final ret = SaleReturn.fromJson(data);
+            await DatabaseService.saveReturn(ret);
+            break;
+          case 'write_off':
+            final wo = WriteOff.fromJson(data);
+            await DatabaseService.saveWriteOff(wo);
+            break;
+          case 'inventory':
+            final inv = InventoryEntry.fromJson(data);
+            await DatabaseService.saveInventory(inv);
+            break;
+          case 'warehouse_delete':
+            await DatabaseService.deleteWarehouse(data['id']);
+            break;
+          case 'register_delete':
+            await DatabaseService.deleteRegister(data['id']);
+            break;
+          case 'return_delete':
+            await DatabaseService.deleteReturn(data['id']);
+            break;
+        }
+        SyncService.broadcast(type, data);
+        await _loadFromDb();
         notifyListeners();
       },
       onSyncRequested: () {
@@ -425,10 +589,22 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  Future<void> _sendUpdate(String type, Map<String, dynamic> data) async {
+    if (isMaster == true) {
+      SyncService.broadcast(type, data);
+    } else if (isMaster == false && masterAddress != null) {
+      final success = await SyncService.sendUpdateToMaster(masterAddress!, type, data);
+      if (!success) {
+        throw Exception('Ma\'lumotlarni serverga yuborib bo\'lmadi');
+      }
+    }
+  }
+
   // --- Category CRUD ---
   Future<void> addCategory(String name) async {
     final category = Category.create(name);
     await DatabaseService.saveCategory(category);
+    await _sendUpdate('category', category.toJson());
     categories.add(category);
     notifyListeners();
   }
@@ -436,6 +612,7 @@ class AppState extends ChangeNotifier {
   Future<void> updateCategory(String id, String newName) async {
     final category = Category(id: id, name: newName);
     await DatabaseService.saveCategory(category);
+    await _sendUpdate('category', category.toJson());
     final index = categories.indexWhere((c) => c.id == id);
     if (index >= 0) {
       categories[index] = category;
@@ -448,6 +625,7 @@ class AppState extends ChangeNotifier {
     if (index >= 0) {
       final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: true);
       await DatabaseService.saveCategory(updated);
+      await _sendUpdate('category', updated.toJson());
       categories[index] = updated;
       notifyListeners();
     }
@@ -458,6 +636,7 @@ class AppState extends ChangeNotifier {
     if (index >= 0) {
       final updated = Category(id: categories[index].id, name: categories[index].name, isDeleted: false);
       await DatabaseService.saveCategory(updated);
+      await _sendUpdate('category', updated.toJson());
       categories[index] = updated;
       notifyListeners();
     }
@@ -466,12 +645,14 @@ class AppState extends ChangeNotifier {
   // --- Product CRUD ---
   Future<void> addProduct(Product product) async {
     await DatabaseService.saveProduct(product);
+    await _sendUpdate('product', product.toJson());
     products.add(product);
     notifyListeners();
   }
 
   Future<void> updateProduct(Product updatedProduct) async {
     await DatabaseService.saveProduct(updatedProduct);
+    await _sendUpdate('product', updatedProduct.toJson());
     final index = products.indexWhere((p) => p.id == updatedProduct.id);
     if (index >= 0) {
       products[index] = updatedProduct;
@@ -484,6 +665,7 @@ class AppState extends ChangeNotifier {
     if (index >= 0) {
       final updated = products[index].copyWith(isDeleted: true);
       await DatabaseService.saveProduct(updated);
+      await _sendUpdate('product', updated.toJson());
       products[index] = updated;
       notifyListeners();
     }
@@ -494,6 +676,7 @@ class AppState extends ChangeNotifier {
     if (index >= 0) {
       final updated = products[index].copyWith(isDeleted: false);
       await DatabaseService.saveProduct(updated);
+      await _sendUpdate('product', updated.toJson());
       products[index] = updated;
       notifyListeners();
     }
@@ -703,6 +886,7 @@ class AppState extends ChangeNotifier {
   // --- Stock Entries ---
   Future<void> addStockEntry(StockEntry entry) async {
     await DatabaseService.saveStockEntry(entry);
+    await _sendUpdate('stock_entry', entry.toJson());
     
     // Update local stocks
     for (var item in entry.items) {
@@ -728,6 +912,7 @@ class AppState extends ChangeNotifier {
   // --- User Management ---
   Future<void> addUser(User user) async {
     await DatabaseService.saveUser(user);
+    await _sendUpdate('user', user.toJson());
     users.add(user);
     notifyListeners();
   }
@@ -743,6 +928,7 @@ class AppState extends ChangeNotifier {
         isDeleted: true,
       );
       await DatabaseService.saveUser(updated);
+      await _sendUpdate('user', updated.toJson());
       users[index] = updated;
       notifyListeners();
     }
@@ -759,6 +945,7 @@ class AppState extends ChangeNotifier {
         isDeleted: false,
       );
       await DatabaseService.saveUser(updated);
+      await _sendUpdate('user', updated.toJson());
       users[index] = updated;
       notifyListeners();
     }
@@ -779,6 +966,7 @@ class AppState extends ChangeNotifier {
   Future<void> addWarehouse(String name) async {
     final warehouse = Warehouse.create(name);
     await DatabaseService.saveWarehouse(warehouse);
+    await _sendUpdate('warehouse', warehouse.toJson());
     warehouses.add(warehouse);
     notifyListeners();
   }
@@ -786,6 +974,7 @@ class AppState extends ChangeNotifier {
   Future<void> updateWarehouse(String id, String newName) async {
     final warehouse = Warehouse(id: id, name: newName);
     await DatabaseService.saveWarehouse(warehouse);
+    await _sendUpdate('warehouse', warehouse.toJson());
     final index = warehouses.indexWhere((w) => w.id == id);
     if (index >= 0) {
       warehouses[index] = warehouse;
@@ -795,6 +984,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> deleteWarehouse(String id) async {
     await DatabaseService.deleteWarehouse(id);
+    await _sendUpdate('warehouse_delete', {'id': id}); // Generic update for delete
     warehouses.removeWhere((w) => w.id == id);
     notifyListeners();
   }
@@ -803,6 +993,7 @@ class AppState extends ChangeNotifier {
   Future<void> addRegister(String name, String warehouseId) async {
     final register = Register.create(name, warehouseId);
     await DatabaseService.saveRegister(register);
+    await _sendUpdate('register', register.toJson());
     registers.add(register);
     notifyListeners();
   }
@@ -810,6 +1001,7 @@ class AppState extends ChangeNotifier {
   Future<void> updateRegister(String id, String name, String warehouseId) async {
     final register = Register(id: id, name: name, warehouseId: warehouseId);
     await DatabaseService.saveRegister(register);
+    await _sendUpdate('register', register.toJson());
     final index = registers.indexWhere((r) => r.id == id);
     if (index >= 0) {
       registers[index] = register;
@@ -820,6 +1012,7 @@ class AppState extends ChangeNotifier {
   // --- NEW: Returns, Write-offs, Inventories ---
   Future<void> addReturn(SaleReturn ret) async {
     await DatabaseService.saveReturn(ret);
+    await _sendUpdate('return', ret.toJson());
     
     // Update stock (Return increases stock if tracked)
     for (var item in ret.items) {
@@ -840,6 +1033,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> addWriteOff(WriteOff wo) async {
     await DatabaseService.saveWriteOff(wo);
+    await _sendUpdate('write_off', wo.toJson());
     
     // Update stock (Write off decreases stock if tracked)
     for (var item in wo.items) {
@@ -860,6 +1054,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> addInventory(InventoryEntry inv) async {
     await DatabaseService.saveInventory(inv);
+    await _sendUpdate('inventory', inv.toJson());
     
     // Update stock (Inventory sets stock to actual count)
     for (var item in inv.items) {
@@ -894,6 +1089,7 @@ class AppState extends ChangeNotifier {
         }
       }
       await DatabaseService.deleteReturn(id);
+      await _sendUpdate('return_delete', {'id': id});
       returns.removeAt(index);
       notifyListeners();
     }
@@ -947,6 +1143,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> deleteRegister(String id) async {
     await DatabaseService.deleteRegister(id);
+    await _sendUpdate('register_delete', {'id': id});
     registers.removeWhere((r) => r.id == id);
     if (currentRegister?.id == id) {
       currentRegister = registers.isNotEmpty ? registers.first : null;
