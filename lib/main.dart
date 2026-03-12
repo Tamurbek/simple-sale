@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,7 +59,7 @@ class SimpleSaleApp extends StatelessWidget {
         dividerColor: const Color(0xFFE9ECEF),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2D2D2D), // Neutral primary
-          primary: const Color(0xFF2D2D2D),
+          primary: const Color(0xFF4F46E5),
           onPrimary: Colors.white,
           surface: const Color(0xFFF8F9FA),
           onSurface: const Color(0xFF212529),
@@ -191,6 +192,29 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  Timer? _inactivityTimer;
+  static const inactivityTimeout = Duration(minutes: 5);
+
+  void _resetInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(inactivityTimeout, () {
+      if (mounted) {
+        context.read<AppState>().logout();
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _resetInactivityTimer();
+  }
+
+  @override
+  void dispose() {
+    _inactivityTimer?.cancel();
+    super.dispose();
+  }
 
   List<Widget> get _screens => [
     POSScreen(onMenuPressed: () => _scaffoldKey.currentState?.openEndDrawer()),
@@ -232,7 +256,16 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Listener(
+      onPointerDown: (_) => _resetInactivityTimer(),
+      onPointerMove: (_) => _resetInactivityTimer(),
+      behavior: HitTestBehavior.translucent,
+      child: Focus(
+        onKeyEvent: (node, event) {
+          _resetInactivityTimer();
+          return KeyEventResult.ignored;
+        },
+        child: Scaffold(
       key: _scaffoldKey,
       endDrawer: Drawer(width: 250, child: _buildSidebar(false)),
       body: LayoutBuilder(
@@ -270,8 +303,10 @@ class _MainLayoutState extends State<MainLayout> {
           );
         },
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildSidebar(bool slim) {
     final state = context.watch<AppState>();

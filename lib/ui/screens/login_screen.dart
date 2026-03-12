@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
@@ -13,6 +14,19 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   String pin = '';
   User? selectedUser;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   void _onNumberPressed(String number) {
     if (pin.length < 4) {
@@ -242,7 +256,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
+      body: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            final key = event.logicalKey;
+            if (key == LogicalKeyboardKey.backspace) {
+              _onDelete();
+              return KeyEventResult.handled;
+            }
+            final String? digit = event.character;
+            if (digit != null && RegExp(r'^[0-9]$').hasMatch(digit)) {
+              _onNumberPressed(digit);
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Stack(
         children: [
           Center(
             child: SingleChildScrollView(
@@ -367,8 +399,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _resetTerminalMode() {
     showDialog(
