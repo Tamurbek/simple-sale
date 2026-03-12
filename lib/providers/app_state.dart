@@ -36,6 +36,7 @@ class AppState extends ChangeNotifier {
   String? masterAddress;
   String? deviceId;
   bool isInitialized = false;
+  String? initializationError;
   bool isActivated = false;
   bool isBlocked = false;
   String? activationCode;
@@ -154,74 +155,94 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final master = prefs.getBool('isMaster');
-    final ip = prefs.getString('masterAddress');
-    masterPassword = prefs.getString('masterPassword');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final master = prefs.getBool('isMaster');
+      final ip = prefs.getString('masterAddress');
+      masterPassword = prefs.getString('masterPassword');
 
-    isMaster = master;
-    masterAddress = ip;
-    deviceId = prefs.getString('deviceId') ?? Uuid().v4();
-    await prefs.setString('deviceId', deviceId!);
-    isActivated = prefs.getBool('isActivated') ?? false;
-    activationCode = prefs.getString('activationCode');
+      isMaster = master;
+      masterAddress = ip;
+      deviceId = prefs.getString('deviceId') ?? Uuid().v4();
+      await prefs.setString('deviceId', deviceId!);
+      isActivated = prefs.getBool('isActivated') ?? false;
+      activationCode = prefs.getString('activationCode');
 
-    final savedTheme = prefs.getString('themeMode');
-    if (savedTheme == 'light') {
-      _themeMode = ThemeMode.light;
-    } else if (savedTheme == 'dark')
-      _themeMode = ThemeMode.dark;
-    else
-      _themeMode = ThemeMode.system;
+      final savedTheme = prefs.getString('themeMode');
+      if (savedTheme == 'light') {
+        _themeMode = ThemeMode.light;
+      } else if (savedTheme == 'dark') {
+        _themeMode = ThemeMode.dark;
+      } else {
+        _themeMode = ThemeMode.system;
+      }
 
-    // Load data from DB
-    await _loadFromDb();
-
-    // Safety check: ensure no nulls
-    categories = categories.whereType<Category>().toList();
-    products = products.whereType<Product>().toList();
-    warehouses = warehouses.whereType<Warehouse>().toList();
-    registers = registers.whereType<Register>().toList();
-    users = users.whereType<User>().toList();
-
-    // If master and empty, add dummy data for demonstration
-    if (isMaster == true && products.isEmpty && categories.isEmpty) {
-      await _initializeDummyData();
+      // Load data from DB
       await _loadFromDb();
-    }
 
-    final savedRegId = prefs.getString('currentRegisterId');
-    if (savedRegId != null) {
-      final matching = registers.where((r) => r.id == savedRegId).toList();
-      if (matching.isNotEmpty && matching.first.activeDeviceId == deviceId) {
-        currentRegister = matching.first;
+      // Safety check: ensure no nulls
+      categories = categories.whereType<Category>().toList();
+      products = products.whereType<Product>().toList();
+      warehouses = warehouses.whereType<Warehouse>().toList();
+      registers = registers.whereType<Register>().toList();
+      users = users.whereType<User>().toList();
+
+      // If master and empty, add dummy data for demonstration
+      if (isMaster == true && products.isEmpty && categories.isEmpty) {
+        await _initializeDummyData();
+        await _loadFromDb();
       }
-    }
 
-    if (isMaster == true) {
-      _startServer();
-      // Automatic Windows Firewall rule add (if on Windows)
-      if (Platform.isWindows) {
-        _addWindowsFirewallRule();
-      }
-    } else if (isMaster == false && masterAddress != null) {
-      await syncWithMaster();
-      _connectRealtime();
-    }
-
-    // License and remote logout check
-    if (isActivated && activationCode != null) {
-      checkBlockingStatus(); // Initial check
-      // Periodically check every 5 minutes (for both Master and Clients)
-      Timer.periodic(const Duration(minutes: 5), (timer) {
-        if (!isBlocked) {
-          checkBlockingStatus();
+      final savedRegId = prefs.getString('currentRegisterId');
+      if (savedRegId != null) {
+        final matching = registers.where((r) => r.id == savedRegId).toList();
+        if (matching.isNotEmpty && matching.first.activeDeviceId == deviceId) {
+          currentRegister = matching.first;
         }
-      });
-    }
+      }
 
-    isInitialized = true;
+      if (isMaster == true) {
+        _startServer();
+        // Automatic Windows Firewall rule add (if on Windows)
+        if (Platform.isWindows) {
+          _addWindowsFirewallRule();
+        }
+      } else if (isMaster == false && masterAddress != null) {
+        try {
+          await syncWithMaster();
+          _connectRealtime();
+        } catch (e) {
+          // Agar master bilan ulanib bo'lmasa ham, dastur ishlashini davom ettiradi
+          print('Master bilan ulanishda xatolik (offline rejim): $e');
+        }
+      }
+
+      // License and remote logout check
+      if (isActivated && activationCode != null) {
+        checkBlockingStatus(); // Initial check
+        // Periodically check every 5 minutes (for both Master and Clients)
+        Timer.periodic(const Duration(minutes: 5), (timer) {
+          if (!isBlocked) {
+            checkBlockingStatus();
+          }
+        });
+      }
+    } catch (e) {
+      // Har qanday kutilmagan xato bo'lsa ham, dastur ishlashini davom ettiradi
+      initializationError = e.toString();
+      print('loadSettings xatosi: $e');
+    } finally {
+      // Har doim initialized qilimiz – loading ekranda qotib qolmasin
+      isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  Future<void> retryInitialization() async {
+    isInitialized = false;
+    initializationError = null;
     notifyListeners();
+    await loadSettings();
   }
 
   Future<void> _loadFromDb() async {
