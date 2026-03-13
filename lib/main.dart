@@ -480,6 +480,7 @@ class _MainLayoutState extends State<MainLayout> {
         children: [
           _buildLogo(slim),
           _buildThemeToggle(slim),
+          _buildConnectionStatus(slim),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -872,6 +873,59 @@ class _MainLayoutState extends State<MainLayout> {
                 ),
                 onPressed: () => state.logout(),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConnectionStatus(bool slim) {
+    final state = context.watch<AppState>();
+    if (state.isMaster == true || state.masterAddress == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: slim ? 0 : 12),
+        decoration: BoxDecoration(
+          color:
+              (state.isConnected ? Colors.green : Colors.red).withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment:
+              slim ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: state.isConnected ? Colors.green : Colors.red,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (state.isConnected ? Colors.green : Colors.red)
+                        .withOpacity(0.4),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+            if (!slim) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  state.isConnected ? 'Asosiy terminalga ulangan' : 'Aloqa yo\'q',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: state.isConnected ? Colors.green : Colors.red,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

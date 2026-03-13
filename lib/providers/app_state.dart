@@ -45,6 +45,8 @@ class AppState extends ChangeNotifier {
   WebSocketChannel? _wsChannel;
   Timer? _wsPingTimer;
   bool _isConnectingWs = false;
+  bool _isConnected = false;
+  bool get isConnected => isMaster == true ? true : _isConnected;
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
 
@@ -505,19 +507,27 @@ class AppState extends ChangeNotifier {
 
       _wsChannel!.stream.listen(
         (message) async {
+          if (!_isConnected) {
+            _isConnected = true;
+            notifyListeners();
+          }
           final data = jsonDecode(message);
           if (data['type'] == 'pong') return; // Ignore heartbeat responses
           await _handleRemoteUpdate(data['type'], data['data']);
         },
         onDone: () {
           _isConnectingWs = false;
+          _isConnected = false;
           _wsPingTimer?.cancel();
           _reconnectRealtime();
+          notifyListeners();
         },
         onError: (err) {
           _isConnectingWs = false;
+          _isConnected = false;
           _wsPingTimer?.cancel();
           _reconnectRealtime();
+          notifyListeners();
         },
       );
       print('WebSocket ulandi: $wsUrl');

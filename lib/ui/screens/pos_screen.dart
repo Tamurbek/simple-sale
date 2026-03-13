@@ -950,6 +950,49 @@ class _POSScreenState extends State<POSScreen> {
       ),
       child: Column(
         children: [
+          if (state.isMaster == false && state.masterAddress != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: state.isConnected ? Colors.green : Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (state.isConnected ? Colors.green : Colors.red).withOpacity(0.3),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    state.isConnected ? 'Asosiy terminalga ulangan' : 'Asosiy terminal bilan aloqa yo\'q',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: state.isConnected ? Colors.green : Colors.red,
+                    ),
+                  ),
+                  if (!state.isConnected) ...[
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
