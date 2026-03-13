@@ -13,19 +13,21 @@ class SyncService {
 
   // Broadcast to all connected clients
   static void broadcast(String type, Map<String, dynamic> data) {
+    if (_clients.isEmpty) return;
     final message = jsonEncode({'type': type, 'data': data});
     final List<WebSocketChannel> toRemove = [];
 
-    for (var client in _clients) {
+    for (var client in List.from(_clients)) {
       try {
         client.sink.add(message);
       } catch (e) {
+        print('Broadcast error for client: $e');
         toRemove.add(client);
       }
     }
 
-    for (var client in toRemove) {
-      _clients.remove(client);
+    if (toRemove.isNotEmpty) {
+      _clients.removeWhere((c) => toRemove.contains(c));
     }
   }
 
@@ -48,10 +50,21 @@ class SyncService {
         _clients.add(socket);
         socket.stream.listen(
           (message) {
-            // Clients don't send much via WS in this architecture, usually just ping
+            try {
+              final data = jsonDecode(message as String);
+              if (data['type'] == 'ping') {
+                socket.sink.add(jsonEncode({'type': 'pong'}));
+              }
+            } catch (e) {
+              // Ignore invalid messages
+            }
           },
-          onDone: () => _clients.remove(socket),
-          onError: (err) => _clients.remove(socket),
+          onDone: () {
+            _clients.remove(socket);
+          },
+          onError: (err) {
+            _clients.remove(socket);
+          },
         );
       })(request);
     });
@@ -61,9 +74,11 @@ class SyncService {
       try {
         final payload = await request.readAsString();
         final data = jsonDecode(payload);
-        onSaleReceived(data);
+        print('Sale received from client...');
+        await onSaleReceived(data);
         return Response.ok(jsonEncode({'status': 'success'}));
       } catch (e) {
+        print('Error handling /sale: $e');
         return Response.internalServerError(body: e.toString());
       }
     });
@@ -73,9 +88,11 @@ class SyncService {
       try {
         final payload = await request.readAsString();
         final data = jsonDecode(payload);
-        onUpdateReceived(data['type'], data['data']);
+        print('Update received from client: ${data['type']}');
+        await onUpdateReceived(data['type'], data['data']);
         return Response.ok(jsonEncode({'status': 'success'}));
       } catch (e) {
+        print('Error handling /update: $e');
         return Response.internalServerError(body: e.toString());
       }
     });

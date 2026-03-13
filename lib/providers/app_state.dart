@@ -43,6 +43,7 @@ class AppState extends ChangeNotifier {
   String? activationCode;
   Timer? _syncTimer;
   WebSocketChannel? _wsChannel;
+  Timer? _wsPingTimer;
   bool _isConnectingWs = false;
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
@@ -485,6 +486,7 @@ class AppState extends ChangeNotifier {
 
   void _connectRealtime() {
     _syncTimer?.cancel();
+    _wsPingTimer?.cancel();
     if (isMaster != false || masterAddress == null || _isConnectingWs) return;
 
     _isConnectingWs = true;
@@ -492,17 +494,29 @@ class AppState extends ChangeNotifier {
       final wsUrl = 'ws://$masterAddress:8080/ws';
       _wsChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
+      // Set up heartbeat
+      _wsPingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        try {
+          _wsChannel?.sink.add(jsonEncode({'type': 'ping'}));
+        } catch (e) {
+          timer.cancel();
+        }
+      });
+
       _wsChannel!.stream.listen(
         (message) async {
           final data = jsonDecode(message);
+          if (data['type'] == 'pong') return; // Ignore heartbeat responses
           await _handleRemoteUpdate(data['type'], data['data']);
         },
         onDone: () {
           _isConnectingWs = false;
+          _wsPingTimer?.cancel();
           _reconnectRealtime();
         },
         onError: (err) {
           _isConnectingWs = false;
+          _wsPingTimer?.cancel();
           _reconnectRealtime();
         },
       );
@@ -557,194 +571,79 @@ class AppState extends ChangeNotifier {
     String type,
     Map<String, dynamic> data,
   ) async {
-    switch (type) {
-      case 'category':
-        await DatabaseService.saveCategory(Category.fromJson(data));
-        break;
-      case 'product':
-        await DatabaseService.saveProduct(Product.fromJson(data));
-        break;
-      case 'warehouse':
-        await DatabaseService.saveWarehouse(Warehouse.fromJson(data));
-        break;
-      case 'register':
-        await DatabaseService.saveRegister(Register.fromJson(data));
-        break;
-      case 'user':
-        await DatabaseService.saveUser(User.fromJson(data));
-        break;
-      case 'stock_entry':
-        final entry = StockEntry.fromJson(data);
-        if (stockEntries.any((e) => e.id == entry.id)) break;
-        await DatabaseService.saveStockEntry(entry);
-        for (var item in entry.items) {
-          final pIdx = products.indexWhere((p) => p.id == item.productId);
-          if (pIdx >= 0) {
-            final p = products[pIdx];
-            if (p.trackStock) {
-              final newStock = (p.stocks[entry.warehouseId] ?? 0) + item.quantity;
-              p.stocks[entry.warehouseId] = newStock;
-              await DatabaseService.updateStock(p.id, entry.warehouseId, newStock);
-            }
-          }
-        }
-        stockEntries.insert(0, entry);
-        break;
-      case 'sale':
-        final sale = Sale.fromJson(data);
-        if (sales.any((s) => s.id == sale.id)) break;
-        await DatabaseService.saveSale(sale);
-        for (var item in sale.items) {
-          final pIdx = products.indexWhere((p) => p.id == item.productId);
-          if (pIdx >= 0) {
-            final p = products[pIdx];
-            if (p.trackStock) {
-              final newStock = (p.stocks[sale.warehouseId] ?? 0) - item.quantity;
-              p.stocks[sale.warehouseId] = newStock;
-              await DatabaseService.updateStock(p.id, sale.warehouseId, newStock);
-            }
-          }
-        }
-        sales.insert(0, sale);
-        break;
-      case 'return':
-        final ret = SaleReturn.fromJson(data);
-        if (returns.any((r) => r.id == ret.id)) break;
-        await DatabaseService.saveReturn(ret);
-        for (var item in ret.items) {
-          final pIdx = products.indexWhere((p) => p.id == item.productId);
-          if (pIdx >= 0) {
-            final p = products[pIdx];
-            if (p.trackStock) {
-              final newStock = (p.stocks[ret.warehouseId] ?? 0) + item.quantity;
-              p.stocks[ret.warehouseId] = newStock;
-              await DatabaseService.updateStock(p.id, ret.warehouseId, newStock);
-            }
-          }
-        }
-        returns.insert(0, ret);
-        break;
-      case 'write_off':
-        final wo = WriteOff.fromJson(data);
-        if (writeOffs.any((w) => w.id == wo.id)) break;
-        await DatabaseService.saveWriteOff(wo);
-        for (var item in wo.items) {
-          final pIdx = products.indexWhere((p) => p.id == item.productId);
-          if (pIdx >= 0) {
-            final p = products[pIdx];
-            if (p.trackStock) {
-              final newStock = (p.stocks[wo.warehouseId] ?? 0) - item.quantity;
-              p.stocks[wo.warehouseId] = newStock;
-              await DatabaseService.updateStock(p.id, wo.warehouseId, newStock);
-            }
-          }
-        }
-        writeOffs.insert(0, wo);
-        break;
-      case 'inventory':
-        final inv = InventoryEntry.fromJson(data);
-        if (inventories.any((i) => i.id == inv.id)) break;
-        await DatabaseService.saveInventory(inv);
-        for (var item in inv.items) {
-          final pIdx = products.indexWhere((p) => p.id == item.productId);
-          if (pIdx >= 0) {
-            final p = products[pIdx];
-            if (p.trackStock) {
-              p.stocks[inv.warehouseId] = item.actualQuantity;
-              await DatabaseService.updateStock(p.id, inv.warehouseId, item.actualQuantity);
-            }
-          }
-        }
-        inventories.insert(0, inv);
-        break;
-      case 'warehouse_delete':
-        await DatabaseService.deleteWarehouse(data['id']);
-        break;
-      case 'register_delete':
-        await DatabaseService.deleteRegister(data['id']);
-        break;
-      case 'return_delete':
-        final id = data['id'];
-        final index = returns.indexWhere((r) => r.id == id);
-        if (index >= 0) {
-          final ret = returns[index];
-          for (var item in ret.items) {
-            final pIdx = products.indexWhere((p) => p.id == item.productId);
-            if (pIdx >= 0) {
-              final p = products[pIdx];
-              if (p.trackStock) {
-                final newStock = (p.stocks[ret.warehouseId] ?? 0) - item.quantity;
-                p.stocks[ret.warehouseId] = newStock;
-                await DatabaseService.updateStock(p.id, ret.warehouseId, newStock);
-              }
-            }
-          }
-          await DatabaseService.deleteReturn(id);
-          returns.removeAt(index);
-        }
-        break;
-      case 'write_off_delete':
-        final id = data['id'];
-        final index = writeOffs.indexWhere((w) => w.id == id);
-        if (index >= 0) {
-          final wo = writeOffs[index];
-          for (var item in wo.items) {
-            final pIdx = products.indexWhere((p) => p.id == item.productId);
-            if (pIdx >= 0) {
-              final p = products[pIdx];
-              if (p.trackStock) {
-                final newStock = (p.stocks[wo.warehouseId] ?? 0) + item.quantity;
-                p.stocks[wo.warehouseId] = newStock;
-                await DatabaseService.updateStock(p.id, wo.warehouseId, newStock);
-              }
-            }
-          }
-          await DatabaseService.deleteWriteOff(id);
-          writeOffs.removeAt(index);
-        }
-        break;
-      case 'stock_entry_delete':
-        final id = data['id'];
-        final index = stockEntries.indexWhere((e) => e.id == id);
-        if (index >= 0) {
-          final entry = stockEntries[index];
-          for (var item in entry.items) {
-            final pIdx = products.indexWhere((p) => p.id == item.productId);
-            if (pIdx >= 0) {
-              final p = products[pIdx];
-              if (p.trackStock) {
-                final newStock = (p.stocks[entry.warehouseId] ?? 0) - item.quantity;
-                p.stocks[entry.warehouseId] = newStock;
-                await DatabaseService.updateStock(p.id, entry.warehouseId, newStock);
-              }
-            }
-          }
-          await DatabaseService.deleteStockEntry(id);
-          stockEntries.removeAt(index);
-        }
-        break;
-      case 'inventory_delete':
-        final id = data['id'];
-        final index = inventories.indexWhere((i) => i.id == id);
-        if (index >= 0) {
-          final inv = inventories[index];
-          for (var item in inv.items) {
-            final pIdx = products.indexWhere((p) => p.id == item.productId);
-            if (pIdx >= 0) {
-              final p = products[pIdx];
-              if (p.trackStock) {
-                p.stocks[inv.warehouseId] = item.expectedQuantity;
-                await DatabaseService.updateStock(p.id, inv.warehouseId, item.expectedQuantity);
-              }
-            }
-          }
-          await DatabaseService.deleteInventory(id);
-          inventories.removeAt(index);
-        }
-        break;
+    print('Applying remote update: $type');
+    try {
+      switch (type) {
+        case 'category':
+          await DatabaseService.saveCategory(Category.fromJson(data));
+          break;
+        case 'product':
+          await DatabaseService.saveProduct(Product.fromJson(data));
+          break;
+        case 'warehouse':
+          await DatabaseService.saveWarehouse(Warehouse.fromJson(data));
+          break;
+        case 'register':
+          await DatabaseService.saveRegister(Register.fromJson(data));
+          break;
+        case 'user':
+          await DatabaseService.saveUser(User.fromJson(data));
+          break;
+        case 'stock_entry':
+        case 'stock_entry_update':
+          final entry = StockEntry.fromJson(data);
+          // If it's an update, we might need a full reload anyway to be safe with stocks
+          await DatabaseService.deleteStockEntry(entry.id);
+          await DatabaseService.saveStockEntry(entry);
+          break;
+        case 'sale':
+          final sale = Sale.fromJson(data);
+          if (sales.any((s) => s.id == sale.id)) return;
+          await DatabaseService.saveSale(sale);
+          break;
+        case 'return':
+        case 'return_update':
+          final ret = SaleReturn.fromJson(data);
+          await DatabaseService.saveReturn(ret);
+          break;
+        case 'write_off':
+        case 'write_off_update':
+          final wo = WriteOff.fromJson(data);
+          await DatabaseService.saveWriteOff(wo);
+          break;
+        case 'inventory':
+        case 'inventory_update':
+          final inv = InventoryEntry.fromJson(data);
+          await DatabaseService.saveInventory(inv);
+          break;
+        case 'warehouse_delete':
+          await DatabaseService.deleteWarehouse(data['id']);
+          break;
+        case 'register_delete':
+          await DatabaseService.deleteRegister(data['id']);
+          break;
+        case 'return_delete':
+          await DatabaseService.deleteReturn(data['id']);
+          break;
+        case 'write_off_delete':
+          await DatabaseService.deleteWriteOff(data['id']);
+          break;
+        case 'stock_entry_delete':
+          await DatabaseService.deleteStockEntry(data['id']);
+          break;
+        case 'inventory_delete':
+          await DatabaseService.deleteInventory(data['id']);
+          break;
+      }
+      
+      // Every remote update should trigger a database reload to ensure consistency
+      await _loadFromDb();
+      notifyListeners();
+      print('Remote update applied successfully: $type');
+    } catch (e) {
+      print('Error applying remote update ($type): $e');
     }
-    await _loadFromDb();
-    notifyListeners();
+  }
   }
 
   Future<void> resetTerminalMode() async {
@@ -1194,17 +1093,7 @@ class AppState extends ChangeNotifier {
     await DatabaseService.saveSale(sale);
     sales.insert(0, sale);
 
-    if (isMaster == false && masterAddress != null) {
-      final success = await SyncService.sendSaleToMaster(
-        masterAddress!,
-        saleData,
-      );
-      if (!success) {
-        throw Exception('Asosiy server bilan bog\'lanib bo\'lmadi');
-      }
-    } else if (isMaster == true) {
-      SyncService.broadcast('sale', saleData);
-    }
+    await _sendUpdate('sale', saleData);
 
     final warehouseId = currentRegister!.warehouseId;
     for (var item in cart) {
