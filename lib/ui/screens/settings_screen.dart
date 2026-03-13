@@ -5,6 +5,7 @@ import '../../providers/app_state.dart';
 import '../../models/models.dart';
 import 'terminal_management_screen.dart';
 import 'warehouse_management_screen.dart';
+import '../../services/update_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback? onMenuPressed;
@@ -182,8 +183,16 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.info_outline,
                       color: Colors.grey,
                       title: 'Dastur Versiyasi',
-                      subtitle: 'v1.0.4 • 2026',
+                      subtitle: 'v${context.read<AppState>().appVersion} • 2026',
                       onTap: () {},
+                    ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.system_update_rounded,
+                      color: Colors.blue,
+                      title: 'Dasturni Yangilash',
+                      subtitle: 'Yangi versiyani tekshirish',
+                      onTap: () => _checkUpdate(context),
                     ),
                     _buildSettingsTile(
                       context,
@@ -699,6 +708,52 @@ class SettingsScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             child: Text('Saqlash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _checkUpdate(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final updateData = await UpdateService.checkUpdate();
+    if (context.mounted) Navigator.pop(context); // close loader
+
+    if (updateData != null) {
+      if (context.mounted) {
+        _showUpdateDialog(context, updateData['version'], updateData['url']);
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sizda eng oxirgi versiya o\'rnatilgan.')),
+        );
+      }
+    }
+  }
+
+  void _showUpdateDialog(BuildContext context, String version, String url) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Yangi versiya mavjud'),
+        content: Text('Simple Sale v$version mavjud. Yuklab olishni xohlaysizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keyinroq'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              UpdateService.openDownloadPage(url);
+            },
+            child: const Text('Yuklab olish'),
           ),
         ],
       ),

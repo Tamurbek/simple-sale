@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
+import '../../services/update_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -14,6 +15,44 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String? selectedRegisterId; // null means "All Registers"
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdateOnStartup();
+    });
+  }
+
+  void _checkUpdateOnStartup() async {
+    final updateData = await UpdateService.checkUpdate();
+    if (updateData != null && mounted) {
+      _showUpdateDialog(context, updateData['version'], updateData['url']);
+    }
+  }
+
+  void _showUpdateDialog(BuildContext context, String version, String url) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Yangi versiya mavjud'),
+        content: Text('Simple Sale v$version mavjud. Yuklab olishni xohlaysizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keyinroq'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              UpdateService.openDownloadPage(url);
+            },
+            child: const Text('Yuklab olish'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

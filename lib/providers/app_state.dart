@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class AppState extends ChangeNotifier {
   List<Warehouse> warehouses = [];
@@ -52,6 +53,7 @@ class AppState extends ChangeNotifier {
 
   bool _isBarcodeScanMode = false;
   bool get isBarcodeScanMode => _isBarcodeScanMode;
+  String appVersion = '1.7.9';
 
   double get todaySalesTotal {
     final now = DateTime.now();
@@ -174,6 +176,11 @@ class AppState extends ChangeNotifier {
       await prefs.setString('deviceId', deviceId!);
       isActivated = prefs.getBool('isActivated') ?? false;
       activationCode = prefs.getString('activationCode');
+
+      try {
+        final packageInfo = await PackageInfo.fromPlatform();
+        appVersion = packageInfo.version;
+      } catch (_) {}
 
       final savedTheme = prefs.getString('themeMode');
       if (savedTheme == 'light') {
