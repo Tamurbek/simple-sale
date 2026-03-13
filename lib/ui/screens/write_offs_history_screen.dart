@@ -225,6 +225,53 @@ class WriteOffsHistoryScreen extends StatelessWidget {
                     ),
                   ),
                   const Divider(height: 32),
+                  // Barcode Input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            labelText: 'Shtrix kod',
+                            hintText: 'Skanerlang...',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.qr_code_scanner),
+                          ),
+                          onSubmitted: (barcode) {
+                            if (barcode.isEmpty) return;
+                            try {
+                              final p = state.products.firstWhere(
+                                (p) =>
+                                    p.barcode == barcode ||
+                                    p.additionalBarcodes.contains(barcode),
+                              );
+                              setDialogState(() {
+                                final existingIdx = items.indexWhere(
+                                  (i) => i['productId'] == p.id,
+                                );
+                                if (existingIdx >= 0) {
+                                  items[existingIdx]['quantity'] =
+                                      (items[existingIdx]['quantity'] ?? 0) + 1;
+                                } else {
+                                  items.add({
+                                    'productId': p.id,
+                                    'productName': p.name,
+                                    'quantity': 1.0,
+                                  });
+                                }
+                              });
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Mahsulot topilmadi!'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 32),
                   ...items.asMap().entries.map((entry) {
                     final idx = entry.key;
                     final item = entry.value;

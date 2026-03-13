@@ -17,6 +17,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   String? invWarehouseId;
   final TextEditingController descCtrl = TextEditingController();
   final List<Map<String, dynamic>> items = [];
+  final TextEditingController barcodeCtrl = TextEditingController();
+  final FocusNode barcodeFocusNode = FocusNode();
   DateTime selectedDate = DateTime.now();
 
   @override
@@ -46,6 +48,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void dispose() {
     descCtrl.dispose();
+    barcodeCtrl.dispose();
+    barcodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -151,6 +155,34 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
               SizedBox(height: 24),
               const Divider(),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: barcodeCtrl,
+                      focusNode: barcodeFocusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Shtrix kod orqali qo\'shish',
+                        hintText: 'Shtrix kodni o\'qing yoki yozing...',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.qr_code_scanner),
+                      ),
+                      onSubmitted: (val) => _handleBarcode(val, state),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: () => _handleBarcode(barcodeCtrl.text, state),
+                    icon: const Icon(Icons.add),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
               SizedBox(height: 16),
               Text(
                 'Mahsulotlar',
@@ -276,6 +308,43 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       ),
     );
+  }
+
+  void _handleBarcode(String barcode, AppState state) {
+    if (barcode.isEmpty) return;
+
+    try {
+      final product = state.products.firstWhere(
+        (p) => p.barcode == barcode || p.additionalBarcodes.contains(barcode),
+      );
+
+      setState(() {
+        final existingIdx =
+            items.indexWhere((i) => i['productId'] == product.id);
+        if (existingIdx >= 0) {
+          // If already exists, just focus or maybe do nothing as actual quantity needs to be entered manually
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${product.name} allaqachon ro\'yxatda bor'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        } else {
+          items.add({
+            'productId': product.id,
+            'productName': product.name,
+            'expected': product.stocks[invWarehouseId] ?? 0.0,
+            'actual': 0.0,
+          });
+        }
+        barcodeCtrl.clear();
+        barcodeFocusNode.requestFocus();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mahsulot topilmadi!')),
+      );
+    }
   }
 
   void _save() {

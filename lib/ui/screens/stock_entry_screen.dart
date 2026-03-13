@@ -17,6 +17,8 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
   String? entryWarehouseId;
   final TextEditingController descriptionCtrl = TextEditingController();
   final List<Map<String, dynamic>> items = [];
+  final TextEditingController barcodeCtrl = TextEditingController();
+  final FocusNode barcodeFocusNode = FocusNode();
   DateTime selectedDate = DateTime.now();
 
   @override
@@ -45,6 +47,8 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
   @override
   void dispose() {
     descriptionCtrl.dispose();
+    barcodeCtrl.dispose();
+    barcodeFocusNode.dispose();
     super.dispose();
   }
 
@@ -149,6 +153,30 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
               ),
               SizedBox(height: 24),
               const Divider(),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: barcodeCtrl,
+                      focusNode: barcodeFocusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Shtrix kod orqali qo\'shish',
+                        hintText: 'Shtrix kodni o\'qing yoki yozing...',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.qr_code_scanner),
+                      ),
+                      onSubmitted: (val) => _handleBarcode(val, state),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: () => _handleBarcode(barcodeCtrl.text, state),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
               SizedBox(height: 16),
               Text(
                 'Mahsulotlar',
@@ -263,6 +291,35 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
         ),
       ),
     );
+  }
+
+  void _handleBarcode(String barcode, AppState state) {
+    if (barcode.isEmpty) return;
+
+    try {
+      final product = state.products.firstWhere(
+        (p) => p.barcode == barcode || p.additionalBarcodes.contains(barcode),
+      );
+
+      setState(() {
+        final existingIdx = items.indexWhere((i) => i['productId'] == product.id);
+        if (existingIdx >= 0) {
+          items[existingIdx]['quantity'] = (items[existingIdx]['quantity'] ?? 0) + 1;
+        } else {
+          items.add({
+            'productId': product.id,
+            'productName': product.name,
+            'quantity': 1.0,
+          });
+        }
+        barcodeCtrl.clear();
+        barcodeFocusNode.requestFocus();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mahsulot topilmadi!')),
+      );
+    }
   }
 
   void _save() {
