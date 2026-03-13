@@ -458,12 +458,119 @@ class _MainLayoutState extends State<MainLayout> {
                       ],
                     ),
                   ),
+                  _buildStatusFooter(state),
                   if (isSmall) _buildBottomNav(),
                 ],
               );
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusFooter(AppState state) {
+    if (state.isMaster == null) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: state.isMaster == true
+                  ? Colors.blue
+                  : (state.isConnected ? Colors.green : Colors.red),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: (state.isMaster == true
+                          ? Colors.blue
+                          : (state.isConnected ? Colors.green : Colors.red))
+                      .withOpacity(0.3),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            state.isMaster == true
+                ? 'Asosiy terminal (Master)'
+                : (state.isConnected
+                    ? 'Asosiy terminalga ulangan'
+                    : 'Asosiy terminal bilan aloqa yo\'q'),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: state.isMaster == true
+                  ? Colors.blue
+                  : (state.isConnected ? Colors.green : Colors.red),
+            ),
+          ),
+          if (state.isMaster == false && state.masterAddress != null) ...[
+            const Spacer(),
+            Text(
+              'IP: ${state.masterAddress}',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(width: 16),
+            InkWell(
+              onTap: () async {
+                try {
+                  await state.syncWithMaster();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ma\'lumotlar yangilandi')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Xatolik: $e')),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.sync_rounded,
+                      size: 16,
+                      color: state.isConnected ? Colors.green : Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Yangilash',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: state.isConnected ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -480,7 +587,6 @@ class _MainLayoutState extends State<MainLayout> {
         children: [
           _buildLogo(slim),
           _buildThemeToggle(slim),
-          _buildConnectionStatus(slim),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -879,80 +985,4 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildConnectionStatus(bool slim) {
-    final state = context.watch<AppState>();
-    if (state.isMaster == true || state.masterAddress == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: slim ? 0 : 12),
-        decoration: BoxDecoration(
-          color:
-              (state.isConnected ? Colors.green : Colors.red).withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment:
-              slim ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: state.isConnected ? Colors.green : Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (state.isConnected ? Colors.green : Colors.red)
-                        .withOpacity(0.4),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-            ),
-            if (!slim) ...[
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  state.isConnected ? 'Asosiy terminalga ulangan' : 'Aloqa yo\'q',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: state.isConnected ? Colors.green : Colors.red,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.sync,
-                  size: 16,
-                  color: state.isConnected ? Colors.green : Colors.grey,
-                ),
-                onPressed: () async {
-                  try {
-                    await state.syncWithMaster();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ma\'lumotlar yangilandi')),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Xatolik: $e')),
-                    );
-                  }
-                },
-                tooltip: 'Sinxronlash',
-                style: IconButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }
