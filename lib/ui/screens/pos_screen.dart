@@ -1004,7 +1004,7 @@ class _POSScreenState extends State<POSScreen> {
                     tooltip: 'Sinxronlash',
                     style: IconButton.styleFrom(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                   if (!state.isConnected) ...[
