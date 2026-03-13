@@ -522,8 +522,25 @@ class _MainLayoutState extends State<MainLayout> {
                   : (state.isConnected ? Colors.green : Colors.red),
             ),
           ),
+          const SizedBox(width: 16),
+          const VerticalDivider(width: 1, thickness: 1, indent: 4, endIndent: 4),
+          const SizedBox(width: 16),
+          Icon(
+            Icons.person_outline_rounded,
+            size: 16,
+            color: Colors.grey.shade600,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Hodim: ${state.currentUser?.name ?? 'Noma\'lum'}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const Spacer(),
           if (state.isMaster == false && state.masterAddress != null) ...[
-            const Spacer(),
             Text(
               'IP: ${state.masterAddress}',
               style: TextStyle(
@@ -532,6 +549,20 @@ class _MainLayoutState extends State<MainLayout> {
                 fontFamily: 'monospace',
               ),
             ),
+            const SizedBox(width: 16),
+          ],
+          IconButton(
+            icon: Icon(
+              Icons.logout_rounded,
+              size: 18,
+              color: Colors.grey.shade500,
+            ),
+            onPressed: () => state.logout(),
+            tooltip: 'Chiqish',
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+          ),
+          if (state.isMaster == false && state.masterAddress != null) ...[
             const SizedBox(width: 16),
             InkWell(
               onTap: () async {
