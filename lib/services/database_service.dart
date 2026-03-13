@@ -6,10 +6,12 @@ import '../models/models.dart';
 
 class DatabaseService {
   static Database? _db;
+  static Future<Database>? _initFuture;
 
   static Future<Database> get database async {
     if (_db != null && _db!.isOpen) return _db!;
-    _db = await _initDb();
+    _initFuture ??= _initDb();
+    _db = await _initFuture!;
     return _db!;
   }
 
