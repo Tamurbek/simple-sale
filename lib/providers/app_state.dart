@@ -365,54 +365,59 @@ class AppState extends ChangeNotifier {
     );
   }
 
+
   Future<void> syncWithMaster() async {
     if (isMaster != false || masterAddress == null) return;
 
-    final data = await SyncService.fetchFullState(masterAddress!);
-    if (data != null) {
-      final newCategories = (data['categories'] as List)
-          .map((c) => Category.fromJson(c))
-          .toList();
-      final newProducts = (data['products'] as List)
-          .map((p) => Product.fromJson(p))
-          .toList();
-      final newWarehouses = (data['warehouses'] as List)
-          .map((w) => Warehouse.fromJson(w))
-          .toList();
-      final newRegisters = (data['registers'] as List)
-          .map((r) => Register.fromJson(r))
-          .toList();
-      final newUsers = data['users'] != null
-          ? (data['users'] as List).map((u) => User.fromJson(u)).toList()
-          : <User>[];
+    try {
+      final data = await SyncService.fetchFullState(masterAddress!);
+      if (data != null) {
+        final newCategories = (data['categories'] as List)
+            .map((c) => Category.fromJson(c))
+            .toList();
+        final newProducts = (data['products'] as List)
+            .map((p) => Product.fromJson(p))
+            .toList();
+        final newWarehouses = (data['warehouses'] as List)
+            .map((w) => Warehouse.fromJson(w))
+            .toList();
+        final newRegisters = (data['registers'] as List)
+            .map((r) => Register.fromJson(r))
+            .toList();
+        final newUsers = data['users'] != null
+            ? (data['users'] as List).map((u) => User.fromJson(u)).toList()
+            : <User>[];
 
-      await DatabaseService.clearAllAndReplace(
-        categories: newCategories.whereType<Category>().toList(),
-        products: newProducts.whereType<Product>().toList(),
-        warehouses: newWarehouses.whereType<Warehouse>().toList(),
-        registers: newRegisters.whereType<Register>().toList(),
-        users: newUsers.whereType<User>().toList(),
-      );
+        await DatabaseService.clearAllAndReplace(
+          categories: newCategories.whereType<Category>().toList(),
+          products: newProducts.whereType<Product>().toList(),
+          warehouses: newWarehouses.whereType<Warehouse>().toList(),
+          registers: newRegisters.whereType<Register>().toList(),
+          users: newUsers.whereType<User>().toList(),
+        );
 
-      await _loadFromDb();
+        await _loadFromDb();
 
-      if (currentRegister != null) {
-        final existingId = currentRegister!.id;
-        final matching = registers.where((r) => r.id == existingId).toList();
-        if (matching.isNotEmpty) {
-          currentRegister = matching.first;
-        } else if (registers.isNotEmpty) {
-          currentRegister = registers.first;
-        } else {
-          currentRegister = null;
+        if (currentRegister != null) {
+          final existingId = currentRegister!.id;
+          final matching = registers.where((r) => r.id == existingId).toList();
+          if (matching.isNotEmpty) {
+            currentRegister = matching.first;
+          } else if (registers.isNotEmpty) {
+            currentRegister = registers.first;
+          } else {
+            currentRegister = null;
+          }
         }
-      }
 
-      notifyListeners();
-    } else {
-      throw Exception(
-        'Asosiy kompyuterga ulanib bo\'lmadi. IP manzilni tekshiring.',
-      );
+        notifyListeners();
+      } else {
+        throw Exception(
+          'Asosiy kompyuterga ulanib bo\'lmadi. IP manzilni tekshiring.',
+        );
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -602,29 +607,48 @@ class AppState extends ChangeNotifier {
         case 'stock_entry':
         case 'stock_entry_update':
           final entry = StockEntry.fromJson(data);
-          // If it's an update, we might need a full reload anyway to be safe with stocks
           await DatabaseService.deleteStockEntry(entry.id);
           await DatabaseService.saveStockEntry(entry);
+          // Update stocks locally
+          for (var item in entry.items) {
+            await _applyStockAdjustment(item.productId, entry.warehouseId, item.quantity);
+          }
           break;
         case 'sale':
           final sale = Sale.fromJson(data);
           if (sales.any((s) => s.id == sale.id)) return;
           await DatabaseService.saveSale(sale);
+          // Update stocks locally
+          for (var item in sale.items) {
+            await _applyStockAdjustment(item.productId, sale.warehouseId, -item.quantity);
+          }
           break;
         case 'return':
         case 'return_update':
           final ret = SaleReturn.fromJson(data);
           await DatabaseService.saveReturn(ret);
+          // Update stocks locally
+          for (var item in ret.items) {
+            await _applyStockAdjustment(item.productId, ret.warehouseId, item.quantity);
+          }
           break;
         case 'write_off':
         case 'write_off_update':
           final wo = WriteOff.fromJson(data);
           await DatabaseService.saveWriteOff(wo);
+          // Update stocks locally
+          for (var item in wo.items) {
+            await _applyStockAdjustment(item.productId, wo.warehouseId, -item.quantity);
+          }
           break;
         case 'inventory':
         case 'inventory_update':
           final inv = InventoryEntry.fromJson(data);
           await DatabaseService.saveInventory(inv);
+          // Update stocks locally to exact values
+          for (var item in inv.items) {
+            await DatabaseService.updateStock(item.productId, inv.warehouseId, item.actualQuantity);
+          }
           break;
         case 'warehouse_delete':
           await DatabaseService.deleteWarehouse(data['id']);
@@ -650,11 +674,25 @@ class AppState extends ChangeNotifier {
       await _loadFromDb();
       notifyListeners();
       print('Remote update applied successfully: $type');
-    } catch (e) {
+    } catch (e, stack) {
       print('Error applying remote update ($type): $e');
+      print(stack);
     }
   }
+
+  Future<void> _applyStockAdjustment(String productId, String warehouseId, double delta) async {
+    final pIdx = products.indexWhere((p) => p.id == productId);
+    if (pIdx >= 0) {
+      final p = products[pIdx];
+      if (p.trackStock) {
+        final current = p.stocks[warehouseId] ?? 0;
+        final news = current + delta;
+        p.stocks[warehouseId] = news;
+        await DatabaseService.updateStock(productId, warehouseId, news);
+      }
+    }
   }
+
 
   Future<void> resetTerminalMode() async {
     final prefs = await SharedPreferences.getInstance();

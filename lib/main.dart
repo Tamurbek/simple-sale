@@ -925,6 +925,30 @@ class _MainLayoutState extends State<MainLayout> {
                   ),
                 ),
               ),
+              IconButton(
+                icon: Icon(
+                  Icons.sync,
+                  size: 16,
+                  color: state.isConnected ? Colors.green : Colors.grey,
+                ),
+                onPressed: () async {
+                  try {
+                    await state.syncWithMaster();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ma\'lumotlar yangilandi')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Xatolik: $e')),
+                    );
+                  }
+                },
+                tooltip: 'Sinxronlash',
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ),
             ],
           ],
         ),

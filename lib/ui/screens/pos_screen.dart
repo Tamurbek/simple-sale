@@ -971,12 +971,40 @@ class _POSScreenState extends State<POSScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    state.isConnected ? 'Asosiy terminalga ulangan' : 'Asosiy terminal bilan aloqa yo\'q',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: state.isConnected ? Colors.green : Colors.red,
+                  Expanded(
+                    child: Text(
+                      state.isConnected
+                          ? 'Asosiy terminalga ulangan'
+                          : 'Asosiy terminal bilan aloqa yo\'q',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: state.isConnected ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.sync,
+                      size: 18,
+                      color: state.isConnected ? Colors.green : Colors.grey,
+                    ),
+                    onPressed: () async {
+                      try {
+                        await state.syncWithMaster();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ma\'lumotlar yangilandi')),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Xatolik: $e')),
+                        );
+                      }
+                    },
+                    tooltip: 'Sinxronlash',
+                    style: IconButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ),
                   if (!state.isConnected) ...[
