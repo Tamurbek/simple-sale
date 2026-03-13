@@ -186,6 +186,7 @@ class AppState extends ChangeNotifier {
 
       _isBarcodeScanMode = prefs.getBool('isBarcodeScanMode') ?? false;
       networkPrinterIp = prefs.getString('networkPrinterIp');
+      selectedPrinterName = prefs.getString('selectedPrinterName');
 
       // Load data from DB
       await _loadFromDb();
@@ -398,6 +399,9 @@ class AppState extends ChangeNotifier {
 
         await _loadFromDb();
 
+        final prefs = await SharedPreferences.getInstance();
+        final savedRegId = prefs.getString('currentRegisterId');
+        
         if (currentRegister != null) {
           final existingId = currentRegister!.id;
           final matching = registers.where((r) => r.id == existingId).toList();
@@ -407,6 +411,11 @@ class AppState extends ChangeNotifier {
             currentRegister = registers.first;
           } else {
             currentRegister = null;
+          }
+        } else if (savedRegId != null) {
+          final matching = registers.where((r) => r.id == savedRegId).toList();
+          if (matching.isNotEmpty && matching.first.activeDeviceId == deviceId) {
+            currentRegister = matching.first;
           }
         }
 
@@ -1186,8 +1195,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updatePrinter(String name) {
+  Future<void> updatePrinter(String name) async {
     selectedPrinterName = name;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedPrinterName', name);
     notifyListeners();
   }
 
