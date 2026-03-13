@@ -437,6 +437,7 @@ class _MainLayoutState extends State<MainLayout> {
               // Disable permanent sidebar everywhere, just like POS
               const bool showPermanentSidebar = false;
 
+              final state = context.watch<AppState>();
               return Column(
                 children: [
                   Expanded(
