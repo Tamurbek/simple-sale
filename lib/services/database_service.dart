@@ -523,6 +523,11 @@ class DatabaseService {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  static Future<void> updateProductImagePath(String id, String path) async {
+    final db = await database;
+    await db.update('products', {'imagePath': path}, where: 'id = ?', whereArgs: [id]);
+  }
+
   // --- Bulk Sync ---
   static Future<void> clearAllAndReplace({
     required List<Category> categories,
