@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import 'terminal_management_screen.dart';
 import 'warehouse_management_screen.dart';
 import '../../services/update_service.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback? onMenuPressed;

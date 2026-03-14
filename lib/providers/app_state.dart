@@ -1794,6 +1794,7 @@ class AppState extends ChangeNotifier {
           notifyListeners();
         }
       } else if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         // Update name if different
         bool changed = false;
         final prefs = await SharedPreferences.getInstance();
