@@ -411,6 +411,20 @@ class _POSScreenState extends State<POSScreen> {
                           }
                         },
                       ),
+                      IconButton(
+                        tooltip: state.showProductImages
+                            ? 'Rasmsiz rejim'
+                            : 'Rasmli rejim',
+                        icon: Icon(
+                          state.showProductImages
+                              ? Icons.image_outlined
+                              : Icons.image_not_supported_outlined,
+                          color: state.showProductImages
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade400,
+                        ),
+                        onPressed: () => state.toggleShowProductImages(),
+                      ),
                     ],
                   ),
                   border: InputBorder.none,
@@ -557,7 +571,7 @@ class _POSScreenState extends State<POSScreen> {
         maxCrossAxisExtent: width < 600 ? 180 : 220,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        mainAxisExtent: 260,
+        mainAxisExtent: state.showProductImages ? 260 : 100,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) =>
@@ -586,7 +600,7 @@ class _POSScreenState extends State<POSScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(state.showProductImages ? 20 : 12),
           border: Border.all(color: Theme.of(context).dividerColor),
           boxShadow: [
             BoxShadow(
@@ -599,8 +613,9 @@ class _POSScreenState extends State<POSScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Container(
+            if (state.showProductImages)
+              Expanded(
+                child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.transparent,

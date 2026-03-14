@@ -57,6 +57,8 @@ class AppState extends ChangeNotifier {
 
   bool _isBarcodeScanMode = false;
   bool get isBarcodeScanMode => _isBarcodeScanMode;
+  bool _showProductImages = true;
+  bool get showProductImages => _showProductImages;
   String appVersion = '1.7.9';
 
   double get todaySalesTotal {
@@ -200,6 +202,7 @@ class AppState extends ChangeNotifier {
       }
 
       _isBarcodeScanMode = prefs.getBool('isBarcodeScanMode') ?? false;
+      _showProductImages = prefs.getBool('showProductImages') ?? true;
       networkPrinterIp = prefs.getString('networkPrinterIp');
       selectedPrinterName = prefs.getString('selectedPrinterName');
 
@@ -505,6 +508,13 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isBarcodeScanMode', _isBarcodeScanMode);
     notifyListeners();
+  }
+
+  void toggleShowProductImages() async {
+    _showProductImages = !_showProductImages;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('showProductImages', _showProductImages);
   }
 
   void toggleTheme() {

@@ -191,6 +191,20 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     _buildSettingsTile(
                       context,
+                      icon: Icons.image_outlined,
+                      color: Colors.green,
+                      title: 'Mahsulot Rasmlari',
+                      subtitle: state.showProductImages
+                          ? 'Sotuv oynasida rasmlar ko\'rsatiladi'
+                          : 'Rasmsiz ixcham rejim yoqilgan',
+                      trailing: Switch(
+                        value: state.showProductImages,
+                        onChanged: (val) => state.toggleShowProductImages(),
+                      ),
+                      onTap: () => state.toggleShowProductImages(),
+                    ),
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.wifi,
                       color: Colors.indigo,
                       title: 'Tarmoq Printeri (IP)',
