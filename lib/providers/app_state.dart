@@ -825,10 +825,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-
-    notifyListeners();
-  }
-
   Future<void> setReceiptWidth(int width) async {
     receiptWidth = width;
     final prefs = await SharedPreferences.getInstance();

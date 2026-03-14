@@ -9,7 +9,7 @@ import 'stock_entry_screen.dart';
 import 'return_screen.dart';
 import 'write_off_screen.dart';
 import 'inventory_screen.dart';
-import '../services/print_service.dart';
+import '../../services/print_service.dart';
 
 class WarehouseScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;

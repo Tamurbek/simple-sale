@@ -5,6 +5,7 @@ import '../models/models.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class PrintService {
   static Future<void> printBarcodeLabels({
@@ -29,7 +30,7 @@ class PrintService {
             pageFormat: labelFormat,
             build: (pw.Context context) {
               return pw.Column(
-                mainAxisAlignment: pw.Center,
+                mainAxisAlignment: pw.MainAxisAlignment.center,
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   pw.Text(

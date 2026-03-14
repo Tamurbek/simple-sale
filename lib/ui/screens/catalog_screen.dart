@@ -5,6 +5,7 @@ import '../../providers/app_state.dart';
 import '../../models/models.dart';
 import 'product_form_screen.dart';
 import 'barcode_print_screen.dart';
+import '../../services/print_service.dart';
 import 'dart:io';
 
 class CatalogScreen extends StatefulWidget {
