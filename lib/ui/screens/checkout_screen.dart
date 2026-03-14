@@ -74,6 +74,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           instagram: state.instagramUsername,
           logoPath: state.organizationLogoPath,
           width: state.receiptWidth,
+          footerText: state.receiptFooterText,
+          showLogo: state.showLogoOnReceipt,
+          showInstagram: state.showInstagramOnReceipt,
         );
       }
 

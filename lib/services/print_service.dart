@@ -18,11 +18,14 @@ class PrintService {
     String? instagram,
     String? logoPath,
     int width = 80,
+    String? footerText,
+    bool showLogo = true,
+    bool showInstagram = true,
   }) async {
     final doc = pw.Document();
     
     pw.MemoryImage? logoImage;
-    if (logoPath != null && File(logoPath).existsSync()) {
+    if (showLogo && logoPath != null && File(logoPath).existsSync()) {
       logoImage = pw.MemoryImage(File(logoPath).readAsBytesSync());
     }
 
@@ -34,7 +37,7 @@ class PrintService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              if (logoImage != null)
+              if (showLogo && logoImage != null)
                 pw.Container(
                   height: 60,
                   child: pw.Image(logoImage),
@@ -113,12 +116,13 @@ class PrintService {
               ),
               pw.Center(
                 child: pw.Text(
-                  'Xaridingiz uchun rahmat!',
+                  footerText ?? 'Xaridingiz uchun rahmat!',
                   style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontStyle: pw.FontStyle.italic),
+                  textAlign: pw.TextAlign.center,
                 ),
               ),
               pw.SizedBox(height: 10),
-              if (instagram != null && instagram.isNotEmpty) ...[
+              if (showInstagram && instagram != null && instagram.isNotEmpty) ...[
                 pw.Divider(thickness: 0.5, borderStyle: pw.BorderStyle.dashed),
                 pw.SizedBox(height: 5),
                 pw.Center(child: pw.Text('Instagram: @$instagram', style: pw.TextStyle(fontSize: width == 58 ? 8 : 9))),
@@ -165,6 +169,8 @@ class PrintService {
           orgAddress: orgAddress, 
           instagram: instagram,
           width: width,
+          footerText: footerText,
+          showInstagram: showInstagram,
         );
         socket.add(commands);
         await socket.flush();
@@ -183,6 +189,8 @@ class PrintService {
     String? orgAddress,
     String? instagram,
     int width = 80,
+    String? footerText,
+    bool showInstagram = true,
   }) {
     List<int> bytes = [];
     int maxChars = width == 58 ? 32 : 42;
@@ -242,9 +250,9 @@ class PrintService {
     bytes.addAll([0x1D, 0x21, 0x00]); // normal size
     bytes.addAll([0x1B, 0x45, 0x00]); // bold off
     
-    bytes.addAll(utf8.encode('\nXaridingiz uchun rahmat!\n'));
+    bytes.addAll(utf8.encode('\n${footerText ?? "Xaridingiz uchun rahmat!"}\n'));
 
-    if (instagram != null && instagram.isNotEmpty) {
+    if (showInstagram && instagram != null && instagram.isNotEmpty) {
       bytes.addAll(utf8.encode('$divider\n'));
       bytes.addAll(utf8.encode('Instagram: @$instagram\n'));
     }

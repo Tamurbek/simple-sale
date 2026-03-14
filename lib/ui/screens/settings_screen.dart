@@ -7,6 +7,7 @@ import 'terminal_management_screen.dart';
 import 'warehouse_management_screen.dart';
 import '../../services/update_service.dart';
 import 'package:file_picker/file_picker.dart';
+import 'receipt_designer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback? onMenuPressed;
@@ -230,6 +231,17 @@ class SettingsScreen extends StatelessWidget {
                       title: 'Chek o\'lchami',
                       subtitle: '${state.receiptWidth} mm',
                       onTap: () => _showReceiptWidthPicker(context, state),
+                    ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.design_services_outlined,
+                      color: Colors.pink,
+                      title: 'Chek dizayni',
+                      subtitle: 'Chek ko\'rinishini sozlash va tahrirlash',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ReceiptDesignerScreen()),
+                      ),
                     ),
                   ],
                 ),

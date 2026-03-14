@@ -34,6 +34,9 @@ class AppState extends ChangeNotifier {
   String? selectedPrinterName;
   String? networkPrinterIp;
   int receiptWidth = 80; // 58 or 80
+  String receiptFooterText = 'Xaridingiz uchun rahmat!';
+  bool showLogoOnReceipt = true;
+  bool showInstagramOnReceipt = true;
 
   bool? isMaster;
   String? masterAddress;
@@ -207,6 +210,9 @@ class AppState extends ChangeNotifier {
       networkPrinterIp = prefs.getString('networkPrinterIp');
       selectedPrinterName = prefs.getString('selectedPrinterName');
       receiptWidth = prefs.getInt('receiptWidth') ?? 80;
+      receiptFooterText = prefs.getString('receiptFooterText') ?? 'Xaridingiz uchun rahmat!';
+      showLogoOnReceipt = prefs.getBool('showLogoOnReceipt') ?? true;
+      showInstagramOnReceipt = prefs.getBool('showInstagramOnReceipt') ?? true;
 
       // Load data from DB
       await _loadFromDb();
@@ -790,6 +796,27 @@ class AppState extends ChangeNotifier {
     receiptWidth = width;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('receiptWidth', width);
+    notifyListeners();
+  }
+
+  Future<void> updateReceiptSettings({
+    String? footerText,
+    bool? showLogo,
+    bool? showInstagram,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (footerText != null) {
+      receiptFooterText = footerText;
+      await prefs.setString('receiptFooterText', footerText);
+    }
+    if (showLogo != null) {
+      showLogoOnReceipt = showLogo;
+      await prefs.setBool('showLogoOnReceipt', showLogo);
+    }
+    if (showInstagram != null) {
+      showInstagramOnReceipt = showInstagram;
+      await prefs.setBool('showInstagramOnReceipt', showInstagram);
+    }
     notifyListeners();
   }
 
