@@ -130,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Dashboard',
+                    state.organizationName ?? 'Dashboard',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   Text(

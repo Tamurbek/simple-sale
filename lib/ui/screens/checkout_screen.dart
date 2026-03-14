@@ -69,6 +69,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           registerName: state.currentRegister?.name ?? 'Kassa',
           printerName: state.selectedPrinterName,
           ipAddress: state.networkPrinterIp,
+          orgName: state.organizationName,
+          orgAddress: state.organizationAddress,
+          instagram: state.instagramUsername,
+          logoPath: state.organizationLogoPath,
         );
       }
 

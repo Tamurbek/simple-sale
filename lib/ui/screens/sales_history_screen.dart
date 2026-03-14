@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
+import '../../services/print_service.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -454,6 +455,38 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                 SizedBox(height: 20),
                 Row(
                   children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => PrintService.printReceipt(
+                          items: sale.items,
+                          total: sale.total,
+                          registerName: registerName,
+                          printerName: state.selectedPrinterName,
+                          ipAddress: state.networkPrinterIp,
+                          orgName: state.organizationName,
+                          orgAddress: state.organizationAddress,
+                          instagram: state.instagramUsername,
+                          logoPath: state.organizationLogoPath,
+                        ),
+                        icon: Icon(Icons.print_rounded, size: 18),
+                        label: Text(
+                          'Chekni chiqarish',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(

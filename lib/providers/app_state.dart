@@ -42,6 +42,10 @@ class AppState extends ChangeNotifier {
   bool isActivated = false;
   bool isBlocked = false;
   String? activationCode;
+  String? organizationName;
+  String? organizationAddress;
+  String? instagramUsername;
+  String? organizationLogoPath;
   Timer? _syncTimer;
   WebSocketChannel? _wsChannel;
   Timer? _wsPingTimer;
@@ -176,6 +180,10 @@ class AppState extends ChangeNotifier {
       await prefs.setString('deviceId', deviceId!);
       isActivated = prefs.getBool('isActivated') ?? false;
       activationCode = prefs.getString('activationCode');
+      organizationName = prefs.getString('organizationName') ?? 'Simple Sale';
+      organizationAddress = prefs.getString('organizationAddress') ?? '';
+      instagramUsername = prefs.getString('instagramUsername') ?? '';
+      organizationLogoPath = prefs.getString('organizationLogoPath');
 
       try {
         final packageInfo = await PackageInfo.fromPlatform();
@@ -1720,9 +1728,15 @@ class AppState extends ChangeNotifier {
           final data = jsonDecode(response.body);
           isActivated = true;
           activationCode = code;
+          organizationName = data['organization_name'] ?? 'Simple Sale';
+          organizationAddress = data['organization_address'] ?? '';
+          instagramUsername = data['instagram'] ?? '';
           isBlocked = false;
           await prefs.setBool('isActivated', true);
           await prefs.setString('activationCode', code);
+          await prefs.setString('organizationName', organizationName!);
+          await prefs.setString('organizationAddress', organizationAddress!);
+          await prefs.setString('instagramUsername', instagramUsername!);
 
           // Attempt cloud restore after activation
           await restoreDatabaseFromCloud();
@@ -1780,7 +1794,28 @@ class AppState extends ChangeNotifier {
           notifyListeners();
         }
       } else if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // Update name if different
+        bool changed = false;
+        final prefs = await SharedPreferences.getInstance();
+        
+        if (data['organization_name'] != null && data['organization_name'] != organizationName) {
+          organizationName = data['organization_name'];
+          await prefs.setString('organizationName', organizationName!);
+          changed = true;
+        }
+        if (data['organization_address'] != null && data['organization_address'] != organizationAddress) {
+          organizationAddress = data['organization_address'];
+          await prefs.setString('organizationAddress', organizationAddress!);
+          changed = true;
+        }
+        if (data['instagram'] != null && data['instagram'] != instagramUsername) {
+          instagramUsername = data['instagram'];
+          await prefs.setString('instagramUsername', instagramUsername!);
+          changed = true;
+        }
+
+        if (changed) notifyListeners();
+
         if (data['force_logout'] == true) {
           debugPrint("Remote kick triggered. Backing up and clearing data...");
           try {
@@ -1859,6 +1894,63 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> updateOrganizationInfo({String? name, String? address, String? instagram}) async {
+    if (!isActivated || activationCode == null) {
+      throw Exception('Dastur faollashtirilmagan');
+    }
+
+    const url = "https://web-production-afb90.up.railway.app/update_org_info";
+    
+    Map<String, String> queryParams = {"activation_code": activationCode!};
+    if (name != null) queryParams["name"] = name;
+    if (address != null) queryParams["address"] = address;
+    if (instagram != null) queryParams["instagram"] = instagram;
+
+    final uri = Uri.parse(url).replace(queryParameters: queryParams);
+    
+    try {
+      final response = await http.post(uri).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        if (name != null) {
+          organizationName = name;
+          await prefs.setString('organizationName', name);
+        }
+        if (address != null) {
+          organizationAddress = address;
+          await prefs.setString('organizationAddress', address);
+        }
+        if (instagram != null) {
+          instagramUsername = instagram;
+          await prefs.setString('instagramUsername', instagram);
+        }
+        notifyListeners();
+      } else {
+        throw Exception('Server xatosi: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Ma\'lumotlarni yangilab bo\'lmadi: $e');
+    }
+  }
+
+  Future<void> updateOrganizationLogo(String? path) async {
+    organizationLogoPath = path;
+    final prefs = await SharedPreferences.getInstance();
+    if (path == null) {
+      await prefs.remove('organizationLogoPath');
+    } else {
+      await prefs.setString('organizationLogoPath', path);
+    }
+    notifyListeners();
+  }
+
+  // Remove old updateOrganizationName as it's replaced by updateOrganizationInfo
+  @Deprecated('Use updateOrganizationInfo instead')
+  Future<void> updateOrganizationName(String newName) async {
+    await updateOrganizationInfo(name: newName);
   }
 
   Future<void> clearAllData() async {

@@ -41,6 +41,44 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       _buildSettingsTile(
                         context,
+                        icon: Icons.business_rounded,
+                        color: Colors.blueGrey,
+                        title: 'Tashkilot nomi',
+                        subtitle: state.organizationName ?? 'Simple Sale',
+                        onTap: () => _showEditOrgInfoDialog(context, state, field: 'name'),
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.location_on_rounded,
+                        color: Colors.orange,
+                        title: 'Tashkilot manzili',
+                        subtitle: state.organizationAddress?.isEmpty ?? true
+                            ? 'Kiritilmagan'
+                            : state.organizationAddress!,
+                        onTap: () => _showEditOrgInfoDialog(context, state, field: 'address'),
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.camera_alt_rounded,
+                        color: Colors.purple,
+                        title: 'Instagram',
+                        subtitle: state.instagramUsername?.isEmpty ?? true
+                            ? 'Kiritilmagan'
+                            : '@${state.instagramUsername}',
+                        onTap: () => _showEditOrgInfoDialog(context, state, field: 'instagram'),
+                      ),
+                      _buildSettingsTile(
+                        context,
+                        icon: Icons.image_rounded,
+                        color: Colors.teal,
+                        title: 'Tashkilot logosi',
+                        subtitle: state.organizationLogoPath != null
+                            ? 'Logo yuklangan'
+                            : 'Yuklanmagan',
+                        onTap: () => _pickLogo(context, state),
+                      ),
+                      _buildSettingsTile(
+                        context,
                         icon: Icons.terminal_rounded,
                         color: Colors.indigo,
                         title: 'Kassa Terminallari',
@@ -712,6 +750,103 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showEditOrgInfoDialog(BuildContext context, AppState state, {required String field}) {
+    if (state.currentUser?.role != UserRole.admin) return;
+
+    String title = '';
+    String label = '';
+    String initialValue = '';
+    
+    if (field == 'name') {
+      title = 'Tashkilot nomini tahrirlash';
+      label = 'Nomi';
+      initialValue = state.organizationName ?? '';
+    } else if (field == 'address') {
+      title = 'Tashkilot manzilini tahrirlash';
+      label = 'Manzil';
+      initialValue = state.organizationAddress ?? '';
+    } else if (field == 'instagram') {
+      title = 'Instagram foydalanuvchi nomini kiritish';
+      label = 'Foydalanuvchi nomi (@ siz)';
+      initialValue = state.instagramUsername ?? '';
+    }
+
+    final controller = TextEditingController(text: initialValue);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Bekor qilish'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final val = controller.text.trim();
+              try {
+                Navigator.pop(context);
+                if (field == 'name') {
+                  await state.updateOrganizationInfo(name: val);
+                } else if (field == 'address') {
+                  await state.updateOrganizationInfo(address: val);
+                } else if (field == 'instagram') {
+                  await state.updateOrganizationInfo(instagram: val);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: Text('Saqlash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickLogo(BuildContext context, AppState state) async {
+    if (state.currentUser?.role != UserRole.admin) return;
+    
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      
+      if (result != null && result.files.single.path != null) {
+        await state.updateOrganizationLogo(result.files.single.path);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Logo yangilandi')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @Deprecated('Use _showEditOrgInfoDialog instead')
+  void _showEditOrgNameDialog(BuildContext context, AppState state) {
+    _showEditOrgInfoDialog(context, state, field: 'name');
   }
 
   void _checkUpdate(BuildContext context) async {
