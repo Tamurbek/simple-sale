@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
 import '../../services/update_service.dart';
+import '../../services/print_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -180,6 +181,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
+                ),
+              ),
+              SizedBox(width: 12),
+              IconButton(
+                onPressed: () => _showReportsMenu(context, state, filteredSales),
+                icon: const Icon(Icons.print_outlined),
+                tooltip: 'Hisobotlarni chop etish',
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  padding: const EdgeInsets.all(12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               if (width > 800) ...[
@@ -571,6 +584,162 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
         ],
       ),
+    );
+  }
+
+  void _showReportsMenu(BuildContext context, AppState state, List<Sale> sales) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Hisobotni tanlang',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.today, color: Colors.green),
+              title: const Text('Kunlik X-Hisobot (Umumiy)'),
+              subtitle: const Text('Bugungi savdo va cheklar xulosasi'),
+              onTap: () {
+                Navigator.pop(context);
+                _printDailyReport(state, sales);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory_2_outlined, color: Colors.orange),
+              title: const Text('Mahsulotlar Qoldig\'i'),
+              subtitle: const Text('Ombordagi kam qolgan va umumiy mahsulotlar'),
+              onTap: () {
+                Navigator.pop(context);
+                _printInventoryReport(state);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.star_outline, color: Colors.purple),
+              title: const Text('Top Mahsulotlar'),
+              subtitle: const Text('Eng ko\'p sotilgan mahsulotlar reytingi'),
+              onTap: () {
+                Navigator.pop(context);
+                _printTopProductsReport(state, sales);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _printDailyReport(AppState state, List<Sale> sales) {
+    final now = DateTime.now();
+    final todaySales = sales.where((s) {
+      return s.date.year == now.year &&
+          s.date.month == now.month &&
+          s.date.day == now.day;
+    }).toList();
+
+    double total = todaySales.fold(0.0, (sum, s) => sum + s.total);
+    int count = todaySales.length;
+    double avg = count == 0 ? 0 : total / count;
+
+    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+
+    PrintService.printReport(
+      reportTitle: 'Kunlik Savdo Hisoboti',
+      orgName: state.organizationName,
+      printerName: state.selectedPrinterName,
+      ipAddress: state.networkPrinterIp,
+      width: state.receiptWidth,
+      sections: [
+        {
+          'title': 'Umumiy Ko\'rsatkichlar',
+          'rows': [
+            {'label': 'Sotuvlar soni:', 'value': '$count ta'},
+            {'label': 'Jami tushum:', 'value': '${fmt.format(total)} so\'m'},
+            {'label': 'O\'rtacha chek:', 'value': '${fmt.format(avg)} so\'m'},
+          ],
+        },
+        {
+          'title': 'Kassalar bo\'yicha',
+          'rows': state.registers.map((r) {
+            final regSales = todaySales.where((s) => s.registerId == r.id);
+            final regTotal = regSales.fold(0.0, (sum, s) => sum + s.total);
+            return {'label': r.name, 'value': '${fmt.format(regTotal)} s'};
+          }).toList(),
+        }
+      ],
+    );
+  }
+
+  void _printInventoryReport(AppState state) {
+    final lowStock = state.activeProducts.where((p) => (p.stock ?? 0) <= 5).take(10).toList();
+    final totalInventoryValue = state.activeProducts.fold(0.0, (sum, p) => sum + ((p.stock ?? 0) * p.price));
+    
+    final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
+
+    PrintService.printReport(
+      reportTitle: 'Ombor Qoldig\'i Hisoboti',
+      orgName: state.organizationName,
+      printerName: state.selectedPrinterName,
+      ipAddress: state.networkPrinterIp,
+      width: state.receiptWidth,
+      sections: [
+        {
+          'title': 'Umumiy Holat',
+          'rows': [
+            {'label': 'Mahsulot turlari:', 'value': '${state.activeProducts.length} ta'},
+            {'label': 'Umumiy qiymat:', 'value': '${fmt.format(totalInventoryValue)} so\'m'},
+          ],
+        },
+        if (lowStock.isNotEmpty) {
+          'title': 'Kam qolgan mahsulotlar',
+          'rows': lowStock.map((p) => {
+            'label': p.name,
+            'value': '${p.stock?.toStringAsFixed(1) ?? '0'} ${p.unit ?? 'ta'}'
+          }).toList(),
+        }
+      ],
+    );
+  }
+
+  void _printTopProductsReport(AppState state, List<Sale> sales) {
+    final now = DateTime.now();
+    final todaySales = sales.where((s) => 
+      s.date.year == now.year && s.date.month == now.month && s.date.day == now.day
+    );
+
+    final Map<String, double> topMap = {};
+    for (var sale in todaySales) {
+      for (var item in sale.items) {
+        topMap[item.productName] = (topMap[item.productName] ?? 0.0) + item.quantity;
+      }
+    }
+
+    final sorted = topMap.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final topProducts = sorted.take(15).toList();
+
+    PrintService.printReport(
+      reportTitle: 'Top Mahsulotlar (Bugun)',
+      orgName: state.organizationName,
+      printerName: state.selectedPrinterName,
+      ipAddress: state.networkPrinterIp,
+      width: state.receiptWidth,
+      sections: [
+        {
+          'title': 'Eng ko\'p sotilganlar',
+          'rows': topProducts.map((e) => {
+            'label': e.key,
+            'value': '${e.value.toStringAsFixed(1)} ta'
+          }).toList(),
+        }
+      ],
     );
   }
 }

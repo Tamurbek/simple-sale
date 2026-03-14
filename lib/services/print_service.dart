@@ -343,6 +343,135 @@ class PrintService {
     return bytes;
   }
 
+  static Future<void> printReport({
+    required String reportTitle,
+    required List<Map<String, dynamic>> sections,
+    String? printerName,
+    String? ipAddress,
+    int width = 80,
+    String? orgName,
+  }) async {
+    final doc = pw.Document();
+    
+    doc.addPage(
+      pw.Page(
+        pageFormat: width == 58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80,
+        margin: const pw.EdgeInsets.all(5),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Text(
+                (orgName ?? 'SIMPLE SALE').toUpperCase(),
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 10 : 12),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                reportTitle.toUpperCase(),
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 12 : 14),
+              ),
+              pw.Text(
+                'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
+                style: pw.TextStyle(fontSize: width == 58 ? 8 : 10),
+              ),
+              pw.Divider(thickness: 1),
+              ...sections.map((section) {
+                final String title = section['title'] ?? '';
+                final List<Map<String, String>> rows = (section['rows'] as List?)?.cast<Map<String, String>>() ?? [];
+                
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    if (title.isNotEmpty) ...[
+                      pw.SizedBox(height: 10),
+                      pw.Text(title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 9 : 11)),
+                      pw.Divider(thickness: 0.5),
+                    ],
+                    ...rows.map((row) => pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Expanded(child: pw.Text(row['label'] ?? '', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10))),
+                          pw.Text(row['value'] ?? '', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontWeight: pw.FontWeight.bold)),
+                        ],
+                      ),
+                    )),
+                  ],
+                );
+              }),
+              pw.SizedBox(height: 20),
+              pw.Divider(thickness: 0.5),
+              pw.Text('Simple Sale hisoboti', style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic)),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (printerName != null) {
+      final printers = await Printing.listPrinters();
+      final printer = printers.firstWhere(
+        (p) => p.name == printerName,
+        orElse: () => printers.first,
+      );
+      await Printing.directPrintPdf(
+        printer: printer,
+        onLayout: (format) => doc.save(),
+      );
+    }
+
+    if (ipAddress != null && ipAddress.isNotEmpty) {
+      try {
+        final socket = await Socket.connect(ipAddress, 9100, timeout: const Duration(seconds: 3));
+        List<int> bytes = [];
+        int maxChars = width == 58 ? 32 : 42;
+        
+        // init
+        bytes.addAll([0x1B, 0x40]);
+        // center
+        bytes.addAll([0x1B, 0x61, 0x01]);
+        bytes.addAll(utf8.encode('${orgName ?? 'SIMPLE SALE'}\n'));
+        bytes.addAll([0x1B, 0x45, 0x01]);
+        bytes.addAll(utf8.encode('${reportTitle.toUpperCase()}\n'));
+        bytes.addAll([0x1B, 0x45, 0x00]);
+        bytes.addAll(utf8.encode('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n'));
+        bytes.addAll(utf8.encode('-' * maxChars + '\n'));
+        
+        for (var section in sections) {
+          final String title = section['title'] ?? '';
+          final List<Map<String, String>> rows = (section['rows'] as List?)?.cast<Map<String, String>>() ?? [];
+          
+          if (title.isNotEmpty) {
+            bytes.addAll([0x1B, 0x61, 0x00]); // left
+            bytes.addAll([0x1B, 0x45, 0x01]);
+            bytes.addAll(utf8.encode('\n$title\n'));
+            bytes.addAll([0x1B, 0x45, 0x00]);
+            bytes.addAll(utf8.encode('-' * maxChars + '\n'));
+          }
+          
+          for (var row in rows) {
+            String label = row['label'] ?? '';
+            String value = row['value'] ?? '';
+            int spaces = maxChars - label.length - value.length;
+            if (spaces < 1) spaces = 1;
+            bytes.addAll(utf8.encode(label + (' ' * spaces) + value + '\n'));
+          }
+        }
+        
+        bytes.addAll(utf8.encode('\n' + '-' * maxChars + '\n'));
+        bytes.addAll(utf8.encode('Simple Sale hisoboti\n\n\n\n\n'));
+        bytes.addAll([0x1D, 0x56, 0x42, 0x00]);
+        
+        socket.add(bytes);
+        await socket.flush();
+        await socket.close();
+      } catch (e) {
+        debugPrint('IP Printer error: $e');
+      }
+    }
+  }
+
   static Future<List<Printer>> getPrinters() async {
     return await Printing.listPrinters();
   }
