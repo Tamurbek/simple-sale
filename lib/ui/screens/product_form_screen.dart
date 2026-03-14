@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
+import '../../services/print_service.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -186,9 +187,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   SizedBox(width: 16),
                   Expanded(
                     child: _buildTextField(
-                      'Asosiy Shtrix-kod',
+                      'Shtrix-kod',
                       _barcodeController,
                       Icons.qr_code_scanner_outlined,
+                      suffix: IconButton(
+                        icon: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
+                        tooltip: 'Generatsiya qilish',
+                        onPressed: () {
+                          setState(() {
+                            _barcodeController.text = state.generateBarcode();
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -197,6 +207,28 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               _buildAdditionalBarcodes(),
               SizedBox(height: 20),
               _buildTrackStockToggle(),
+              if (widget.product != null) ...[
+                SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: OutlinedButton.icon(
+                    onPressed: () => PrintService.printBarcodeLabel(
+                      product: widget.product!,
+                      printerName: state.selectedPrinterName,
+                    ),
+                    icon: Icon(Icons.print_outlined),
+                    label: Text('SHTRIX-KODNI CHOP ETISH'),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.teal),
+                      foregroundColor: Colors.teal,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
@@ -303,6 +335,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     TextEditingController controller,
     IconData icon, {
     bool isNumber = false,
+    Widget? suffix,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,6 +367,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
+              suffixIcon: suffix,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
               hintStyle: TextStyle(

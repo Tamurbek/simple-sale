@@ -2043,6 +2043,15 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  String generateBarcode() {
+    // Generate a simple unique barcode (e.g. 13 digits starting with 200 for internal use)
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch.toString();
+    // Use last 10 digits of timestamp + a random digit to make it 11, then add 200 at start
+    final core = timestamp.substring(timestamp.length - 10);
+    return '200$core';
+  }
+
   Future<void> updateOrganizationLogo(String? path) async {
     organizationLogoPath = path;
     final prefs = await SharedPreferences.getInstance();

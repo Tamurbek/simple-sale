@@ -235,6 +235,10 @@ class _CatalogScreenState extends State<CatalogScreen>
                       ),
                     ),
                     onDelete: () => state.deleteProduct(product.id),
+                    onPrint: () => PrintService.printBarcodeLabel(
+                      product: product,
+                      printerName: state.selectedPrinterName,
+                    ),
                     isNarrow: isNarrow,
                     imagePath: product.imagePath,
                   );
@@ -265,6 +269,7 @@ class _CatalogScreenState extends State<CatalogScreen>
               trailing: '',
               onEdit: () => _showCategoryDialog(category),
               onDelete: () => state.deleteCategory(category.id),
+              onPrint: null,
               isNarrow: isNarrow,
             );
           },
@@ -279,6 +284,7 @@ class _CatalogScreenState extends State<CatalogScreen>
     required String trailing,
     required VoidCallback onEdit,
     required VoidCallback onDelete,
+    VoidCallback? onPrint,
     required bool isNarrow,
     String? imagePath,
   }) {
@@ -351,6 +357,11 @@ class _CatalogScreenState extends State<CatalogScreen>
             icon: Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
             onPressed: onEdit,
           ),
+          if (onPrint != null)
+            IconButton(
+              icon: Icon(Icons.print_outlined, size: 20, color: Colors.teal),
+              onPressed: onPrint,
+            ),
           IconButton(
             icon: Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
             onPressed: onDelete,

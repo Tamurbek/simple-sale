@@ -9,6 +9,7 @@ import 'stock_entry_screen.dart';
 import 'return_screen.dart';
 import 'write_off_screen.dart';
 import 'inventory_screen.dart';
+import '../services/print_service.dart';
 
 class WarehouseScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -510,6 +511,15 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                     ),
                   ),
                 ],
+              ),
+              SizedBox(width: 12),
+              IconButton(
+                icon: Icon(Icons.print_outlined, size: 20, color: Colors.teal),
+                onPressed: () => PrintService.printBarcodeLabel(
+                  product: product,
+                  printerName: state.selectedPrinterName,
+                ),
+                tooltip: 'Shtrix-kodni chop etish',
               ),
             ],
           ),
