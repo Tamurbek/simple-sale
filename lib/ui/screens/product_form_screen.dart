@@ -215,7 +215,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => PrintService.printBarcodeLabel(
                       product: widget.product!,
-                      printerName: state.selectedPrinterName,
+                      printerName: state.barcodePrinterName,
                     ),
                     icon: Icon(Icons.print_outlined),
                     label: Text('SHTRIX-KODNI CHOP ETISH'),

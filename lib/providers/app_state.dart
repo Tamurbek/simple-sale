@@ -32,6 +32,7 @@ class AppState extends ChangeNotifier {
   Register? currentRegister;
   List<SaleItem> cart = [];
   String? selectedPrinterName;
+  String? barcodePrinterName;
   String? networkPrinterIp;
   int receiptWidth = 80; // 58 or 80
   String receiptFooterText = 'Xaridingiz uchun rahmat!';
@@ -209,6 +210,7 @@ class AppState extends ChangeNotifier {
       _showProductImages = prefs.getBool('showProductImages') ?? true;
       networkPrinterIp = prefs.getString('networkPrinterIp');
       selectedPrinterName = prefs.getString('selectedPrinterName');
+      barcodePrinterName = prefs.getString('barcodePrinterName');
       receiptWidth = prefs.getInt('receiptWidth') ?? 80;
       receiptFooterText = prefs.getString('receiptFooterText') ?? 'Xaridingiz uchun rahmat!';
       showLogoOnReceipt = prefs.getBool('showLogoOnReceipt') ?? true;
@@ -222,6 +224,7 @@ class AppState extends ChangeNotifier {
       if (dbSettings.containsKey('organizationName')) organizationName = dbSettings['organizationName']!;
       if (dbSettings.containsKey('organizationAddress')) organizationAddress = dbSettings['organizationAddress']!;
       if (dbSettings.containsKey('instagramUsername')) instagramUsername = dbSettings['instagramUsername']!;
+      if (dbSettings.containsKey('barcodePrinterName')) barcodePrinterName = dbSettings['barcodePrinterName']!;
 
       // Load data from DB
       await _loadFromDb();
@@ -300,6 +303,7 @@ class AppState extends ChangeNotifier {
     if (dbSettings.containsKey('organizationName')) organizationName = dbSettings['organizationName']!;
     if (dbSettings.containsKey('organizationAddress')) organizationAddress = dbSettings['organizationAddress']!;
     if (dbSettings.containsKey('instagramUsername')) instagramUsername = dbSettings['instagramUsername']!;
+    if (dbSettings.containsKey('barcodePrinterName')) barcodePrinterName = dbSettings['barcodePrinterName']!;
 
     categories = await DatabaseService.getCategories();
     products = await DatabaseService.getProducts();
@@ -794,6 +798,7 @@ class AppState extends ChangeNotifier {
           if (data['key'] == 'receiptFooterText') receiptFooterText = data['value'];
           if (data['key'] == 'showLogoOnReceipt') showLogoOnReceipt = data['value'] == 'true';
           if (data['key'] == 'showInstagramOnReceipt') showInstagramOnReceipt = data['value'] == 'true';
+          if (data['key'] == 'barcodePrinterName') barcodePrinterName = data['value'];
           break;
       }
       
@@ -952,6 +957,7 @@ class AppState extends ChangeNotifier {
             'receiptFooterText': receiptFooterText,
             'showLogoOnReceipt': showLogoOnReceipt.toString(),
             'showInstagramOnReceipt': showInstagramOnReceipt.toString(),
+            'barcodePrinterName': barcodePrinterName ?? '',
           }
         };
       },
@@ -1367,6 +1373,15 @@ class AppState extends ChangeNotifier {
     selectedPrinterName = name;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('selectedPrinterName', name);
+    notifyListeners();
+  }
+
+  Future<void> updateBarcodePrinter(String name) async {
+    barcodePrinterName = name;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('barcodePrinterName', name);
+    await DatabaseService.saveSetting('barcodePrinterName', name);
+    await _sendUpdate('setting', {'key': 'barcodePrinterName', 'value': name});
     notifyListeners();
   }
 

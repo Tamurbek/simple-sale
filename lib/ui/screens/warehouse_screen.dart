@@ -517,7 +517,7 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                 icon: Icon(Icons.print_outlined, size: 20, color: Colors.teal),
                 onPressed: () => PrintService.printBarcodeLabel(
                   product: product,
-                  printerName: state.selectedPrinterName,
+                  printerName: state.barcodePrinterName,
                 ),
                 tooltip: 'Shtrix-kodni chop etish',
               ),

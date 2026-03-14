@@ -168,11 +168,26 @@ class SettingsScreen extends StatelessWidget {
                       title: 'Asosiy Printer',
                       subtitle:
                           state.selectedPrinterName ??
-                          'Tizim primteri (Tanlang)',
+                          'Tizim printeri (Tanlang)',
                       onTap: () async {
                         final printers = await Printing.listPrinters();
                         if (context.mounted) {
-                          _showPrinterPicker(context, state, printers);
+                          _showPrinterPicker(context, state, printers, isBarcode: false);
+                        }
+                      },
+                    ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.qr_code_scanner,
+                      color: Colors.teal,
+                      title: 'Shtrix-kod Printeri',
+                      subtitle:
+                          state.barcodePrinterName ??
+                          'Shtrix-kod printeri (Tanlang)',
+                      onTap: () async {
+                        final printers = await Printing.listPrinters();
+                        if (context.mounted) {
+                          _showPrinterPicker(context, state, printers, isBarcode: true);
                         }
                       },
                     ),
@@ -703,12 +718,13 @@ class SettingsScreen extends StatelessWidget {
   void _showPrinterPicker(
     BuildContext context,
     AppState state,
-    List<Printer> printers,
-  ) {
+    List<Printer> printers, {
+    required bool isBarcode,
+  }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Printerni tanlang'),
+        title: Text(isBarcode ? 'Shtrix-kod printerini tanlang' : 'Asosiy printerni tanlang'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: SizedBox(
           width: 350,
@@ -721,7 +737,11 @@ class SettingsScreen extends StatelessWidget {
                 leading: Icon(Icons.print),
                 title: Text(p.name),
                 onTap: () {
-                  state.updatePrinter(p.name);
+                  if (isBarcode) {
+                    state.updateBarcodePrinter(p.name);
+                  } else {
+                    state.updatePrinter(p.name);
+                  }
                   Navigator.pop(context);
                 },
               );

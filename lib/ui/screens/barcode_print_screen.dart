@@ -190,7 +190,7 @@ class _BarcodePrintScreenState extends State<BarcodePrintScreen> {
                       ? null
                       : () => PrintService.printBarcodeLabels(
                           items: selectedItems,
-                          printerName: state.selectedPrinterName,
+                          printerName: state.barcodePrinterName,
                         ),
                       icon: const Icon(Icons.print),
                       label: const Text('BARCHASINI CHOP ETISH'),

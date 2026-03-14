@@ -253,7 +253,7 @@ class _CatalogScreenState extends State<CatalogScreen>
                     onDelete: () => state.deleteProduct(product.id),
                     onPrint: () => PrintService.printBarcodeLabel(
                       product: product,
-                      printerName: state.selectedPrinterName,
+                      printerName: state.barcodePrinterName,
                     ),
                     isNarrow: isNarrow,
                     imagePath: product.imagePath,
