@@ -204,14 +204,30 @@ class PrintService {
               if (showInstagram && instagram != null && instagram.isNotEmpty) ...[
                 pw.Divider(thickness: 0.5, borderStyle: pw.BorderStyle.dashed),
                 pw.SizedBox(height: 5),
-                pw.Center(child: pw.Text('Instagram: @$instagram', style: pw.TextStyle(fontSize: width == 58 ? 8 : 9))),
-                pw.SizedBox(height: 5),
-                pw.Center(
-                  child: pw.BarcodeWidget(
-                    barcode: pw.Barcode.qrCode(),
-                    data: 'https://instagram.com/$instagram',
-                    width: width == 58 ? 40 : 50,
-                    height: width == 58 ? 40 : 50,
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey400, width: 1),
+                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.BarcodeWidget(
+                        barcode: pw.Barcode.qrCode(),
+                        data: 'https://instagram.com/$instagram',
+                        width: width == 58 ? 45 : 60,
+                        height: width == 58 ? 45 : 60,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        instagram.toUpperCase(),
+                        style: pw.TextStyle(
+                          fontSize: width == 58 ? 9 : 11,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -333,7 +349,7 @@ class PrintService {
 
     if (showInstagram && instagram != null && instagram.isNotEmpty) {
       bytes.addAll(utf8.encode('$divider\n'));
-      bytes.addAll(utf8.encode('Instagram: @$instagram\n'));
+      bytes.addAll(utf8.encode('INSTAGRAM: ${instagram.toUpperCase()}\n'));
     }
 
     bytes.addAll(utf8.encode('\n\n\n\n\n'));
