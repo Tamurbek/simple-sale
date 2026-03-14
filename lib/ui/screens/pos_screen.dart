@@ -1050,90 +1050,69 @@ class _POSScreenState extends State<POSScreen> {
 
   Widget _buildVirtualKeyboard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        color: Theme.of(context).cardColor,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Toolbar
-          Padding(
-            padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton.icon(
-                  onPressed: () => setState(() => _showKeyboard = false),
-                  icon: Icon(
-                    Icons.expand_more_rounded,
-                    size: 20,
-                    color: Colors.grey,
-                  ),
-                  label: Text(
-                    'Yashirish',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Toolbar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => setState(() => _showKeyboard = false),
+                      icon: const Icon(Icons.keyboard_hide_rounded, size: 18, color: Colors.grey),
+                      label: const Text('Yashirish', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _onKeyTap('clear'),
+                      icon: const Icon(Icons.delete_sweep_outlined, size: 18, color: Colors.redAccent),
+                      label: const Text('Tozalash', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                    ),
+                  ],
                 ),
-                TextButton.icon(
-                  onPressed: () => _onKeyTap('clear'),
-                  icon: Icon(
-                    Icons.delete_sweep_outlined,
-                    size: 18,
-                    color: Colors.redAccent,
-                  ),
-                  label: Text(
-                    'Tozalash',
-                    style: TextStyle(color: Colors.redAccent, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              // Row 1: Numbers
+              _buildKeyRow(
+                ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'back'],
+                rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5],
+              ),
+              const SizedBox(height: 4),
+              // Row 2: QWERTY
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: _buildKeyRow(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']),
+              ),
+              const SizedBox(height: 4),
+              // Row 3: ASDF
+              _buildKeyRow(
+                ['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'enter'],
+                rowFlex: [1.2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5],
+              ),
+              const SizedBox(height: 4),
+              // Row 4: ZXCV
+              _buildKeyRow(
+                ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', ',', 'space'],
+                rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 3.5],
+              ),
+            ],
           ),
-          // Row 1: Numbers
-          _buildKeyRow(
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'back'],
-            rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8],
-          ),
-          SizedBox(height: 8),
-          // Row 2: QWERTY (Staggered by padding)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: _buildKeyRow([
-              'q',
-              'w',
-              'e',
-              'r',
-              't',
-              'y',
-              'u',
-              'i',
-              'o',
-              'p',
-            ]),
-          ),
-          SizedBox(height: 8),
-          // Row 3: ASDF (Caps + Enter)
-          _buildKeyRow(
-            ['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'enter'],
-            rowFlex: [1.4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8],
-          ),
-          SizedBox(height: 8),
-          // Row 4: ZXCV (Space)
-          _buildKeyRow(
-            ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', ',', 'space'],
-            rowFlex: [1, 1, 1, 1, 1, 1, 1, 1, 1, 4.0],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1198,16 +1177,22 @@ class _POSScreenState extends State<POSScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(1.0), // Very tight grid like eHopper
+      padding: const EdgeInsets.all(1.5),
       child: SizedBox(
-        height: 60,
+        height: 48,
         child: Material(
           color: bgColor,
+          borderRadius: BorderRadius.circular(6),
           child: InkWell(
             onTap: () => _onKeyTap(k),
+            borderRadius: BorderRadius.circular(6),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                  width: 0.5,
+                ),
               ),
               child: Center(child: labelWidget),
             ),

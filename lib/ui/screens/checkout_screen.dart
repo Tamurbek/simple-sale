@@ -509,29 +509,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
         SizedBox(height: 24),
-        Expanded(
-          child: GridView.count(
-            padding: const EdgeInsets.all(24),
-            crossAxisCount: 3,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              for (var i = 1; i <= 9; i++) _buildNumBtn(i.toString()),
-              _buildNumBtn(
-                'C',
-                color: Colors.red.withOpacity(0.1),
-                textColor: Colors.red,
-              ),
-              _buildNumBtn('0'),
-              _buildNumBtn(
-                'back',
-                icon: Icons.backspace_rounded,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-            ],
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.4,
+              children: [
+                for (var i = 1; i <= 9; i++) _buildNumBtn(i.toString()),
+                _buildNumBtn(
+                  'C',
+                  color: Colors.red.withOpacity(0.1),
+                  textColor: Colors.red,
+                ),
+                _buildNumBtn('0'),
+                _buildNumBtn(
+                  'back',
+                  icon: Icons.backspace_rounded,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+              ],
+            ),
           ),
         ),
+        const Spacer(),
         Padding(
           padding: const EdgeInsets.all(24),
           child: ElevatedButton(
@@ -565,13 +571,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }) {
     return Material(
       color: color ?? (Theme.of(context).cardColor),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => onNumPressed(val),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).dividerColor,
-              width: 0.5,
+              color: Theme.of(context).dividerColor.withOpacity(0.5),
+              width: 1,
             ),
           ),
           child: Center(
@@ -579,12 +588,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ? Icon(
                     icon,
                     color: Theme.of(context).colorScheme.onSurface,
-                    size: 24,
+                    size: 28,
                   )
                 : Text(
                     val,
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color:
                           textColor ?? Theme.of(context).colorScheme.onSurface,

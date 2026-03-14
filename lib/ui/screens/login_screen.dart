@@ -343,8 +343,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 48),
                     _buildPinDisplay(),
-                    SizedBox(height: 48),
-                    _buildNumpad(),
+                    const SizedBox(height: 48),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 320),
+                        child: _buildNumpad(),
+                      ),
+                    ),
                     SizedBox(height: 24),
                     TextButton(
                       onPressed: _showRecoveryDialog,
@@ -466,60 +471,63 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildNumpad() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildNumpadRow(['1', '2', '3']),
-          _buildNumpadRow(['4', '5', '6']),
-          _buildNumpadRow(['7', '8', '9']),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 70,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor,
-                      width: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-              _buildNumButton('0'),
-              _buildIconButton(Icons.backspace_outlined, _onDelete),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildNumpadRow(['1', '2', '3']),
+        const SizedBox(height: 12),
+        _buildNumpadRow(['4', '5', '6']),
+        const SizedBox(height: 12),
+        _buildNumpadRow(['7', '8', '9']),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Expanded(child: SizedBox()),
+            const SizedBox(width: 12),
+            _buildNumButton('0'),
+            const SizedBox(width: 12),
+            _buildIconButton(Icons.backspace_rounded, _onDelete),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildNumpadRow(List<String> numbers) {
     return Row(
-      children: numbers.map((n) => _buildNumButton(n)).toList(),
+      children: [
+        _buildNumButton(numbers[0]),
+        const SizedBox(width: 12),
+        _buildNumButton(numbers[1]),
+        const SizedBox(width: 12),
+        _buildNumButton(numbers[2]),
+      ],
     );
   }
 
   Widget _buildNumButton(String n) {
     return Expanded(
-      child: InkWell(
-        onTap: () => _onNumberPressed(n),
-        child: Container(
-          height: 70,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
-          ),
-          child: Text(
-            n,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
+      child: Material(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => _onNumberPressed(n),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            height: 70,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withOpacity(0.5),
+              ),
+            ),
+            child: Text(
+              n,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ),
@@ -529,18 +537,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildIconButton(IconData icon, VoidCallback onTap) {
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          height: 70,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
-          ),
-          child: Icon(
-            icon,
-            size: 22,
-            color: Theme.of(context).colorScheme.onSurface,
+      child: Material(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            height: 70,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withOpacity(0.5),
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 26,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ),
