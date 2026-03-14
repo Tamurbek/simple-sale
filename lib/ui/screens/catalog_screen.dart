@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../models/models.dart';
 import 'product_form_screen.dart';
+import 'barcode_print_screen.dart';
 import 'dart:io';
 
 class CatalogScreen extends StatefulWidget {
@@ -127,6 +128,21 @@ class _CatalogScreenState extends State<CatalogScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+            ),
+          ),
+          SizedBox(width: 12),
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BarcodePrintScreen()),
+            ),
+            icon: const Icon(Icons.qr_code_2_rounded),
+            tooltip: 'Shtrix-kodlarni chop etish',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.teal.withOpacity(0.1),
+              foregroundColor: Colors.teal,
+              padding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           if (widget.onMenuPressed != null) ...[

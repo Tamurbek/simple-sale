@@ -214,6 +214,15 @@ class AppState extends ChangeNotifier {
       showLogoOnReceipt = prefs.getBool('showLogoOnReceipt') ?? true;
       showInstagramOnReceipt = prefs.getBool('showInstagramOnReceipt') ?? true;
 
+      // Load settings from DB (overrides SharedPreferences if exists)
+      final dbSettings = await DatabaseService.getAllSettings();
+      if (dbSettings.containsKey('receiptFooterText')) receiptFooterText = dbSettings['receiptFooterText']!;
+      if (dbSettings.containsKey('showLogoOnReceipt')) showLogoOnReceipt = dbSettings['showLogoOnReceipt'] == 'true';
+      if (dbSettings.containsKey('showInstagramOnReceipt')) showInstagramOnReceipt = dbSettings['showInstagramOnReceipt'] == 'true';
+      if (dbSettings.containsKey('organizationName')) organizationName = dbSettings['organizationName']!;
+      if (dbSettings.containsKey('organizationAddress')) organizationAddress = dbSettings['organizationAddress']!;
+      if (dbSettings.containsKey('instagramUsername')) instagramUsername = dbSettings['instagramUsername']!;
+
       // Load data from DB
       await _loadFromDb();
 
@@ -392,7 +401,6 @@ class AppState extends ChangeNotifier {
     );
   }
 
-
   Future<void> syncWithMaster() async {
     if (isMaster != false || masterAddress == null) return;
 
@@ -423,7 +431,15 @@ class AppState extends ChangeNotifier {
           users: newUsers.whereType<User>().toList(),
         );
 
-        await _loadFromDb();
+        // Sync settings
+        if (data['settings'] != null) {
+          final Map<String, dynamic> remoteSettings = data['settings'];
+          for (var entry in remoteSettings.entries) {
+            await DatabaseService.saveSetting(entry.key, entry.value.toString());
+          }
+        }
+
+        await _loadFromDb(); // Reload data and settings from DB
 
         final prefs = await SharedPreferences.getInstance();
         final savedRegId = prefs.getString('currentRegisterId');
@@ -763,6 +779,13 @@ class AppState extends ChangeNotifier {
         case 'inventory_delete':
           await DatabaseService.deleteInventory(data['id']);
           break;
+        case 'setting':
+          await DatabaseService.saveSetting(data['key'], data['value'].toString());
+          // Update local state if it matches cached settings
+          if (data['key'] == 'receiptFooterText') receiptFooterText = data['value'];
+          if (data['key'] == 'showLogoOnReceipt') showLogoOnReceipt = data['value'] == 'true';
+          if (data['key'] == 'showInstagramOnReceipt') showInstagramOnReceipt = data['value'] == 'true';
+          break;
       }
       
       // Every remote update should trigger a database reload to ensure consistency
@@ -808,14 +831,20 @@ class AppState extends ChangeNotifier {
     if (footerText != null) {
       receiptFooterText = footerText;
       await prefs.setString('receiptFooterText', footerText);
+      await DatabaseService.saveSetting('receiptFooterText', footerText);
+      await _sendUpdate('setting', {'key': 'receiptFooterText', 'value': footerText});
     }
     if (showLogo != null) {
       showLogoOnReceipt = showLogo;
       await prefs.setBool('showLogoOnReceipt', showLogo);
+      await DatabaseService.saveSetting('showLogoOnReceipt', showLogo.toString());
+      await _sendUpdate('setting', {'key': 'showLogoOnReceipt', 'value': showLogo.toString()});
     }
     if (showInstagram != null) {
       showInstagramOnReceipt = showInstagram;
       await prefs.setBool('showInstagramOnReceipt', showInstagram);
+      await DatabaseService.saveSetting('showInstagramOnReceipt', showInstagram.toString());
+      await _sendUpdate('setting', {'key': 'showInstagramOnReceipt', 'value': showInstagram.toString()});
     }
     notifyListeners();
   }
@@ -893,6 +922,10 @@ class AppState extends ChangeNotifier {
         SyncService.broadcast(type, data);
       },
       onSyncRequested: () {
+        // Run synchronously but we need a way to get settings
+        // Since onSyncRequested is currently synchronous in the SinkService call,
+        // we might have some trouble getting settings if we don't cache them.
+        // But AppState usually has them in memory.
         return {
           'categories': categories.map((c) => c.toJson()).toList(),
           'products': products.map((p) => p.toJson()).toList(),
@@ -906,6 +939,11 @@ class AppState extends ChangeNotifier {
           'organizationAddress': organizationAddress,
           'instagramUsername': instagramUsername,
           'logoPath': organizationLogoPath,
+          'settings': {
+            'receiptFooterText': receiptFooterText,
+            'showLogoOnReceipt': showLogoOnReceipt.toString(),
+            'showInstagramOnReceipt': showInstagramOnReceipt.toString(),
+          }
         };
       },
       onRegisterSelectionRequested: (registerId, rDeviceId, force) async {

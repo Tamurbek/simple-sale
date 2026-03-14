@@ -7,53 +7,58 @@ import 'dart:io';
 import 'dart:convert';
 
 class PrintService {
-  static Future<void> printBarcodeLabel({
-    required Product product,
+  static Future<void> printBarcodeLabels({
+    required List<Map<String, dynamic>> items, // [{'product': Product, 'quantity': int}]
     String? printerName,
   }) async {
     final doc = pw.Document();
 
-    // Standard barcode label size is often around 40x30mm or 50x30mm
-    // We'll use a custom small format
     const labelFormat = PdfPageFormat(
       40 * PdfPageFormat.mm,
       30 * PdfPageFormat.mm,
       marginAll: 2 * PdfPageFormat.mm,
     );
 
-    doc.addPage(
-      pw.Page(
-        pageFormat: labelFormat,
-        build: (pw.Context context) {
-          return pw.Column(
-            mainAxisAlignment: pw.Center,
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.Text(
-                product.name.toUpperCase(),
-                style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-                maxLines: 2,
-                textAlign: pw.TextAlign.center,
-              ),
-              pw.SizedBox(height: 2),
-              pw.BarcodeWidget(
-                barcode: pw.Barcode.code128(),
-                data: product.barcode,
-                width: 35 * PdfPageFormat.mm,
-                height: 12 * PdfPageFormat.mm,
-                drawText: true,
-                textStyle: const pw.TextStyle(fontSize: 7),
-              ),
-              pw.SizedBox(height: 2),
-              pw.Text(
-                'Narxi: ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} so\'m',
-                style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+    for (var item in items) {
+      final Product product = item['product'];
+      final int quantity = item['quantity'] ?? 1;
+
+      for (int i = 0; i < quantity; i++) {
+        doc.addPage(
+          pw.Page(
+            pageFormat: labelFormat,
+            build: (pw.Context context) {
+              return pw.Column(
+                mainAxisAlignment: pw.Center,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Text(
+                    product.name.toUpperCase(),
+                    style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                    maxLines: 2,
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.BarcodeWidget(
+                    barcode: pw.Barcode.code128(),
+                    data: product.barcode,
+                    width: 35 * PdfPageFormat.mm,
+                    height: 12 * PdfPageFormat.mm,
+                    drawText: true,
+                    textStyle: const pw.TextStyle(fontSize: 7),
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    'Narxi: ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} so\'m',
+                    style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      }
+    }
 
     if (printerName != null) {
       final printers = await Printing.listPrinters();
@@ -68,6 +73,16 @@ class PrintService {
     } else {
       await Printing.layoutPdf(onLayout: (format) => doc.save());
     }
+  }
+
+  static Future<void> printBarcodeLabel({
+    required Product product,
+    String? printerName,
+  }) async {
+    await printBarcodeLabels(
+      items: [{'product': product, 'quantity': 1}],
+      printerName: printerName,
+    );
   }
 
   static Future<void> printReceipt({

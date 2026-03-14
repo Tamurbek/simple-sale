@@ -57,7 +57,7 @@ class DatabaseService {
 
     return await openDatabase(
       newPath,
-      version: 9,
+      version: 10,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE categories (
@@ -202,8 +202,22 @@ class DatabaseService {
             isDeleted INTEGER NOT NULL DEFAULT 0
           )
         ''');
+        await db.execute('''
+          CREATE TABLE settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 10) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+              key TEXT PRIMARY KEY,
+              value TEXT
+            )
+          ''');
+        }
         if (oldVersion < 2) {
           await db.execute('''
             CREATE TABLE stock_entries (
@@ -587,6 +601,34 @@ class DatabaseService {
         }
       }
     });
+  }
+
+  // --- Settings ---
+  static Future<void> saveSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<String?> getSetting(String key) async {
+    final db = await database;
+    final res = await db.query('settings', where: 'key = ?', whereArgs: [key]);
+    if (res.isNotEmpty) {
+      return res.first['value']?.toString();
+    }
+    return null;
+  }
+
+  static Future<Map<String, String>> getAllSettings() async {
+    final db = await database;
+    final res = await db.query('settings');
+    return {
+      for (var row in res)
+        row['key'].toString(): row['value'].toString(),
+    };
   }
 
   // --- Stock Entries ---
