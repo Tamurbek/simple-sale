@@ -292,6 +292,15 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _loadFromDb() async {
+    // Load settings from DB (overrides SharedPreferences if exists)
+    final dbSettings = await DatabaseService.getAllSettings();
+    if (dbSettings.containsKey('receiptFooterText')) receiptFooterText = dbSettings['receiptFooterText']!;
+    if (dbSettings.containsKey('showLogoOnReceipt')) showLogoOnReceipt = dbSettings['showLogoOnReceipt'] == 'true';
+    if (dbSettings.containsKey('showInstagramOnReceipt')) showInstagramOnReceipt = dbSettings['showInstagramOnReceipt'] == 'true';
+    if (dbSettings.containsKey('organizationName')) organizationName = dbSettings['organizationName']!;
+    if (dbSettings.containsKey('organizationAddress')) organizationAddress = dbSettings['organizationAddress']!;
+    if (dbSettings.containsKey('instagramUsername')) instagramUsername = dbSettings['instagramUsername']!;
+
     categories = await DatabaseService.getCategories();
     products = await DatabaseService.getProducts();
     warehouses = await DatabaseService.getWarehouses();
