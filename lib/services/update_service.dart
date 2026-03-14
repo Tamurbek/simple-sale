@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file_plus/open_file_plus.dart';
+import 'package:open_app_file/open_app_file.dart';
 
 class UpdateService {
   static const String _activationServerUrl = "https://web-production-afb90.up.railway.app";
@@ -82,7 +82,7 @@ class UpdateService {
         await Future.delayed(const Duration(seconds: 1));
         exit(0); 
       } else {
-        await OpenFile.open(file.path);
+        await OpenAppFile.open(file.path);
       }
     } catch (e) {
       print("Yuklab olish yoki o'rnatishda xatolik: $e");

@@ -488,14 +488,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.3.0"
-  open_file_plus:
+  open_app_file:
     dependency: "direct main"
     description:
-      name: open_file_plus
-      sha256: "01ad7011d46d253aa22e5f0bc7345ca49cfe652c50ae9b0af945491c1728a8c3"
+      name: open_app_file
+      sha256: "031fa67cdf6fd22c1c07039daa1a617457047ed750b90c345f64ced09135a0dc"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.1+1"
+    version: "4.0.4"
   package_info_plus:
     dependency: "direct main"
     description:
@@ -833,10 +833,10 @@ packages:
     dependency: transitive
     description:
       name: sqlite3
-      sha256: f8f8ba7f9454f2761d4b416e030c4528ebc45e9290798d848f4dc08890c42a7c
+      sha256: caa693ad15a587a2b4fde093b728131a1827903872171089dedb16f7665d3a91
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.7"
+    version: "3.2.0"
   sqlite3_flutter_libs:
     dependency: "direct main"
     description:
