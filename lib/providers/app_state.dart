@@ -437,6 +437,31 @@ class AppState extends ChangeNotifier {
           }
         }
 
+        if (data['organizationName'] != null) organizationName = data['organizationName'];
+        if (data['organizationAddress'] != null) organizationAddress = data['organizationAddress'];
+        if (data['instagramUsername'] != null) instagramUsername = data['instagramUsername'];
+        
+        // Logo sync
+        if (data['logoPath'] != null) {
+          try {
+            final logoResponse = await http.get(Uri.parse('http://$masterAddress:8080/logo'));
+            if (logoResponse.statusCode == 200) {
+              final appDir = await getApplicationDocumentsDirectory();
+              final localLogoFile = File('${appDir.path}/master_logo.png');
+              await localLogoFile.writeAsBytes(logoResponse.bodyBytes);
+              organizationLogoPath = localLogoFile.path;
+              
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('organizationLogoPath', organizationLogoPath!);
+              await prefs.setString('organizationName', organizationName!);
+              await prefs.setString('organizationAddress', organizationAddress!);
+              await prefs.setString('instagramUsername', instagramUsername!);
+            }
+          } catch (e) {
+            print('Logo sync error: $e');
+          }
+        }
+
         notifyListeners();
       } else {
         throw Exception(
@@ -810,6 +835,10 @@ class AppState extends ChangeNotifier {
           'returns': returns.map((r) => r.toJson()).toList(),
           'writeOffs': writeOffs.map((w) => w.toJson()).toList(),
           'inventories': inventories.map((i) => i.toJson()).toList(),
+          'organizationName': organizationName,
+          'organizationAddress': organizationAddress,
+          'instagramUsername': instagramUsername,
+          'logoPath': organizationLogoPath,
         };
       },
       onRegisterSelectionRequested: (registerId, rDeviceId, force) async {

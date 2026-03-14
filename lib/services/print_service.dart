@@ -69,26 +69,29 @@ class PrintService {
                 ),
               ),
               pw.Divider(thickness: 0.5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Expanded(child: pw.Text('Nomi', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-                  pw.Text('Soni', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                  pw.Text('Narxi', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                  pw.Text('Jami', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                ],
-              ),
-              pw.SizedBox(height: 2),
               ...items.map(
                 (item) => pw.Padding(
-                  padding: const pw.EdgeInsets.symmetric(vertical: 2),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Expanded(child: pw.Text(item.productName, style: const pw.TextStyle(fontSize: 10))),
-                      pw.Text('${item.quantity}', style: const pw.TextStyle(fontSize: 10)),
-                      pw.Text(item.price.toStringAsFixed(0), style: const pw.TextStyle(fontSize: 10)),
-                      pw.Text((item.quantity * item.price).toStringAsFixed(0), style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text(
+                        item.productName.toUpperCase(),
+                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                      ),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            '${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.price)}',
+                            style: const pw.TextStyle(fontSize: 9),
+                          ),
+                          pw.Text(
+                            NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.quantity * item.price),
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -107,26 +110,27 @@ class PrintService {
                   ),
                 ],
               ),
-              pw.SizedBox(height: 15),
-              if (instagram != null && instagram.isNotEmpty) ...[
-                pw.Center(child: pw.Text('Instagram: @$instagram', style: const pw.TextStyle(fontSize: 9))),
-                pw.SizedBox(height: 5),
-                pw.Center(
-                  child: pw.BarcodeWidget(
-                    barcode: pw.Barcode.qrCode(),
-                    data: 'https://instagram.com/$instagram',
-                    width: 60,
-                    height: 60,
-                  ),
-                ),
-                pw.SizedBox(height: 10),
-              ],
               pw.Center(
                 child: pw.Text(
                   'Xaridingiz uchun rahmat!',
                   style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic),
                 ),
               ),
+              pw.SizedBox(height: 10),
+              if (instagram != null && instagram.isNotEmpty) ...[
+                pw.Divider(thickness: 0.5, borderStyle: pw.BorderStyle.dashed),
+                pw.SizedBox(height: 5),
+                pw.Center(child: pw.Text('Instagram: @$instagram', style: const pw.TextStyle(fontSize: 9))),
+                pw.SizedBox(height: 5),
+                pw.Center(
+                  child: pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: 'https://instagram.com/$instagram',
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+              ],
             ],
           );
         },
@@ -210,12 +214,18 @@ class PrintService {
     bytes.addAll(utf8.encode('--------------------------------\n'));
 
     for (var item in items) {
-      bytes.addAll(utf8.encode('${item.productName}\n'));
-      bytes.addAll(
-        utf8.encode(
-          '${item.quantity} x ${item.price.toStringAsFixed(0)} = ${(item.quantity * item.price).toStringAsFixed(0)}\n',
-        ),
-      );
+      // Product Name (Upper Case for clarity)
+      bytes.addAll(utf8.encode('${item.productName.toUpperCase()}\n'));
+      
+      // Quantity x Price and Total on the same line
+      String qtyPrice = ' ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${item.price.toStringAsFixed(0)}';
+      String totalItem = (item.quantity * item.price).toStringAsFixed(0);
+      
+      // Simple padding for 32 chars (standard 58mm/80mm vary, 32 is safe minimum)
+      int spaces = 32 - qtyPrice.length - totalItem.length;
+      if (spaces < 1) spaces = 1;
+      
+      bytes.addAll(utf8.encode(qtyPrice + (' ' * spaces) + totalItem + '\n'));
     }
 
     bytes.addAll(utf8.encode('--------------------------------\n'));
@@ -226,12 +236,15 @@ class PrintService {
     bytes.addAll(utf8.encode('JAMI: ${total.toStringAsFixed(0)} so\'m\n'));
     bytes.addAll([0x1D, 0x21, 0x00]); // normal size
     bytes.addAll([0x1B, 0x45, 0x00]); // bold off
+    
+    bytes.addAll(utf8.encode('\nXaridingiz uchun rahmat!\n'));
 
     if (instagram != null && instagram.isNotEmpty) {
-      bytes.addAll(utf8.encode('\nInstagram: @$instagram\n'));
+      bytes.addAll(utf8.encode('--------------------------------\n'));
+      bytes.addAll(utf8.encode('Instagram: @$instagram\n'));
     }
 
-    bytes.addAll(utf8.encode('\nXaridingiz uchun rahmat!\n\n\n\n\n'));
+    bytes.addAll(utf8.encode('\n\n\n\n\n'));
 
     // Cut paper (partial cut)
     bytes.addAll([0x1D, 0x56, 0x42, 0x00]);

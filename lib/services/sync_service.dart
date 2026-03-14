@@ -135,6 +135,22 @@ class SyncService {
       );
     });
 
+    // Endpoint to serve Logo file
+    router.get('/logo', (Request request) async {
+      final logoPath = onSyncRequested()['logoPath'];
+      if (logoPath != null && File(logoPath).existsSync()) {
+        final file = File(logoPath);
+        return Response.ok(
+          file.openRead(),
+          headers: {
+            'Content-Type': 'image/png', // or appropriate type
+            'Content-Length': file.lengthSync().toString(),
+          },
+        );
+      }
+      return Response.notFound('Logo topilmadi');
+    });
+
     _server = await io.serve(router.call, InternetAddress.anyIPv4, 8080);
     print('Server ishga tushdi: ${_server!.address.address}:${_server!.port}');
   }
