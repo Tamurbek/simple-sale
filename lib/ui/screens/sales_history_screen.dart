@@ -475,6 +475,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           orgAddress: state.organizationAddress,
                           instagram: state.instagramUsername,
                           logoPath: state.organizationLogoPath,
+                          width: state.receiptWidth,
                         ),
                         icon: Icon(Icons.print_rounded, size: 18),
                         label: Text(

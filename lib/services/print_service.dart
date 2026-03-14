@@ -17,6 +17,7 @@ class PrintService {
     String? orgAddress,
     String? instagram,
     String? logoPath,
+    int width = 80,
   }) async {
     final doc = pw.Document();
     
@@ -27,7 +28,7 @@ class PrintService {
 
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
+        pageFormat: width == 58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(5),
         build: (pw.Context context) {
           return pw.Column(
@@ -43,14 +44,14 @@ class PrintService {
                 (orgName ?? 'SIMPLE SALE').toUpperCase(),
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: width == 58 ? 11 : 14,
                 ),
                 textAlign: pw.TextAlign.center,
               ),
               if (orgAddress != null && orgAddress.isNotEmpty)
                 pw.Text(
                   orgAddress,
-                  style: const pw.TextStyle(fontSize: 10),
+                  style: pw.TextStyle(fontSize: width == 58 ? 8 : 10),
                   textAlign: pw.TextAlign.center,
                 ),
               pw.SizedBox(height: 5),
@@ -60,10 +61,10 @@ class PrintService {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Kassa: $registerName', style: const pw.TextStyle(fontSize: 10)),
+                    pw.Text('Kassa: $registerName', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10)),
                     pw.Text(
                       'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
-                      style: const pw.TextStyle(fontSize: 10),
+                      style: pw.TextStyle(fontSize: width == 58 ? 8 : 10),
                     ),
                   ],
                 ),
@@ -77,18 +78,18 @@ class PrintService {
                     children: [
                       pw.Text(
                         item.productName.toUpperCase(),
-                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(fontSize: width == 58 ? 8 : 9, fontWeight: pw.FontWeight.bold),
                       ),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
                           pw.Text(
                             '${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.price)}',
-                            style: const pw.TextStyle(fontSize: 9),
+                            style: pw.TextStyle(fontSize: width == 58 ? 8 : 9),
                           ),
                           pw.Text(
                             NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.quantity * item.price),
-                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                            style: pw.TextStyle(fontSize: width == 58 ? 9 : 10, fontWeight: pw.FontWeight.bold),
                           ),
                         ],
                       ),
@@ -102,32 +103,32 @@ class PrintService {
                 children: [
                   pw.Text(
                     'JAMI SUMMA:',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 10 : 12),
                   ),
                   pw.Text(
                     '${total.toStringAsFixed(0)} so\'m',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 11 : 14),
                   ),
                 ],
               ),
               pw.Center(
                 child: pw.Text(
                   'Xaridingiz uchun rahmat!',
-                  style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic),
+                  style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontStyle: pw.FontStyle.italic),
                 ),
               ),
               pw.SizedBox(height: 10),
               if (instagram != null && instagram.isNotEmpty) ...[
                 pw.Divider(thickness: 0.5, borderStyle: pw.BorderStyle.dashed),
                 pw.SizedBox(height: 5),
-                pw.Center(child: pw.Text('Instagram: @$instagram', style: const pw.TextStyle(fontSize: 9))),
+                pw.Center(child: pw.Text('Instagram: @$instagram', style: pw.TextStyle(fontSize: width == 58 ? 8 : 9))),
                 pw.SizedBox(height: 5),
                 pw.Center(
                   child: pw.BarcodeWidget(
                     barcode: pw.Barcode.qrCode(),
                     data: 'https://instagram.com/$instagram',
-                    width: 50,
-                    height: 50,
+                    width: width == 58 ? 40 : 50,
+                    height: width == 58 ? 40 : 50,
                   ),
                 ),
               ],
@@ -162,7 +163,8 @@ class PrintService {
           registerName, 
           orgName: orgName, 
           orgAddress: orgAddress, 
-          instagram: instagram
+          instagram: instagram,
+          width: width,
         );
         socket.add(commands);
         await socket.flush();
@@ -180,8 +182,11 @@ class PrintService {
     String? orgName,
     String? orgAddress,
     String? instagram,
+    int width = 80,
   }) {
     List<int> bytes = [];
+    int maxChars = width == 58 ? 32 : 42;
+    String divider = '-' * maxChars;
 
     // init printer
     bytes.addAll([0x1B, 0x40]);
@@ -204,14 +209,14 @@ class PrintService {
 
     bytes.addAll([0x1B, 0x61, 0x00]); // Align left
 
-    bytes.addAll(utf8.encode('--------------------------------\n'));
+    bytes.addAll(utf8.encode('$divider\n'));
     bytes.addAll(utf8.encode('Kassa: $registerName\n'));
     bytes.addAll(
       utf8.encode(
         'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n',
       ),
     );
-    bytes.addAll(utf8.encode('--------------------------------\n'));
+    bytes.addAll(utf8.encode('$divider\n'));
 
     for (var item in items) {
       // Product Name (Upper Case for clarity)
@@ -221,14 +226,14 @@ class PrintService {
       String qtyPrice = ' ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${item.price.toStringAsFixed(0)}';
       String totalItem = (item.quantity * item.price).toStringAsFixed(0);
       
-      // Simple padding for 32 chars (standard 58mm/80mm vary, 32 is safe minimum)
-      int spaces = 32 - qtyPrice.length - totalItem.length;
+      // Simple padding
+      int spaces = maxChars - qtyPrice.length - totalItem.length;
       if (spaces < 1) spaces = 1;
       
       bytes.addAll(utf8.encode(qtyPrice + (' ' * spaces) + totalItem + '\n'));
     }
 
-    bytes.addAll(utf8.encode('--------------------------------\n'));
+    bytes.addAll(utf8.encode('$divider\n'));
     bytes.addAll([0x1B, 0x61, 0x01]); // Align center
 
     bytes.addAll([0x1B, 0x45, 0x01]); // bold on
@@ -240,7 +245,7 @@ class PrintService {
     bytes.addAll(utf8.encode('\nXaridingiz uchun rahmat!\n'));
 
     if (instagram != null && instagram.isNotEmpty) {
-      bytes.addAll(utf8.encode('--------------------------------\n'));
+      bytes.addAll(utf8.encode('$divider\n'));
       bytes.addAll(utf8.encode('Instagram: @$instagram\n'));
     }
 

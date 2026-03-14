@@ -73,6 +73,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           orgAddress: state.organizationAddress,
           instagram: state.instagramUsername,
           logoPath: state.organizationLogoPath,
+          width: state.receiptWidth,
         );
       }
 

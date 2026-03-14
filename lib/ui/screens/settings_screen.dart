@@ -223,6 +223,14 @@ class SettingsScreen extends StatelessWidget {
                         }
                       },
                     ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.straighten_rounded,
+                      color: Colors.orange,
+                      title: 'Chek o\'lchami',
+                      subtitle: '${state.receiptWidth} mm',
+                      onTap: () => _showReceiptWidthPicker(context, state),
+                    ),
                   ],
                 ),
                 SizedBox(height: 24),
@@ -906,6 +914,52 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Yuklab olish'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showReceiptWidthPicker(BuildContext context, AppState state) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Chek o\'lchamini tanlang',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 24),
+            ListTile(
+              leading: Icon(Icons.straighten),
+              title: Text('58 mm'),
+              trailing: state.receiptWidth == 58
+                  ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                  : null,
+              onTap: () {
+                state.setReceiptWidth(58);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.straighten),
+              title: Text('80 mm'),
+              trailing: state.receiptWidth == 80
+                  ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                  : null,
+              onTap: () {
+                state.setReceiptWidth(80);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

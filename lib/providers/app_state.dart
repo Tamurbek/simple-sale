@@ -33,6 +33,7 @@ class AppState extends ChangeNotifier {
   List<SaleItem> cart = [];
   String? selectedPrinterName;
   String? networkPrinterIp;
+  int receiptWidth = 80; // 58 or 80
 
   bool? isMaster;
   String? masterAddress;
@@ -205,6 +206,7 @@ class AppState extends ChangeNotifier {
       _showProductImages = prefs.getBool('showProductImages') ?? true;
       networkPrinterIp = prefs.getString('networkPrinterIp');
       selectedPrinterName = prefs.getString('selectedPrinterName');
+      receiptWidth = prefs.getInt('receiptWidth') ?? 80;
 
       // Load data from DB
       await _loadFromDb();
@@ -780,6 +782,16 @@ class AppState extends ChangeNotifier {
     }
   }
 
+
+    notifyListeners();
+  }
+
+  Future<void> setReceiptWidth(int width) async {
+    receiptWidth = width;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('receiptWidth', width);
+    notifyListeners();
+  }
 
   Future<void> resetTerminalMode() async {
     final prefs = await SharedPreferences.getInstance();
