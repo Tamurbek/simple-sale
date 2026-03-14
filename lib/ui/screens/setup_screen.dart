@@ -46,14 +46,12 @@ class _SetupScreenState extends State<SetupScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/icon.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
+              Image.asset(
+                'assets/icon.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
               ),
               SizedBox(height: 24),
               Text(

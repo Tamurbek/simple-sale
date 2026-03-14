@@ -301,21 +301,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                      ),
-                      child: Image.asset(
-                        'assets/icon.png',
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
-                      ),
+                    Image.asset(
+                      'assets/icon.png',
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
                     ),
                     SizedBox(height: 24),
                     Text(
