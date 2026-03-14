@@ -99,6 +99,8 @@ class Product {
     this.trackStock = true,
   });
 
+  double get stock => stocks.values.fold(0.0, (sum, val) => sum + val);
+
   factory Product.create(
     String name,
     double price,

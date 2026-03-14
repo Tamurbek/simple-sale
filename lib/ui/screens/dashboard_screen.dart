@@ -71,7 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
-              _buildHeader(context, state, constraints.maxWidth),
+              _buildHeader(context, state, constraints.maxWidth, filteredSales),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(24),
@@ -107,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppState state, double width) {
+  Widget _buildHeader(BuildContext context, AppState state, double width, List<Sale> filteredSales) {
     return Container(
       padding: const EdgeInsets.all(24),
       color: Theme.of(context).cardColor,
@@ -679,8 +679,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _printInventoryReport(AppState state) {
-    final lowStock = state.activeProducts.where((p) => (p.stock ?? 0) <= 5).take(10).toList();
-    final totalInventoryValue = state.activeProducts.fold(0.0, (sum, p) => sum + ((p.stock ?? 0) * p.price));
+    final lowStock = state.activeProducts.where((p) => p.stock <= 5).take(10).toList();
+    final totalInventoryValue = state.activeProducts.fold(0.0, (sum, p) => sum + (p.stock * p.price));
     
     final fmt = NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0);
 
@@ -702,7 +702,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'title': 'Kam qolgan mahsulotlar',
           'rows': lowStock.map((p) => {
             'label': p.name,
-            'value': '${p.stock?.toStringAsFixed(1) ?? '0'} ${p.unit ?? 'ta'}'
+            'value': '${p.stock.toStringAsFixed(1)} ${p.unit ?? 'ta'}'
           }).toList(),
         }
       ],
