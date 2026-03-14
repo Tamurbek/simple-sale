@@ -29,11 +29,18 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Clean build artifacts
+        run: flutter clean
+
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Configure Git for long paths
+        run: git config --global core.longpaths true
+
       - name: Build Windows
-        run: flutter build windows --release
+        run: |
+          flutter build windows --release
 
       - name: Download VC++ Redistributable
         shell: pwsh
