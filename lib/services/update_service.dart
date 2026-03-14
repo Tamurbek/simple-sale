@@ -59,9 +59,21 @@ class UpdateService {
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(bytes);
 
-      await OpenFile.open(file.path);
+      if (Platform.isWindows) {
+        // Windows uchun avtomatik (silent) o'rnatish
+        // /VERYSILENT va /SUPPRESSMSGBOXES - Inno Setup uchun standart bayroqlar
+        // /S - NSIS installeri uchun standart bayroq
+        await Process.start(file.path, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/SP-', '/NOCANCEL', '/NORESTART']);
+        
+        // Installer ishga tushishi uchun biroz kutamiz va ilovani yopamiz
+        await Future.delayed(const Duration(seconds: 1));
+        exit(0); 
+      } else {
+        // Boshqa platformalar (Android va h.k.) uchun faylni ochish
+        await OpenFile.open(file.path);
+      }
     } catch (e) {
-      print("Yuklab olishda xatolik: $e");
+      print("Yuklab olish yoki o'rnatishda xatolik: $e");
       rethrow;
     }
   }
