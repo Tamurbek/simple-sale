@@ -462,6 +462,34 @@ class AppState extends ChangeNotifier {
           }
         }
 
+        // Product images sync
+        final appDir = await getApplicationDocumentsDirectory();
+        final imagesDir = Directory('${appDir.path}/product_images');
+        if (!await imagesDir.exists()) await imagesDir.create();
+
+        for (var pData in data['products']) {
+          final pId = pData['id'];
+          final remotePath = pData['imagePath'];
+          
+          if (remotePath != null && remotePath.isNotEmpty) {
+            final localPath = '${imagesDir.path}/$pId.jpg';
+            final localFile = File(localPath);
+            
+            if (!await localFile.exists()) {
+              try {
+                final imgResponse = await http.get(Uri.parse('http://$masterAddress:8080/product-image/$pId'));
+                if (imgResponse.statusCode == 200) {
+                  await localFile.writeAsBytes(imgResponse.bodyBytes);
+                  // Update local state and DB (if you have it)
+                  await DatabaseService.updateProductImagePath(pId, localPath);
+                }
+              } catch (e) {
+                print('Product image sync error ($pId): $e');
+              }
+            }
+          }
+        }
+
         notifyListeners();
       } else {
         throw Exception(

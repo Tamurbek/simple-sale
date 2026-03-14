@@ -151,6 +151,30 @@ class SyncService {
       return Response.notFound('Logo topilmadi');
     });
 
+    // Endpoint to serve Product Image
+    router.get('/product-image/<id>', (Request request, String id) async {
+      final stateData = onSyncRequested();
+      final products = stateData['products'] as List;
+      final product = products.firstWhere(
+        (p) => p['id'] == id,
+        orElse: () => null,
+      );
+
+      if (product != null && product['imagePath'] != null) {
+        final file = File(product['imagePath']);
+        if (file.existsSync()) {
+          return Response.ok(
+            file.openRead(),
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'Content-Length': file.lengthSync().toString(),
+            },
+          );
+        }
+      }
+      return Response.notFound('Rasm topilmadi');
+    });
+
     _server = await io.serve(router.call, InternetAddress.anyIPv4, 8080);
     print('Server ishga tushdi: ${_server!.address.address}:${_server!.port}');
   }
