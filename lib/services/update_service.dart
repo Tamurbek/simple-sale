@@ -41,40 +41,54 @@ class UpdateService {
   }
 
   static Future<void> downloadAndInstall(String downloadUrl, Function(double) onProgress) async {
+    final client = http.Client();
     try {
       final fullUrl = downloadUrl.startsWith('http') ? downloadUrl : "$_activationServerUrl$downloadUrl";
-      final response = await http.Client().send(http.Request('GET', Uri.parse(fullUrl)));
-      final contentLength = response.contentLength ?? 0;
-      
-      final bytes = <int>[];
-      await for (var chunk in response.stream) {
-        bytes.addAll(chunk);
-        if (contentLength > 0) {
-          onProgress(bytes.length / contentLength);
-        }
+      final request = http.Request('GET', Uri.parse(fullUrl));
+      final response = await client.send(request);
+
+      if (response.statusCode != 200) {
+        throw Exception("Serverdan xato javob keldi: ${response.statusCode}");
       }
 
+      final contentLength = response.contentLength ?? 0;
       final tempDir = await getTemporaryDirectory();
       final fileName = downloadUrl.split('/').last;
       final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(bytes);
+      
+      // Agar eski fayl bo'lsa o'chirib tashlaymiz
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      final sink = file.openWrite();
+      int downloadedLength = 0;
+
+      await for (var chunk in response.stream) {
+        sink.add(chunk);
+        downloadedLength += chunk.length;
+        if (contentLength > 0) {
+          onProgress(downloadedLength / contentLength);
+        }
+      }
+
+      await sink.flush();
+      await sink.close();
 
       if (Platform.isWindows) {
         // Windows uchun avtomatik (silent) o'rnatish
-        // /VERYSILENT va /SUPPRESSMSGBOXES - Inno Setup uchun standart bayroqlar
-        // /S - NSIS installeri uchun standart bayroq
         await Process.start(file.path, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/SP-', '/NOCANCEL', '/NORESTART']);
         
-        // Installer ishga tushishi uchun biroz kutamiz va ilovani yopamiz
         await Future.delayed(const Duration(seconds: 1));
         exit(0); 
       } else {
-        // Boshqa platformalar (Android va h.k.) uchun faylni ochish
         await OpenFile.open(file.path);
       }
     } catch (e) {
       print("Yuklab olish yoki o'rnatishda xatolik: $e");
       rethrow;
+    } finally {
+      client.close();
     }
   }
 
