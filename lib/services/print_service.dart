@@ -234,10 +234,11 @@ class PrintService {
                 ),
               ],
             ],
-          );
-        },
-      ),
-    );
+          ),
+        );
+      },
+    ),
+  );
 
     if (printerName != null) {
       final printers = await Printing.listPrinters();
