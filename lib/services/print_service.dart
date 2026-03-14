@@ -110,48 +110,51 @@ class PrintService {
 
     doc.addPage(
       pw.Page(
-        pageFormat: width == 58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80,
-        margin: const pw.EdgeInsets.all(5),
+        pageFormat: PdfPageFormat(
+          width * PdfPageFormat.mm,
+          double.infinity,
+          marginAll: 0,
+        ),
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              if (showLogo && logoImage != null)
-                pw.Container(
-                  height: 60,
-                  child: pw.Image(logoImage),
-                ),
-              pw.SizedBox(height: 5),
-              pw.Text(
-                (orgName ?? 'SIMPLE SALE').toUpperCase(),
-                style: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                  fontSize: width == 58 ? 11 : 14,
-                ),
-                textAlign: pw.TextAlign.center,
-              ),
-              if (orgAddress != null && orgAddress.isNotEmpty)
+          final double scale = width / 58;
+          return pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                if (showLogo && logoImage != null)
+                  pw.Container(
+                    height: 50 * scale,
+                    child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                  ),
+                pw.SizedBox(height: 5),
                 pw.Text(
-                  orgAddress,
-                  style: pw.TextStyle(fontSize: width == 58 ? 8 : 10),
+                  (orgName ?? 'SIMPLE SALE').toUpperCase(),
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 10 * scale,
+                  ),
                   textAlign: pw.TextAlign.center,
                 ),
-              pw.SizedBox(height: 5),
-              pw.Divider(thickness: 0.5),
-              pw.Container(
-                alignment: pw.Alignment.centerLeft,
-                child: pw.Column(
+                if (orgAddress != null && orgAddress.isNotEmpty)
+                  pw.Text(
+                    orgAddress,
+                    style: pw.TextStyle(fontSize: 7.5 * scale),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                pw.SizedBox(height: 5),
+                pw.Divider(thickness: 0.5),
+                pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Kassa: $registerName', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10)),
+                    pw.Text('Kassa: $registerName', style: pw.TextStyle(fontSize: 7.5 * scale)),
                     pw.Text(
                       'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
-                      style: pw.TextStyle(fontSize: width == 58 ? 8 : 10),
+                      style: pw.TextStyle(fontSize: 7.5 * scale),
                     ),
                   ],
                 ),
-              ),
-              pw.Divider(thickness: 0.5),
+                pw.Divider(thickness: 0.5),
               ...items.map(
                 (item) => pw.Padding(
                   padding: const pw.EdgeInsets.symmetric(vertical: 3),
@@ -160,18 +163,18 @@ class PrintService {
                     children: [
                       pw.Text(
                         item.productName.toUpperCase(),
-                        style: pw.TextStyle(fontSize: width == 58 ? 8 : 9, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(fontSize: 8 * scale, fontWeight: pw.FontWeight.bold),
                       ),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
                           pw.Text(
                             '${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.price)}',
-                            style: pw.TextStyle(fontSize: width == 58 ? 8 : 9),
+                            style: pw.TextStyle(fontSize: 8 * scale),
                           ),
                           pw.Text(
                             NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.quantity * item.price),
-                            style: pw.TextStyle(fontSize: width == 58 ? 9 : 10, fontWeight: pw.FontWeight.bold),
+                            style: pw.TextStyle(fontSize: 8.5 * scale, fontWeight: pw.FontWeight.bold),
                           ),
                         ],
                       ),
@@ -185,20 +188,19 @@ class PrintService {
                 children: [
                   pw.Text(
                     'JAMI SUMMA:',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 10 : 12),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10 * scale),
                   ),
                   pw.Text(
                     '${total.toStringAsFixed(0)} so\'m',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: width == 58 ? 11 : 14),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11 * scale),
                   ),
                 ],
               ),
-              pw.Center(
-                child: pw.Text(
-                  footerText ?? 'Xaridingiz uchun rahmat!',
-                  style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontStyle: pw.FontStyle.italic),
-                  textAlign: pw.TextAlign.center,
-                ),
+              pw.SizedBox(height: 5 * scale),
+              pw.Text(
+                footerText ?? 'Xaridingiz uchun rahmat!',
+                style: pw.TextStyle(fontSize: 8 * scale, fontStyle: pw.FontStyle.italic),
+                textAlign: pw.TextAlign.center,
               ),
               pw.SizedBox(height: 10),
               if (showInstagram && instagram != null && instagram.isNotEmpty) ...[
@@ -215,15 +217,15 @@ class PrintService {
                       pw.BarcodeWidget(
                         barcode: pw.Barcode.qrCode(),
                         data: 'https://instagram.com/$instagram',
-                        width: width == 58 ? 45 : 60,
-                        height: width == 58 ? 45 : 60,
+                        width: 45 * scale,
+                        height: 45 * scale,
                         color: PdfColors.black,
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
                         instagram.toUpperCase(),
                         style: pw.TextStyle(
-                          fontSize: width == 58 ? 9 : 11,
+                          fontSize: 9 * scale,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
@@ -288,7 +290,7 @@ class PrintService {
     bool showInstagram = true,
   }) {
     List<int> bytes = [];
-    int maxChars = width == 58 ? 32 : 42;
+    int maxChars = width == 58 ? 32 : 48;
     String divider = '-' * maxChars;
 
     // init printer
@@ -349,7 +351,26 @@ class PrintService {
 
     if (showInstagram && instagram != null && instagram.isNotEmpty) {
       bytes.addAll(utf8.encode('$divider\n'));
-      bytes.addAll(utf8.encode('INSTAGRAM: ${instagram.toUpperCase()}\n'));
+      bytes.addAll(utf8.encode('INSTAGRAM: ${instagram.toUpperCase()}\n\n'));
+      
+      // ESC/POS QR Code generation
+      String qrData = 'https://instagram.com/${instagram.replaceAll('@', '')}';
+      List<int> qrBytes = utf8.encode(qrData);
+      int pL = (qrBytes.length + 3) % 256;
+      int pH = (qrBytes.length + 3) ~/ 256;
+
+      // Select model
+      bytes.addAll([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]);
+      // Set size
+      bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06]);
+      // Error correction level L
+      bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]);
+      // Store data
+      bytes.addAll([0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30]);
+      bytes.addAll(qrBytes);
+      // Print QR code
+      bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
+      bytes.addAll(utf8.encode('\n'));
     }
 
     bytes.addAll(utf8.encode('\n\n\n\n\n'));
