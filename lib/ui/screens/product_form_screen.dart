@@ -21,6 +21,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _priceController;
+  late TextEditingController _costPriceController;
   late TextEditingController _barcodeController;
   String? _selectedCategoryId;
   String? _imagePath;
@@ -33,6 +34,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController = TextEditingController(text: widget.product?.name ?? '');
     _priceController = TextEditingController(
       text: widget.product?.price.toStringAsFixed(0) ?? '',
+    );
+    _costPriceController = TextEditingController(
+      text: widget.product?.costPrice.toStringAsFixed(0) ?? '',
     );
     _barcodeController = TextEditingController(
       text: widget.product?.barcode ?? '',
@@ -49,6 +53,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
+    _costPriceController.dispose();
     _barcodeController.dispose();
     for (var c in _additionalBarcodeControllers) {
       c.dispose();
@@ -96,6 +101,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
       final name = _nameController.text;
       final price = double.tryParse(_priceController.text) ?? 0.0;
+      final costPrice = double.tryParse(_costPriceController.text) ?? 0.0;
       final barcode = _barcodeController.text;
       final additionalBarcodes = _additionalBarcodeControllers
           .map((c) => c.text)
@@ -108,6 +114,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           price,
           _selectedCategoryId!,
           barcode,
+          costPrice: costPrice,
           imagePath: _imagePath,
           trackStock: _trackStock,
         ).copyWith(additionalBarcodes: additionalBarcodes);
@@ -116,6 +123,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         final updatedProduct = widget.product!.copyWith(
           name: name,
           price: price,
+          costPrice: costPrice,
           categoryId: _selectedCategoryId,
           barcode: barcode,
           additionalBarcodes: additionalBarcodes,
@@ -187,6 +195,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   SizedBox(width: 16),
                   Expanded(
                     child: _buildTextField(
+                      'Tannarxi (so\'m)',
+                      _costPriceController,
+                      Icons.shopping_bag_outlined,
+                      isNumber: true,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
                       'Shtrix-kod',
                       _barcodeController,
                       Icons.qr_code_scanner_outlined,
@@ -216,6 +237,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     onPressed: () => PrintService.printBarcodeLabel(
                       product: widget.product!,
                       printerName: state.barcodePrinterName,
+                      ipAddress: state.networkBarcodePrinterIp,
                     ),
                     icon: Icon(Icons.print_outlined),
                     label: Text('SHTRIX-KODNI CHOP ETISH'),

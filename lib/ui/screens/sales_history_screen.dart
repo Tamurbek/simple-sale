@@ -47,6 +47,10 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       0,
       (sum, item) => sum + item.total,
     );
+    final totalProfit = filteredSales.fold<double>(
+      0,
+      (sum, sale) => sum + sale.items.fold(0, (iSum, item) => iSum + item.profit),
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -108,6 +112,14 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                           color: Colors.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'Foyda: ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(totalProfit)} so\'m',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],

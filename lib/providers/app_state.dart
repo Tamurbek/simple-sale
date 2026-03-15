@@ -34,6 +34,7 @@ class AppState extends ChangeNotifier {
   String? selectedPrinterName;
   String? barcodePrinterName;
   String? networkPrinterIp;
+  String? networkBarcodePrinterIp;
   int receiptWidth = 80; // 58 or 80
   String receiptFooterText = 'Xaridingiz uchun rahmat!';
   bool showLogoOnReceipt = true;
@@ -64,7 +65,7 @@ class AppState extends ChangeNotifier {
   bool get isBarcodeScanMode => _isBarcodeScanMode;
   bool _showProductImages = true;
   bool get showProductImages => _showProductImages;
-  String appVersion = '1.9.5';
+  String appVersion = '1.9.6';
 
   double get todaySalesTotal {
     final now = DateTime.now();
@@ -76,6 +77,18 @@ class AppState extends ChangeNotifier {
               s.date.day == now.day,
         )
         .fold(0.0, (sum, s) => sum + s.total);
+  }
+
+  double get todayProfitTotal {
+    final now = DateTime.now();
+    return sales
+        .where(
+          (s) =>
+              s.date.year == now.year &&
+              s.date.month == now.month &&
+              s.date.day == now.day,
+        )
+        .fold(0.0, (sum, s) => sum + s.items.fold(0.0, (iSum, item) => iSum + item.profit));
   }
 
   int get todaySalesCount {
@@ -209,6 +222,7 @@ class AppState extends ChangeNotifier {
       _isBarcodeScanMode = prefs.getBool('isBarcodeScanMode') ?? false;
       _showProductImages = prefs.getBool('showProductImages') ?? true;
       networkPrinterIp = prefs.getString('networkPrinterIp');
+      networkBarcodePrinterIp = prefs.getString('networkBarcodePrinterIp');
       selectedPrinterName = prefs.getString('selectedPrinterName');
       barcodePrinterName = prefs.getString('barcodePrinterName');
       receiptWidth = prefs.getInt('receiptWidth') ?? 80;
@@ -1222,6 +1236,7 @@ class AppState extends ChangeNotifier {
         productName: product.name,
         quantity: item.quantity + 1,
         price: product.price,
+        costPrice: product.costPrice,
       );
     } else {
       cart.add(
@@ -1230,6 +1245,7 @@ class AppState extends ChangeNotifier {
           productName: product.name,
           quantity: 1,
           price: product.price,
+          costPrice: product.costPrice,
         ),
       );
     }
@@ -1260,6 +1276,7 @@ class AppState extends ChangeNotifier {
           productName: item.productName,
           quantity: quantity,
           price: item.price,
+          costPrice: item.costPrice,
         );
       }
       notifyListeners();
@@ -1289,6 +1306,7 @@ class AppState extends ChangeNotifier {
           productName: item.productName,
           quantity: item.quantity - 1,
           price: item.price,
+          costPrice: item.costPrice,
         );
       } else {
         cart.removeAt(index);
@@ -1381,13 +1399,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateNetworkPrinterIp(String? ip) async {
-    networkPrinterIp = ip;
+  Future<void> updateNetworkPrinterIp(String ip) async {
     final prefs = await SharedPreferences.getInstance();
-    if (ip == null || ip.isEmpty) {
+    networkPrinterIp = ip;
+    if (ip.isEmpty) {
       await prefs.remove('networkPrinterIp');
     } else {
       await prefs.setString('networkPrinterIp', ip);
+    }
+    notifyListeners();
+  }
+  
+  Future<void> updateNetworkBarcodePrinterIp(String ip) async {
+    final prefs = await SharedPreferences.getInstance();
+    networkBarcodePrinterIp = ip;
+    if (ip.isEmpty) {
+      await prefs.remove('networkBarcodePrinterIp');
+    } else {
+      await prefs.setString('networkBarcodePrinterIp', ip);
     }
     notifyListeners();
   }

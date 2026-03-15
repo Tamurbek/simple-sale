@@ -81,9 +81,16 @@ class SimpleSaleApp extends StatelessWidget {
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2D2D2D),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF2D2D2D),
           elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF2D2D2D)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF2D2D2D),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       darkTheme: ThemeData(
@@ -120,6 +127,13 @@ class SimpleSaleApp extends StatelessWidget {
           backgroundColor: Color(0xFF121212),
           foregroundColor: Colors.white,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       home: const InitializationWrapper(),

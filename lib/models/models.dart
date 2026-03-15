@@ -75,7 +75,8 @@ class Category {
 class Product {
   final String id;
   final String name;
-  final double price;
+  final double price; // selling price
+  final double costPrice; // NEW: tannarx
   final String categoryId;
   final String barcode;
   final List<String> additionalBarcodes;
@@ -89,6 +90,7 @@ class Product {
     required this.id,
     required this.name,
     required this.price,
+    this.costPrice = 0.0,
     required this.categoryId,
     required this.barcode,
     this.additionalBarcodes = const [],
@@ -106,6 +108,7 @@ class Product {
     double price,
     String categoryId,
     String barcode, {
+    double costPrice = 0.0,
     String? imagePath,
     String unit = 'dona',
     bool trackStock = true,
@@ -113,6 +116,7 @@ class Product {
     id: Uuid().v4(),
     name: name,
     price: price,
+    costPrice: costPrice,
     categoryId: categoryId,
     barcode: barcode,
     additionalBarcodes: [],
@@ -125,6 +129,7 @@ class Product {
   Product copyWith({
     String? name,
     double? price,
+    double? costPrice,
     String? categoryId,
     String? barcode,
     List<String>? additionalBarcodes,
@@ -137,6 +142,7 @@ class Product {
     id: id,
     name: name ?? this.name,
     price: price ?? this.price,
+    costPrice: costPrice ?? this.costPrice,
     categoryId: categoryId ?? this.categoryId,
     barcode: barcode ?? this.barcode,
     additionalBarcodes: additionalBarcodes ?? this.additionalBarcodes,
@@ -151,6 +157,7 @@ class Product {
     'id': id,
     'name': name,
     'price': price,
+    'costPrice': costPrice,
     'categoryId': categoryId,
     'barcode': barcode,
     'additionalBarcodes': additionalBarcodes,
@@ -180,6 +187,7 @@ class Product {
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Noma\'lum',
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      costPrice: double.tryParse(json['costPrice']?.toString() ?? '0') ?? 0.0,
       categoryId: json['categoryId']?.toString() ?? '',
       barcode: json['barcode']?.toString() ?? '',
       additionalBarcodes: barcodes,
@@ -234,22 +242,26 @@ class SaleItem {
   final String productId;
   final String productName;
   final double quantity;
-  final double price;
+  final double price; // selling price
+  final double costPrice; // NEW: cost at time of sale
 
   SaleItem({
     required this.productId,
     required this.productName,
     required this.quantity,
     required this.price,
+    this.costPrice = 0.0,
   });
 
   double get subtotal => quantity * price;
+  double get profit => quantity * (price - costPrice);
 
   Map<String, dynamic> toJson() => {
     'productId': productId,
     'productName': productName,
     'quantity': quantity,
     'price': price,
+    'costPrice': costPrice,
   };
 
   factory SaleItem.fromJson(Map<String, dynamic> json) => SaleItem(
@@ -257,6 +269,7 @@ class SaleItem {
     productName: json['productName']?.toString() ?? 'Noma\'lum',
     quantity: double.tryParse(json['quantity']?.toString() ?? '1') ?? 1.0,
     price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+    costPrice: double.tryParse(json['costPrice']?.toString() ?? '0') ?? 0.0,
   );
 }
 

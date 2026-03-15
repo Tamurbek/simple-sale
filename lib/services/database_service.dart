@@ -57,7 +57,7 @@ class DatabaseService {
 
     return await openDatabase(
       newPath,
-      version: 10,
+      version: 11,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE categories (
@@ -85,6 +85,7 @@ class DatabaseService {
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             price REAL NOT NULL,
+            costPrice REAL NOT NULL DEFAULT 0,
             categoryId TEXT NOT NULL,
             barcode TEXT NOT NULL,
             imagePath TEXT,
@@ -123,7 +124,8 @@ class DatabaseService {
             productId TEXT NOT NULL,
             productName TEXT NOT NULL,
             quantity REAL NOT NULL,
-            price REAL NOT NULL
+            price REAL NOT NULL,
+            costPrice REAL NOT NULL DEFAULT 0
           )
         ''');
         await db.execute('''
@@ -344,6 +346,10 @@ class DatabaseService {
             )
           ''');
         }
+        if (oldVersion < 11) {
+          await db.execute('ALTER TABLE products ADD COLUMN costPrice REAL NOT NULL DEFAULT 0');
+          await db.execute('ALTER TABLE sale_items ADD COLUMN costPrice REAL NOT NULL DEFAULT 0');
+        }
       },
     );
   }
@@ -444,6 +450,7 @@ class DatabaseService {
       'id': product.id,
       'name': product.name,
       'price': product.price,
+      'costPrice': product.costPrice,
       'categoryId': product.categoryId,
       'barcode': product.barcode,
       'imagePath': product.imagePath,
@@ -500,6 +507,7 @@ class DatabaseService {
           id: pMap['id']?.toString() ?? '',
           name: pMap['name']?.toString() ?? 'Noma\'lum',
           price: double.tryParse(pMap['price']?.toString() ?? '0') ?? 0.0,
+          costPrice: double.tryParse(pMap['costPrice']?.toString() ?? '0') ?? 0.0,
           categoryId: pMap['categoryId']?.toString() ?? '',
           barcode: pMap['barcode']?.toString() ?? '',
           stocks: stocks,
@@ -585,6 +593,7 @@ class DatabaseService {
           'id': p.id,
           'name': p.name,
           'price': p.price,
+          'costPrice': p.costPrice,
           'categoryId': p.categoryId,
           'barcode': p.barcode,
           'imagePath': p.imagePath,
@@ -708,6 +717,7 @@ class DatabaseService {
           'productName': item.productName,
           'quantity': item.quantity,
           'price': item.price,
+          'costPrice': item.costPrice,
         });
       }
     });
@@ -731,6 +741,7 @@ class DatabaseService {
               'productName': i['productName'],
               'quantity': i['quantity'],
               'price': i['price'],
+              'costPrice': i['costPrice'],
             }),
           )
           .toList();

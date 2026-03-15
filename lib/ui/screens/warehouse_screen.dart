@@ -9,6 +9,7 @@ import 'stock_entry_screen.dart';
 import 'return_screen.dart';
 import 'write_off_screen.dart';
 import 'inventory_screen.dart';
+import 'barcode_print_screen.dart';
 import '../../services/print_service.dart';
 
 class WarehouseScreen extends StatefulWidget {
@@ -855,6 +856,15 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
           () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const InventoryScreen()),
+          ),
+        ),
+        _buildActionButton(
+          'Shtrix-kod',
+          Icons.qr_code_2_rounded,
+          Theme.of(context).colorScheme.primary,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => BarcodePrintScreen()),
           ),
         ),
       ],

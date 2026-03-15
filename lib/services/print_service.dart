@@ -8,9 +8,20 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 class PrintService {
+  static String _clean(String text) {
+    return text
+        .replaceAll('\u00A0', ' ') // Non-breaking space
+        .replaceAll('\u202F', ' ') // Narrow non-breaking space
+        .replaceAll('ʻ', "'")      // Uzbek modifier
+        .replaceAll('ʼ', "'")      // Uzbek modifier
+        .replaceAll('‘', "'")      // Left single quote
+        .replaceAll('’', "'");     // Right single quote
+  }
+
   static Future<void> printBarcodeLabels({
     required List<Map<String, dynamic>> items, // [{'product': Product, 'quantity': int}]
     String? printerName,
+    String? ipAddress,
   }) async {
     final doc = pw.Document();
 
@@ -43,10 +54,10 @@ class PrintService {
                   pw.BarcodeWidget(
                     barcode: pw.Barcode.code128(),
                     data: product.barcode,
-                    width: 35 * PdfPageFormat.mm,
-                    height: 12 * PdfPageFormat.mm,
+                    width: 32 * PdfPageFormat.mm,
+                    height: 15 * PdfPageFormat.mm,
                     drawText: true,
-                    textStyle: const pw.TextStyle(fontSize: 7),
+                    textStyle: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
                   ),
                   pw.SizedBox(height: 2),
                   pw.Text(
@@ -71,18 +82,67 @@ class PrintService {
         printer: printer,
         onLayout: (format) => doc.save(),
       );
-    } else {
+    } else if (printerName == null && (ipAddress == null || ipAddress.isEmpty)) {
       await Printing.layoutPdf(onLayout: (format) => doc.save());
+    }
+
+    if (ipAddress != null && ipAddress.isNotEmpty) {
+      try {
+        final socket = await Socket.connect(ipAddress, 9100, timeout: const Duration(seconds: 3));
+        List<int> bytes = [];
+        
+        // Init
+        bytes.addAll([0x1B, 0x40]);
+        
+        for (var item in items) {
+          final Product product = item['product'];
+          final int quantity = item['quantity'] ?? 1;
+          
+          for (int i = 0; i < quantity; i++) {
+            // center
+            bytes.addAll([0x1B, 0x61, 0x01]);
+            
+            // Name
+            bytes.addAll(utf8.encode(_clean('${product.name.toUpperCase()}\n')));
+            
+            // Barcode
+            // ESC/POS Barcode (Code128)
+            bytes.addAll([0x1D, 0x68, 0x60]); // height (usually 1-255, 96 is approx 12mm)
+            bytes.addAll([0x1D, 0x77, 0x02]); // width 2
+            bytes.addAll([0x1D, 0x48, 0x02]); // text below
+            bytes.addAll([0x1D, 0x6B, 0x49]); // Code128
+            bytes.addAll([product.barcode.length + 2]); // length + 2 for subset prefix
+            bytes.addAll([0x7B, 0x42]); // Subset B start character {B
+            bytes.addAll(utf8.encode(product.barcode));
+            
+            bytes.addAll(utf8.encode(_clean('\nNarxi: ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(product.price)} so\'m\n')));
+            bytes.addAll([0x0A, 0x0A, 0x0A]); // feed 3
+            
+            // If it's a label printer, it might need a FF (Form Feed) or similar
+            // But for simple thermal paper, we just feed enough
+          }
+        }
+        
+        bytes.addAll([0x1D, 0x56, 0x42, 0x00]); // cut
+        
+        socket.add(bytes);
+        await socket.flush();
+        await socket.close();
+      } catch (e) {
+        debugPrint('IP Barcode Printer error: $e');
+      }
     }
   }
 
   static Future<void> printBarcodeLabel({
     required Product product,
     String? printerName,
+    String? ipAddress,
   }) async {
     await printBarcodeLabels(
       items: [{'product': product, 'quantity': 1}],
       printerName: printerName,
+      ipAddress: ipAddress,
     );
   }
 
@@ -129,7 +189,7 @@ class PrintService {
                   ),
                 pw.SizedBox(height: 5),
                 pw.Text(
-                  (orgName ?? 'SIMPLE SALE').toUpperCase(),
+                  _clean((orgName ?? 'SIMPLE SALE').toUpperCase()),
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold,
                     fontSize: 10 * scale,
@@ -138,7 +198,7 @@ class PrintService {
                 ),
                 if (orgAddress != null && orgAddress.isNotEmpty)
                   pw.Text(
-                    orgAddress,
+                    _clean(orgAddress),
                     style: pw.TextStyle(fontSize: 7.5 * scale),
                     textAlign: pw.TextAlign.center,
                   ),
@@ -147,9 +207,9 @@ class PrintService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Kassa: $registerName', style: pw.TextStyle(fontSize: 7.5 * scale)),
+                    pw.Text(_clean('Kassa: $registerName'), style: pw.TextStyle(fontSize: 7.5 * scale)),
                     pw.Text(
-                      'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}',
+                      _clean('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}'),
                       style: pw.TextStyle(fontSize: 7.5 * scale),
                     ),
                   ],
@@ -162,18 +222,18 @@ class PrintService {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        item.productName.toUpperCase(),
+                        _clean(item.productName.toUpperCase()),
                         style: pw.TextStyle(fontSize: 8 * scale, fontWeight: pw.FontWeight.bold),
                       ),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
                           pw.Text(
-                            '${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.price)}',
+                            _clean('${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.price)}'),
                             style: pw.TextStyle(fontSize: 8 * scale),
                           ),
                           pw.Text(
-                            NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.quantity * item.price),
+                            _clean(NumberFormat.currency(locale: 'uz_UZ', symbol: '', decimalDigits: 0).format(item.quantity * item.price)),
                             style: pw.TextStyle(fontSize: 8.5 * scale, fontWeight: pw.FontWeight.bold),
                           ),
                         ],
@@ -191,14 +251,14 @@ class PrintService {
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10 * scale),
                   ),
                   pw.Text(
-                    '${total.toStringAsFixed(0)} so\'m',
+                    _clean('${total.toStringAsFixed(0)} so\'m'),
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11 * scale),
                   ),
                 ],
               ),
               pw.SizedBox(height: 5 * scale),
               pw.Text(
-                footerText ?? 'Xaridingiz uchun rahmat!',
+                _clean(footerText ?? 'Xaridingiz uchun rahmat!'),
                 style: pw.TextStyle(fontSize: 8 * scale, fontStyle: pw.FontStyle.italic),
                 textAlign: pw.TextAlign.center,
               ),
@@ -305,28 +365,28 @@ class PrintService {
     // Title
     bytes.addAll([0x1B, 0x45, 0x01]); // bold on
     bytes.addAll([0x1D, 0x21, 0x11]); // double size
-    bytes.addAll(utf8.encode('${orgName ?? 'SIMPLE SALE'}\n'));
+    bytes.addAll(utf8.encode(_clean('${orgName ?? 'SIMPLE SALE'}\n')));
     bytes.addAll([0x1D, 0x21, 0x00]); // normal size
     bytes.addAll([0x1B, 0x45, 0x00]); // bold off
     
     if (orgAddress != null && orgAddress.isNotEmpty) {
-      bytes.addAll(utf8.encode('$orgAddress\n'));
+      bytes.addAll(utf8.encode(_clean('$orgAddress\n')));
     }
 
     bytes.addAll([0x1B, 0x61, 0x00]); // Align left
 
-    bytes.addAll(utf8.encode('$divider\n'));
-    bytes.addAll(utf8.encode('Kassa: $registerName\n'));
+    bytes.addAll(utf8.encode(_clean('$divider\n')));
+    bytes.addAll(utf8.encode(_clean('Kassa: $registerName\n')));
     bytes.addAll(
       utf8.encode(
-        'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n',
+        _clean('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n'),
       ),
     );
     bytes.addAll(utf8.encode('$divider\n'));
 
     for (var item in items) {
       // Product Name (Upper Case for clarity)
-      bytes.addAll(utf8.encode('${item.productName.toUpperCase()}\n'));
+      bytes.addAll(utf8.encode(_clean('${item.productName.toUpperCase()}\n')));
       
       // Quantity x Price and Total on the same line
       String qtyPrice = ' ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} x ${item.price.toStringAsFixed(0)}';
@@ -336,7 +396,7 @@ class PrintService {
       int spaces = maxChars - qtyPrice.length - totalItem.length;
       if (spaces < 1) spaces = 1;
       
-      bytes.addAll(utf8.encode(qtyPrice + (' ' * spaces) + totalItem + '\n'));
+      bytes.addAll(utf8.encode(_clean(qtyPrice + (' ' * spaces) + totalItem + '\n')));
     }
 
     bytes.addAll(utf8.encode('$divider\n'));
@@ -344,15 +404,15 @@ class PrintService {
 
     bytes.addAll([0x1B, 0x45, 0x01]); // bold on
     bytes.addAll([0x1D, 0x21, 0x01]); // double height
-    bytes.addAll(utf8.encode('JAMI: ${total.toStringAsFixed(0)} so\'m\n'));
+    bytes.addAll(utf8.encode(_clean('JAMI: ${total.toStringAsFixed(0)} so\'m\n')));
     bytes.addAll([0x1D, 0x21, 0x00]); // normal size
     bytes.addAll([0x1B, 0x45, 0x00]); // bold off
     
-    bytes.addAll(utf8.encode('\n${footerText ?? "Xaridingiz uchun rahmat!"}\n'));
+    bytes.addAll(utf8.encode(_clean('\n${footerText ?? "Xaridingiz uchun rahmat!"}\n')));
 
     if (showInstagram && instagram != null && instagram.isNotEmpty) {
-      bytes.addAll(utf8.encode('$divider\n'));
-      bytes.addAll(utf8.encode('INSTAGRAM: ${instagram.toUpperCase()}\n\n'));
+      bytes.addAll(utf8.encode(_clean('$divider\n')));
+      bytes.addAll(utf8.encode(_clean('INSTAGRAM: ${instagram.toUpperCase()}\n\n')));
       
       // ESC/POS QR Code generation
       String qrData = 'https://instagram.com/${instagram.replaceAll('@', '')}';
@@ -431,8 +491,8 @@ class PrintService {
                       child: pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Expanded(child: pw.Text(row['label'] ?? '', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10))),
-                          pw.Text(row['value'] ?? '', style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontWeight: pw.FontWeight.bold)),
+                          pw.Expanded(child: pw.Text(_clean(row['label'] ?? ''), style: pw.TextStyle(fontSize: width == 58 ? 8 : 10))),
+                          pw.Text(_clean(row['value'] ?? ''), style: pw.TextStyle(fontSize: width == 58 ? 8 : 10, fontWeight: pw.FontWeight.bold)),
                         ],
                       ),
                     )),
@@ -470,12 +530,12 @@ class PrintService {
         bytes.addAll([0x1B, 0x40]);
         // center
         bytes.addAll([0x1B, 0x61, 0x01]);
-        bytes.addAll(utf8.encode('${orgName ?? 'SIMPLE SALE'}\n'));
+        bytes.addAll(utf8.encode(_clean('${orgName ?? 'SIMPLE SALE'}\n')));
         bytes.addAll([0x1B, 0x45, 0x01]);
-        bytes.addAll(utf8.encode('${reportTitle.toUpperCase()}\n'));
+        bytes.addAll(utf8.encode(_clean('${reportTitle.toUpperCase()}\n')));
         bytes.addAll([0x1B, 0x45, 0x00]);
-        bytes.addAll(utf8.encode('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n'));
-        bytes.addAll(utf8.encode('-' * maxChars + '\n'));
+        bytes.addAll(utf8.encode(_clean('Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}\n')));
+        bytes.addAll(utf8.encode(_clean('-' * maxChars + '\n')));
         
         for (var section in sections) {
           final String title = section['title'] ?? '';
@@ -484,9 +544,9 @@ class PrintService {
           if (title.isNotEmpty) {
             bytes.addAll([0x1B, 0x61, 0x00]); // left
             bytes.addAll([0x1B, 0x45, 0x01]);
-            bytes.addAll(utf8.encode('\n$title\n'));
+            bytes.addAll(utf8.encode(_clean('\n$title\n')));
             bytes.addAll([0x1B, 0x45, 0x00]);
-            bytes.addAll(utf8.encode('-' * maxChars + '\n'));
+            bytes.addAll(utf8.encode(_clean('-' * maxChars + '\n')));
           }
           
           for (var row in rows) {
@@ -494,12 +554,12 @@ class PrintService {
             String value = row['value'] ?? '';
             int spaces = maxChars - label.length - value.length;
             if (spaces < 1) spaces = 1;
-            bytes.addAll(utf8.encode(label + (' ' * spaces) + value + '\n'));
+            bytes.addAll(utf8.encode(_clean(label + (' ' * spaces) + value + '\n')));
           }
         }
         
-        bytes.addAll(utf8.encode('\n' + '-' * maxChars + '\n'));
-        bytes.addAll(utf8.encode('Simple Sale hisoboti\n\n\n\n\n'));
+        bytes.addAll(utf8.encode(_clean('\n' + '-' * maxChars + '\n')));
+        bytes.addAll(utf8.encode(_clean('Simple Sale hisoboti\n\n\n\n\n')));
         bytes.addAll([0x1D, 0x56, 0x42, 0x00]);
         
         socket.add(bytes);

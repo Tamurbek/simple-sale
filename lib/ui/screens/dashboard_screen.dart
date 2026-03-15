@@ -251,6 +251,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }).toList();
 
     final todayTotal = todaySales.fold(0.0, (sum, s) => sum + s.total);
+    final todayProfit = todaySales.fold(0.0, (sum, s) => sum + s.items.fold(0.0, (iSum, item) => iSum + item.profit));
     final todayCount = todaySales.length;
     final avgCheck = todayCount == 0 ? 0.0 : todayTotal / todayCount;
 
@@ -258,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? 1
         : width < 1200
         ? 2
-        : 4;
+        : 5;
     final fmt = NumberFormat.currency(
       locale: 'uz_UZ',
       symbol: '',
@@ -271,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisCount: crossAxisCount,
       crossAxisSpacing: 24,
       mainAxisSpacing: 24,
-      childAspectRatio: 2.2,
+      childAspectRatio: width < 1400 ? 1.6 : 2.0,
       children: [
         _buildStatCard(
           context,
@@ -295,6 +296,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           '${fmt.format(avgCheck)} so\'m',
           Icons.analytics_outlined,
           Colors.orange,
+          'Live',
+        ),
+        _buildStatCard(
+          context,
+          'Bugungi Foyda',
+          '${fmt.format(todayProfit)} so\'m',
+          Icons.trending_up_rounded,
+          Colors.teal,
           'Live',
         ),
         _buildStatCard(
@@ -646,6 +655,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }).toList();
 
     double total = todaySales.fold(0.0, (sum, s) => sum + s.total);
+    double profit = todaySales.fold(0.0, (sum, s) => sum + s.items.fold(0.0, (iSum, item) => iSum + item.profit));
     int count = todaySales.length;
     double avg = count == 0 ? 0 : total / count;
 
@@ -663,6 +673,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'rows': [
             {'label': 'Sotuvlar soni:', 'value': '$count ta'},
             {'label': 'Jami tushum:', 'value': '${fmt.format(total)} so\'m'},
+            {'label': 'Jami foyda:', 'value': '${fmt.format(profit)} so\'m'},
             {'label': 'O\'rtacha chek:', 'value': '${fmt.format(avg)} so\'m'},
           ],
         },

@@ -165,10 +165,10 @@ class SettingsScreen extends StatelessWidget {
                       context,
                       icon: Icons.print_outlined,
                       color: Colors.teal,
-                      title: 'Asosiy Printer',
+                      title: 'Chek Printeri (Tizim)',
                       subtitle:
                           state.selectedPrinterName ??
-                          'Tizim printeri (Tanlang)',
+                          'USB/WiFi/Bluetooth printer (Tanlang)',
                       onTap: () async {
                         final printers = await Printing.listPrinters();
                         if (context.mounted) {
@@ -178,12 +178,34 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     _buildSettingsTile(
                       context,
+                      icon: Icons.lan_outlined,
+                      color: Colors.indigo,
+                      title: 'Chek Printeri (IP)',
+                      subtitle:
+                          state.networkPrinterIp != null &&
+                              state.networkPrinterIp!.isNotEmpty
+                          ? state.networkPrinterIp!
+                          : 'Masalan: 192.168.1.100',
+                      onTap: () async {
+                        final ip = await _showIpInputDialog(
+                          context,
+                          state.networkPrinterIp,
+                          'Chek printeri IP manzili',
+                        );
+                        if (ip != null) {
+                          await state.updateNetworkPrinterIp(ip);
+                        }
+                      },
+                    ),
+                    const Divider(height: 1, indent: 70),
+                    _buildSettingsTile(
+                      context,
                       icon: Icons.qr_code_scanner,
                       color: Colors.teal,
-                      title: 'Shtrix-kod Printeri',
+                      title: 'Shtrix-kod Printeri (Tizim)',
                       subtitle:
                           state.barcodePrinterName ??
-                          'Shtrix-kod printeri (Tanlang)',
+                          'USB/WiFi/Bluetooth printer (Tanlang)',
                       onTap: () async {
                         final printers = await Printing.listPrinters();
                         if (context.mounted) {
@@ -191,6 +213,28 @@ class SettingsScreen extends StatelessWidget {
                         }
                       },
                     ),
+                    _buildSettingsTile(
+                      context,
+                      icon: Icons.router_outlined,
+                      color: Colors.indigo,
+                      title: 'Shtrix-kod Printeri (IP)',
+                      subtitle:
+                          state.networkBarcodePrinterIp != null &&
+                              state.networkBarcodePrinterIp!.isNotEmpty
+                          ? state.networkBarcodePrinterIp!
+                          : 'Masalan: 192.168.1.101',
+                      onTap: () async {
+                        final ip = await _showIpInputDialog(
+                          context,
+                          state.networkBarcodePrinterIp,
+                          'Shtrix-kod printeri IP manzili',
+                        );
+                        if (ip != null) {
+                          await state.updateNetworkBarcodePrinterIp(ip);
+                        }
+                      },
+                    ),
+                    const Divider(height: 1, indent: 70),
                     _buildSettingsTile(
                       context,
                       icon: Icons.qr_code_scanner,
@@ -218,26 +262,6 @@ class SettingsScreen extends StatelessWidget {
                         onChanged: (val) => state.toggleShowProductImages(),
                       ),
                       onTap: () => state.toggleShowProductImages(),
-                    ),
-                    _buildSettingsTile(
-                      context,
-                      icon: Icons.wifi,
-                      color: Colors.indigo,
-                      title: 'Tarmoq Printeri (IP)',
-                      subtitle:
-                          state.networkPrinterIp != null &&
-                              state.networkPrinterIp!.isNotEmpty
-                          ? state.networkPrinterIp!
-                          : 'Sozlanmagan',
-                      onTap: () async {
-                        final ip = await _showIpInputDialog(
-                          context,
-                          state.networkPrinterIp,
-                        );
-                        if (ip != null) {
-                          await state.updateNetworkPrinterIp(ip);
-                        }
-                      },
                     ),
                     _buildSettingsTile(
                       context,
@@ -779,12 +803,12 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<String?> _showIpInputDialog(BuildContext context, String? currentIp) {
+  Future<String?> _showIpInputDialog(BuildContext context, String? currentIp, String title) {
     final controller = TextEditingController(text: currentIp ?? '');
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Tarmoq printeri IP manzili'),
+        title: Text(title),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
